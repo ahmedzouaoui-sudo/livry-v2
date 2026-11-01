@@ -1,0 +1,6 @@
+{
+  "name": "Livry Code Finder",
+  "description": "Recherche ultra-rapide de codes courts et codes-barres pour préparateurs et livreurs Marjane & Aswak Assalam.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

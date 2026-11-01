@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planning pickeurs &amp; livreurs</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1d2330;--mu:#6b7385;--bd:#dfe3ea;--ac:#1f6feb;--ac2:#e8f0fe;--off:#fde8e8;--offt:#b42318;--sh:#e6f6ec;--sht:#1a7f45;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--card:#1b2030;--tx:#e8ebf2;--mu:#98a1b5;--bd:#2c3347;--ac:#6ea8ff;--ac2:#22304f;--off:#3a1f22;--offt:#ff9a93;--sh:#16301f;--sht:#7fdca1;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12151c;--card:#1b2030;--tx:#e8ebf2;--mu:#98a1b5;--bd:#2c3347;--ac:#6ea8ff;--ac2:#22304f;--off:#3a1f22;--offt:#ff9a93;--sh:#16301f;--sht:#7fdca1;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 14px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit}
+.tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;min-width:0}
+.bar input{flex:1;min-width:160px}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit}
+.x{background:transparent;color:var(--mu);border:0;cursor:pointer;font-size:18px;padding:2px 8px}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:700px}
+th,td{border-bottom:1px solid var(--bd);padding:7px 6px;text-align:left}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu)}
+td select{width:100%}
+select.shift{background:var(--sh);color:var(--sht);border-color:transparent}
+select.off{background:var(--off);color:var(--offt);border-color:transparent}
+select.lock{background:var(--ac2);color:var(--ac);border-color:transparent}
+.note{color:var(--mu);font-size:13px;margin:10px 0 0}
+.empty{color:var(--mu);padding:18px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+<h1>Planning pickeurs &amp; livreurs</h1>
+<div class="tabs" id="tabs"></div>
+<div class="card" id="view"></div>
+</main>
+<script>
+const DAYS=["LUNDI","MARDI","MERCREDI","JEUDI","VENDREDI","SAMEDI","DIMANCHE"];
+const KEY="planning-v1";
+let S={tab:"pickeur",pickeur:[],livreur:[],plan:[]};
+try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&typeof o==="object")S=Object.assign(S,o)}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const TABS=[["pickeur","Pickeurs"],["livreur","Livreurs"],["plan","Planification"]];
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function render(){
+  document.getElementById("tabs").innerHTML=TABS.map(([k,l])=>`<button class="${S.tab===k?"on":""}" onclick="S.tab='${k}';save();render()">${l}</button>`).join("");
+  const v=document.getElementById("view");
+  v.innerHTML=S.tab==="plan"?planView():weekView(S.tab);
+}
+function weekView(t){
+  const label=t==="pickeur"?"PICKEUR":"LIVREUR";
+  const rows=S[t].map((p,i)=>`<tr><td><input value="${esc(p.name)}" onchange="S['${t}'][${i}].name=this.value;save()"></td>`+
+    DAYS.map((d,j)=>{
+      if(j>=4)return `<td><select class="lock" disabled><option>no off</option></select></td>`;
+      const v=p.d[j];
+      return `<td><select class="${v}" onchange="S['${t}'][${i}].d[${j}]=this.value;save();render()"><option value="shift"${v==="shift"?" selected":""}>shift</option><option value="off"${v==="off"?" selected":""}>off</option></select></td>`}).join("")+
+    `<td><button class="x" onclick="S['${t}'].splice(${i},1);save();render()" aria-label="Supprimer">×</button></td></tr>`).join("");
+  return `<div class="bar"><input id="nm" placeholder="Nom du ${t}" onkeydown="if(event.key==='Enter')addP('${t}')"><button class="btn" onclick="addP('${t}')">Ajouter</button></div>
+  <div class="wrap"><table><thead><tr><th>${label}</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}<th></th></tr></thead><tbody>${rows||`<tr><td colspan="9" class="empty">Aucun ${t} pour l’instant.</td></tr>`}</tbody></table></div>
+  <p class="note">Du lundi au jeudi : shift ou off. Du vendredi au dimanche : pas de off.</p>`;
+}
+function addP(t){
+  const el=document.getElementById("nm");const n=el.value.trim();if(!n)return;
+  S[t].push({name:n,d:["shift","shift","shift","shift","shift","shift","shift"]});save();render();document.getElementById("nm").focus();
+}
+function planView(){
+  const rows=S.plan.map((r,i)=>`<tr>
+  <td><input type="date" value="${esc(r.date)}" onchange="S.plan[${i}].date=this.value;save()"></td>
+  <td><input value="${esc(r.id)}" style="width:100px" onchange="S.plan[${i}].id=this.value;save()"></td>
+  ${["s1a","s1b","s2a","s2b"].map(k=>`<td><input type="time" value="${esc(r[k])}" onchange="S.plan[${i}].${k}=this.value;save()"></td>`).join("")}
+  <td><button class="x" onclick="S.plan.splice(${i},1);save();render()" aria-label="Supprimer">×</button></td></tr>`).join("");
+  return `<div class="bar"><button class="btn" onclick="S.plan.push({date:'',id:'',s1a:'',s1b:'',s2a:'',s2b:''});save();render()">Ajouter une ligne</button></div>
+  <div class="wrap"><table><thead><tr><th>DATE</th><th>ID</th><th>DÉBUT-SHIFT-1</th><th>FIN-SHIFT-1</th><th>DÉBUT-SHIFT-2</th><th>FIN-SHIFT-2</th><th></th></tr></thead><tbody>${rows||`<tr><td colspan="7" class="empty">Aucune ligne pour l’instant.</td></tr>`}</tbody></table></div>`;
+}
+render();
+</script>
+</body>
+</html>
