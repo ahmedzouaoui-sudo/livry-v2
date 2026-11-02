@@ -279,7 +279,56 @@ CREATE POLICY "barcode_votes_all_access" ON public.barcode_votes FOR ALL USING (
 GRANT ALL ON TABLE public.barcode_votes TO anon, authenticated, service_role;
 
 -- -------------------------------------------------------------------------
--- 6. REALTIME (Synchronisation instantanée)
+-- 6. TABLE DES TÉLÉPHONES / APPAREILS CONNECTÉS ET TEMPS D'UTILISATION
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.user_devices (
+  device_id TEXT PRIMARY KEY,
+  ip_address TEXT,
+  device_type TEXT NOT NULL DEFAULT 'Mobile',
+  device_brand TEXT,
+  user_agent TEXT,
+  screen_size TEXT,
+  first_seen_at TIMESTAMPTZ DEFAULT NOW(),
+  last_active_at TIMESTAMPTZ DEFAULT NOW(),
+  total_time_seconds INT DEFAULT 0,
+  visits_count INT DEFAULT 1,
+  is_online BOOLEAN DEFAULT true,
+  worker_number TEXT,
+  city TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.user_devices ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "user_devices_all_access" ON public.user_devices;
+CREATE POLICY "user_devices_all_access" ON public.user_devices FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON TABLE public.user_devices TO anon, authenticated, service_role;
+
+CREATE TABLE IF NOT EXISTS api.user_devices (
+  device_id TEXT PRIMARY KEY,
+  ip_address TEXT,
+  device_type TEXT NOT NULL DEFAULT 'Mobile',
+  device_brand TEXT,
+  user_agent TEXT,
+  screen_size TEXT,
+  first_seen_at TIMESTAMPTZ DEFAULT NOW(),
+  last_active_at TIMESTAMPTZ DEFAULT NOW(),
+  total_time_seconds INT DEFAULT 0,
+  visits_count INT DEFAULT 1,
+  is_online BOOLEAN DEFAULT true,
+  worker_number TEXT,
+  city TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE api.user_devices ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "api_user_devices_all_access" ON api.user_devices;
+CREATE POLICY "api_user_devices_all_access" ON api.user_devices FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON TABLE api.user_devices TO anon, authenticated, service_role;
+
+-- -------------------------------------------------------------------------
+-- 7. REALTIME (Synchronisation instantanée)
 -- -------------------------------------------------------------------------
 DO $$
 BEGIN
@@ -301,6 +350,14 @@ BEGIN
   END;
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.barcode_votes;
+  EXCEPTION WHEN OTHERS THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.user_devices;
+  EXCEPTION WHEN OTHERS THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE api.user_devices;
   EXCEPTION WHEN OTHERS THEN NULL;
   END;
 END $$;

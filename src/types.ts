@@ -101,3 +101,29 @@ export interface TipPost {
 }
 
 export type DataUpdateStatus = 'up-to-date' | 'update-available' | 'updating';
+
+export interface UserDevice {
+  device_id: string;
+  ip_address: string;
+  device_type: string;
+  device_brand?: string;
+  user_agent: string;
+  screen_size: string;
+  first_seen_at: string;
+  last_active_at: string;
+  total_time_seconds: number;
+  visits_count: number;
+  is_online?: boolean;
+  worker_number?: string;
+  city?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DeviceStats {
+  totalDevices: number;
+  onlineDevices: number;
+  totalTimeSeconds: number;
+  mobileCount: number;
+  desktopCount: number;
+}

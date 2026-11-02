@@ -6,6 +6,8 @@ import {
   TipPost,
   DataUpdateStatus,
   BarcodeVoteRecord,
+  UserDevice,
+  DeviceStats,
 } from '../types';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { parseProductsFromCsv, exportProductsToCsv } from '../utils/csvImporter';
@@ -23,6 +25,12 @@ import {
   saveBarcodeVoteToSupabase,
   SupabaseHealthCheckResult,
 } from '../services/supabaseService';
+import {
+  registerDeviceEntry,
+  sendDeviceHeartbeat,
+  markDeviceOffline,
+  fetchUserDevices,
+} from '../services/deviceTrackerService';
 import { supabasePublic } from '../services/supabaseClient';
 import { triggerHaptic } from '../utils/haptics';
 
@@ -62,6 +70,12 @@ interface AppContextType {
 
   // User IP Tracking
   userIp: string | null;
+
+  // Registered Phones & App Usage Time (Table: user_devices)
+  userDevices: UserDevice[];
+  deviceStats: DeviceStats | null;
+  refreshUserDevices: () => Promise<void>;
+  isLoadingDevices: boolean;
 
   // Community Barcode Voting (15 likes -> Valide, 15 dislikes -> auto deleted)
   barcodeVotes: Record<string, BarcodeVoteRecord>;
@@ -202,9 +216,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsDarkMode((prev) => !prev);
   }, []);
 
-  // Fetch and save user IP
+  // Registered Phones & Usage State
+  const [userDevices, setUserDevices] = useState<UserDevice[]>([]);
+  const [deviceStats, setDeviceStats] = useState<DeviceStats | null>(null);
+  const [isLoadingDevices, setIsLoadingDevices] = useState(false);
+
+  const refreshUserDevices = useCallback(async () => {
+    setIsLoadingDevices(true);
+    try {
+      const res = await fetchUserDevices();
+      if (res.success) {
+        setUserDevices(res.devices);
+        setDeviceStats(res.stats);
+      }
+    } catch (err) {
+      console.warn('Error fetching user devices:', err);
+    } finally {
+      setIsLoadingDevices(false);
+    }
+  }, []);
+
+  // Fetch and save user IP + Auto-register device immediately
   useEffect(() => {
     let isCancelled = false;
+
+    // 1. Immediate initial registration with existing or cached IP
+    registerDeviceEntry().then(() => {
+      refreshUserDevices();
+    });
+
     const fetchIp = async () => {
       try {
         const res = await fetch('https://api.ipify.org?format=json');
@@ -213,9 +253,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (data && data.ip && !isCancelled) {
             setUserIp(data.ip);
             localStorage.setItem(STORAGE_KEY_USER_IP, data.ip);
+            // Re-sync with confirmed IP address
+            registerDeviceEntry(data.ip).then(() => {
+              refreshUserDevices();
+            });
           }
         }
-      } catch (err) {
+      } catch {
         // Fallback
         try {
           const res2 = await fetch('https://api64.ipify.org?format=json');
@@ -224,16 +268,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (data2 && data2.ip && !isCancelled) {
               setUserIp(data2.ip);
               localStorage.setItem(STORAGE_KEY_USER_IP, data2.ip);
+              registerDeviceEntry(data2.ip).then(() => {
+                refreshUserDevices();
+              });
             }
           }
         } catch {}
       }
     };
+
     fetchIp();
+
+    // 2. Active usage time tracking: Heartbeat every 30 seconds while user is using the app
+    const HEARTBEAT_INTERVAL_MS = 30000;
+    const intervalId = window.setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        sendDeviceHeartbeat(30);
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+
+    // 3. Visibility and unload listeners
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        sendDeviceHeartbeat(5);
+      } else {
+        registerDeviceEntry();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      markDeviceOffline();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       isCancelled = true;
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [refreshUserDevices]);
 
   const [role, setRoleState] = useState<Role>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_ROLE);
@@ -844,6 +920,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isDarkMode,
         toggleDarkMode,
         userIp,
+        userDevices,
+        deviceStats,
+        refreshUserDevices,
+        isLoadingDevices,
         barcodeVotes,
         voteBarcode,
         resetBarcodeVotes,

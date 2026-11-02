@@ -34,10 +34,12 @@ import {
   Terminal,
   Link,
   Zap,
+  Smartphone,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department, Product } from '../types';
 import { DEPARTMENT_CONFIGS, getProductBarcodeVariants, getCleanProductCode } from '../utils/productUtils';
+import { UserDevicesModal } from './UserDevicesModal';
 import {
   getSupabaseProjectId,
   SUPABASE_URL,
@@ -72,8 +74,12 @@ export const AdminDashboard: React.FC = () => {
     setActiveTab,
     showToast,
     userIp,
+    userDevices,
+    deviceStats,
+    refreshUserDevices,
   } = useApp();
 
+  const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false);
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
   const [isApiGuideModalOpen, setIsApiGuideModalOpen] = useState(false);
@@ -420,6 +426,23 @@ export const AdminDashboard: React.FC = () => {
             >
               <RefreshCw className="w-3.5 h-3.5 text-gray-600" />
               <span>Vérifier</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsDevicesModalOpen(true);
+                refreshUserDevices();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-black transition active:scale-95 shadow-xs cursor-pointer select-none"
+              title="Consulter les téléphones enregistrés et leur temps d'utilisation de l'app"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-white" />
+              <span>Téléphones & Temps ({deviceStats?.totalDevices ?? userDevices.length})</span>
+              {deviceStats && deviceStats.onlineDevices > 0 && (
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+              )}
             </button>
 
             <button
@@ -2501,6 +2524,12 @@ print(f"Total articles : {len(products)}")`}
           </div>
         </div>
       )}
+
+      {/* Modal Suivi des Téléphones & Temps d'utilisation */}
+      <UserDevicesModal
+        isOpen={isDevicesModalOpen}
+        onClose={() => setIsDevicesModalOpen(false)}
+      />
     </div>
   );
 };
