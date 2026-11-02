@@ -16,6 +16,7 @@ import {
   filterProducts,
   formatProductCodeBadge,
   getProductDisplayStatus,
+  getPrimaryBarcode,
 } from '../utils/productUtils';
 import { triggerHaptic } from '../utils/haptics';
 import { AppTutorialModal, TUTORIAL_STORAGE_KEY } from './AppTutorialModal';
@@ -254,7 +255,7 @@ export const HomeScreen: React.FC = () => {
                 {filteredProducts.map((product) => {
                   const codeBadge = formatProductCodeBadge(product.code);
                   const deptConf = DEPARTMENT_CONFIGS[product.department] || DEPARTMENT_CONFIGS['Fruits et légumes'];
-                  const primaryBarcode = product.barcodeMarjane || product.barcodeP2 || product.barcodeInterne;
+                  const primaryBarcode = getPrimaryBarcode(product, barcodeVotes);
 
                   return (
                     <div

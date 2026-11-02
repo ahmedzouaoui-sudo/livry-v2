@@ -33,6 +33,7 @@ export interface BarcodeVariant {
   badgeBg: string;
   badgeText: string;
   hasMarjaneIcon?: boolean;
+  iconType?: 'marjane' | 'internet' | 'plus';
   canVote?: boolean;
   likes?: number;
   dislikes?: number;

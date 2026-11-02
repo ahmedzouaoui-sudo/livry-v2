@@ -42,16 +42,36 @@ export const DEPARTMENT_CONFIGS: Record<Department, DepartmentConfig> = {
 /**
  * Validates a barcode value strictly according to requirements:
  * Exclude "0", "0.0", "-", "", "sans", "XXXX", null, undefined.
- * Must be strictly 8 or 13 digits.
+ * Must be between 8 and 14 digits (supports EAN-8, UPC-A 12-digit, EAN-13, and GTIN-14).
  */
-function isValidBarcodeString(val: string | undefined): boolean {
+export function isValidBarcodeString(val: string | undefined): boolean {
   if (!val) return false;
-  const s = val.trim();
-  if (s === '0' || s === '0.0' || s === '-' || s === '' || s.toLowerCase() === 'sans' || s === 'XXXX') {
+  const s = String(val).trim();
+  if (
+    s === '0' ||
+    s === '0.0' ||
+    s === '-' ||
+    s === '' ||
+    s.toLowerCase() === 'sans' ||
+    s.toLowerCase() === 'null' ||
+    s.toLowerCase() === 'undefined' ||
+    s.toUpperCase() === 'XXXX'
+  ) {
     return false;
   }
   const digits = s.replace(/\D/g, '');
-  return digits.length === 8 || digits.length === 13;
+  return digits.length >= 8 && digits.length <= 14;
+}
+
+/**
+ * Gets the primary active barcode for a product from its effective barcode variants.
+ */
+export function getPrimaryBarcode(
+  product: Product,
+  votesMap?: Record<string, import('../types').BarcodeVoteRecord>
+): string | undefined {
+  const variants = getEffectiveBarcodeVariants(product, votesMap);
+  return variants[0]?.code;
 }
 
 /**
@@ -66,9 +86,10 @@ function isValidBarcodeString(val: string | undefined): boolean {
 export function getProductBarcodeVariants(product: Product): BarcodeVariant[] {
   const variants: BarcodeVariant[] = [];
 
-  // 1. MARJANE (marjane) -> Valid BLEU, has Marjane icon, no like
-  if (isValidBarcodeString(product.barcodeMarjane)) {
-    const code = product.barcodeMarjane!.replace(/\D/g, '');
+  // 1. MARJANE (marjane) -> Blue, Marjane icon
+  const codeMarjane = product.barcodeMarjane || (!product.barcodeInterne ? product.barcodeMjValide : undefined);
+  if (isValidBarcodeString(codeMarjane)) {
+    const code = codeMarjane!.replace(/\D/g, '');
     variants.push({
       type: 'marjane',
       label: 'MARJANE',
@@ -79,11 +100,12 @@ export function getProductBarcodeVariants(product: Product): BarcodeVariant[] {
       badgeBg: '#EFF6FF',
       badgeText: '#1E40AF',
       hasMarjaneIcon: true,
+      iconType: 'marjane',
       canVote: false,
     });
   }
 
-  // 2. MARJANE 2 (marjane 2) -> Possible ORANGE, has likes, NO Marjane icon
+  // 2. MARJANE 2 (marjane 2) -> Orange, Marjane icon, has likes
   if (isValidBarcodeString(product.barcodeP2)) {
     const code = product.barcodeP2!.replace(/\D/g, '');
     variants.push({
@@ -95,30 +117,32 @@ export function getProductBarcodeVariants(product: Product): BarcodeVariant[] {
       accentColor: '#EA580C',
       badgeBg: '#FFF7ED',
       badgeText: '#C2410C',
-      hasMarjaneIcon: false,
+      hasMarjaneIcon: true,
+      iconType: 'marjane',
       canVote: true,
     });
   }
 
-  // 3. MARJANE INTERNE (marjane Interne) -> Marjane BLEU, has Marjane icon, no like
-  const codeInterne = product.barcodeInterne || product.barcodeMjValide;
-  if (isValidBarcodeString(codeInterne)) {
-    const code = codeInterne!.replace(/\D/g, '');
+  // 3. MARJANE INTERNE (marjane Interne) -> Purple, Internet icon
+  // STRICT RULE: 0 = NO CODEBARRES SECTION AFFICHE. Only shown if barcodeInterne is set!
+  if (isValidBarcodeString(product.barcodeInterne)) {
+    const code = product.barcodeInterne!.replace(/\D/g, '');
     variants.push({
       type: 'marjane Interne',
       label: 'MARJANE INTERNE',
       code,
       format: code.length === 8 ? 'EAN-8' : 'EAN-13',
       status: 'Valide',
-      accentColor: '#0759A4',
-      badgeBg: '#EFF6FF',
-      badgeText: '#1E40AF',
-      hasMarjaneIcon: true,
+      accentColor: '#7C3AED',
+      badgeBg: '#F5F3FF',
+      badgeText: '#6D28D9',
+      hasMarjaneIcon: false,
+      iconType: 'internet',
       canVote: false,
     });
   }
 
-  // 4. MARJANE MINI (marjane mini - 8 chiffres) -> Marjane BLEU, has Marjane icon, no like
+  // 4. MARJANE MINI (marjane mini) -> Chibi (Bleu ciel), Marjane icon
   if (isValidBarcodeString(product.barcodeMiniSecours)) {
     const code = product.barcodeMiniSecours!.replace(/\D/g, '');
     variants.push({
@@ -127,15 +151,16 @@ export function getProductBarcodeVariants(product: Product): BarcodeVariant[] {
       code,
       format: 'EAN-8',
       status: 'Valide',
-      accentColor: '#0759A4',
-      badgeBg: '#EFF6FF',
-      badgeText: '#1E40AF',
+      accentColor: '#0284C7',
+      badgeBg: '#F0F9FF',
+      badgeText: '#0369A1',
       hasMarjaneIcon: true,
+      iconType: 'marjane',
       canVote: false,
     });
   }
 
-  // 5. MARJANE SEC (marjane sec) -> Possible ORANGE, has likes, NO Marjane icon
+  // 5. MARJANE SEC (marjane sec) -> Gris, Plus icon, has likes
   if (isValidBarcodeString(product.barcodeSecours)) {
     const code = product.barcodeSecours!.replace(/\D/g, '');
     variants.push({
@@ -144,15 +169,16 @@ export function getProductBarcodeVariants(product: Product): BarcodeVariant[] {
       code,
       format: code.length === 8 ? 'EAN-8' : 'EAN-13',
       status: 'Possible',
-      accentColor: '#EA580C',
-      badgeBg: '#FFF7ED',
-      badgeText: '#C2410C',
+      accentColor: '#64748B',
+      badgeBg: '#F1F5F9',
+      badgeText: '#334155',
       hasMarjaneIcon: false,
+      iconType: 'plus',
       canVote: true,
     });
   }
 
-  // 6. MARJANE SEC 2 (marjane sec 2) -> Possible ORANGE, has likes, NO Marjane icon
+  // 6. MARJANE SEC 2 (marjane sec 2) -> Gris, Plus icon, has likes
   if (isValidBarcodeString(product.barcodeP3)) {
     const code = product.barcodeP3!.replace(/\D/g, '');
     variants.push({
@@ -161,10 +187,11 @@ export function getProductBarcodeVariants(product: Product): BarcodeVariant[] {
       code,
       format: code.length === 8 ? 'EAN-8' : 'EAN-13',
       status: 'Possible',
-      accentColor: '#EA580C',
-      badgeBg: '#FFF7ED',
-      badgeText: '#C2410C',
+      accentColor: '#64748B',
+      badgeBg: '#F1F5F9',
+      badgeText: '#334155',
       hasMarjaneIcon: false,
+      iconType: 'plus',
       canVote: true,
     });
   }
@@ -296,6 +323,7 @@ export function getEffectiveBarcodeVariants(
           badgeBg: '#EFF6FF',
           badgeText: '#1E40AF',
           hasMarjaneIcon: true,
+          iconType: 'marjane',
           canVote: false, // like buttons disappear
           likes: record.likes || 0,
           dislikes: record.dislikes || 0,
@@ -314,6 +342,7 @@ export function getEffectiveBarcodeVariants(
           badgeBg: v.badgeBg,
           badgeText: v.badgeText,
           hasMarjaneIcon: v.hasMarjaneIcon,
+          iconType: v.iconType,
           canVote: v.canVote,
         });
       }
@@ -401,9 +430,19 @@ export function filterProducts(
   const candidates = products.filter((p) => {
     if (!p.isEnabled) return false;
 
-    const status = getProductDisplayStatus(p, barcodeVotes);
+    // RULE: Products without barcodes NEVER appear in search or library
+    // (Until a barcode is entered for them, then they become accessible)
+    if (!hasProductBarcodes(p, barcodeVotes)) {
+      return false;
+    }
 
     // Rule 1: LI 3ANDO CODE XXXX MKIBANCH BMERA
+    if (!includeXXXX && isProductCodeXXXX(p.code)) {
+      return false;
+    }
+
+    const status = getProductDisplayStatus(p, barcodeVotes);
+
     if (!includeXXXX && status === 'HIDDEN_XXXX') {
       return false;
     }

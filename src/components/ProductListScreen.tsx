@@ -1,7 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowLeft, ShoppingBag, Database } from 'lucide-react';
 import { Department, Product } from '../types';
-import { DEPARTMENT_CONFIGS, filterProducts, formatProductCodeBadge, getProductDisplayStatus } from '../utils/productUtils';
+import {
+  DEPARTMENT_CONFIGS,
+  filterProducts,
+  formatProductCodeBadge,
+  getProductDisplayStatus,
+  getPrimaryBarcode,
+  hasProductBarcodes,
+  isProductCodeXXXX,
+} from '../utils/productUtils';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
 
@@ -26,25 +34,20 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
     ? DEPARTMENT_CONFIGS[selectedDepartment]
     : DEPARTMENT_CONFIGS['Fruits et légumes'];
 
-  // Categories in this department (only products with barcodes)
+  // Categories in this department (strictly ONLY products with valid barcodes)
   const categories = useMemo(() => {
-    const list = selectedDepartment
-      ? products.filter((p) => {
-          if (p.department !== selectedDepartment || !p.isEnabled) return false;
-          const status = getProductDisplayStatus(p, barcodeVotes);
-          return status !== 'HIDDEN_XXXX' && status !== 'HIDDEN_NO_CODE_NO_BC' && status !== 'UNAVAILABLE_NO_BARCODE';
-        })
-      : products.filter((p) => {
-          if (!p.isEnabled) return false;
-          const status = getProductDisplayStatus(p, barcodeVotes);
-          return status !== 'HIDDEN_XXXX' && status !== 'HIDDEN_NO_CODE_NO_BC' && status !== 'UNAVAILABLE_NO_BARCODE';
-        });
+    const list = products.filter((p) => {
+      if (!p.isEnabled) return false;
+      if (selectedDepartment && p.department !== selectedDepartment) return false;
+      if (isProductCodeXXXX(p.code)) return false;
+      return hasProductBarcodes(p, barcodeVotes);
+    });
 
     const unique = Array.from(new Set(list.map((p) => p.category).filter(Boolean)));
     return unique.sort();
   }, [products, selectedDepartment, barcodeVotes]);
 
-  // Filter products by department and category (only products with valid barcodes)
+  // Filter products by department and category (strictly ONLY products with valid barcodes)
   const filtered = useMemo(() => {
     return filterProducts(
       products,
@@ -149,7 +152,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
           filtered.map((product) => {
             const productDeptConfig = DEPARTMENT_CONFIGS[product.department] || deptConfig;
             const codeBadge = formatProductCodeBadge(product.code);
-            const primaryBarcode = product.barcodeMarjane || product.barcodeP2 || product.barcodeInterne;
+            const primaryBarcode = getPrimaryBarcode(product, barcodeVotes);
 
             return (
               <div

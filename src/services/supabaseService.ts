@@ -504,9 +504,7 @@ export function mapRowToProduct(row: any): Product {
     barcodeP3: marjaneSec2 && marjaneSec2 !== '-' && marjaneSec2 !== '0' ? marjaneSec2 : undefined,
     imageUrl: finalImageUrl,
     isEnabled: row.is_enabled ?? row.isEnabled ?? true,
-    barcodeMjValide:
-      (marjaneInterne && marjaneInterne !== '-' && marjaneInterne !== '0' ? marjaneInterne : undefined) ||
-      (marjane && marjane !== '-' && marjane !== '0' ? marjane : undefined),
+    barcodeMjValide: marjane && marjane !== '-' && marjane !== '0' ? marjane : undefined,
   };
 }
 

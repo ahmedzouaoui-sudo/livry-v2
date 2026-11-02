@@ -31,39 +31,44 @@ export const BarcodeCard: React.FC<BarcodeCardProps> = ({ variant, onCopySuccess
     <div className="bg-white dark:bg-slate-900 rounded-[18px] border border-[#E0E0E6] dark:border-slate-800 p-3 shadow-sm space-y-2.5 transition-colors">
       {/* Top Banner: Statut + Little Marjane Icon + Thumbs Like / Dislike buttons */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-slate-800 flex-wrap">
-        {/* Left: Status badge & Marjane Icon */}
+        {/* Left: Status badge */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs transition-all ${
-              isApproved
-                ? 'bg-[#EFF6FF] dark:bg-blue-950/60 text-[#0759A4] dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700'
-                : 'bg-[#FFF7ED] dark:bg-amber-950/60 text-[#EA580C] dark:text-amber-400 ring-1 ring-orange-300 dark:ring-orange-800'
-            }`}
-          >
-            {/* Little Marjane Icon if variant is marjane, marjane Interne, marjane mini */}
-            {variant.hasMarjaneIcon ? (
-              <div className="w-4 h-4 rounded-full bg-[#0759A4] flex items-center justify-center p-0.5 shrink-0">
-                <img
-                  src="/assets/aistudio/psd_2219503b.png"
-                  alt="Marjane"
-                  className="w-3 h-3 object-contain"
-                  loading="eager"
-                />
-              </div>
-            ) : isApproved ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#0759A4] dark:text-blue-400" />
-            ) : (
-              <span className="w-2 h-2 rounded-full bg-[#EA580C]" />
-            )}
-            <span>{isApproved ? 'Valide' : variant.status}</span>
-          </span>
+          {(() => {
+            const isMarjaneInterneOrMini =
+              variant.type === 'marjane Interne' || variant.type === 'marjane mini';
 
-          {variant.hasMarjaneIcon && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0759A4]" />
-              {variant.label}
-            </span>
-          )}
+            if (isMarjaneInterneOrMini) {
+              return (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs transition-all bg-blue-50 dark:bg-blue-950/70 text-[#0759A4] dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700">
+                  <div className="w-4 h-4 rounded-full bg-[#0759A4] flex items-center justify-center p-0.5 shrink-0">
+                    <img
+                      src="/assets/aistudio/psd_2219503b.png"
+                      alt="Marjane"
+                      className="w-3 h-3 object-contain"
+                      loading="eager"
+                    />
+                  </div>
+                  <span>Marjane</span>
+                </span>
+              );
+            }
+
+            if (isApproved) {
+              return (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs transition-all bg-emerald-50 dark:bg-emerald-950/70 text-[#155B48] dark:text-emerald-300 ring-1 ring-emerald-300 dark:ring-emerald-700">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#155B48] dark:text-emerald-400" />
+                  <span>Valide</span>
+                </span>
+              );
+            }
+
+            return (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs transition-all bg-[#FFF7ED] dark:bg-amber-950/60 text-[#EA580C] dark:text-amber-400 ring-1 ring-orange-300 dark:ring-orange-800">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#EA580C] dark:text-orange-400" />
+                <span>Possible</span>
+              </span>
+            );
+          })()}
 
           {likes >= 15 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">

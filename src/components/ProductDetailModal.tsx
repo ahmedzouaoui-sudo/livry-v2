@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, ShoppingBag, Share2, Check, Barcode as BarcodeIcon, Sparkles } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Share2, Check, Barcode as BarcodeIcon, Sparkles, Globe, Plus } from 'lucide-react';
 import { Product } from '../types';
 import { DEPARTMENT_CONFIGS, getEffectiveBarcodeVariants, formatProductCodeBadge, isProductCode0000 } from '../utils/productUtils';
 import { BarcodeCard } from './BarcodeCard';
@@ -25,7 +25,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [imgError, setImgError] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
+
+  useEffect(() => {
+    setSelectedVariantIndex(0);
+  }, [product.id]);
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -132,28 +135,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
       {/* Main Full-Screen Body */}
       <div className="flex-1 w-full max-w-[620px] mx-auto px-3 sm:px-6 py-3 sm:py-5 flex flex-col space-y-3 pb-12">
-        {/* 1. Large Product Image (TSWIRA KBIRA) */}
-        <div className="w-full h-52 sm:h-64 rounded-[20px] bg-white dark:bg-slate-900 border border-[#E0E0E6]/80 dark:border-slate-800 p-3 flex items-center justify-center overflow-hidden relative shadow-2xs group transition-colors">
+        {/* 1. Large Product Image */}
+        <div className="w-full h-52 sm:h-64 rounded-[20px] bg-white dark:bg-slate-900 border border-[#E0E0E6]/80 dark:border-slate-800 p-3 flex items-center justify-center overflow-hidden relative shadow-2xs transition-colors">
           {product.imageUrl && !imgError ? (
-            <>
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                onError={() => setImgError(true)}
-                loading="eager"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-contain cursor-zoom-in active:scale-98 transition-transform"
-                onClick={() => {
-                  triggerHaptic('light');
-                  setIsImageZoomed(true);
-                }}
-                title="Cliquer pour agrandir la photo"
-              />
-              <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-[6px] bg-black/40 text-white text-[9px] font-bold pointer-events-none backdrop-blur-xs">
-                Agrandir
-              </div>
-            </>
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              onError={() => setImgError(true)}
+              loading="eager"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-contain pointer-events-none select-none"
+            />
           ) : (
             <div
               className="w-full h-full rounded-[16px] flex items-center justify-center"
@@ -203,8 +196,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </h2>
         </div>
 
-        {/* 3. Weight / Multiplier Stepper: Strictly (-) digit (+) */}
-        <div className="bg-white dark:bg-slate-900 rounded-[18px] border border-[#E0E0E6]/80 dark:border-slate-800 p-2.5 shadow-2xs flex flex-col items-center transition-colors">
+        {/* 3. Weight / Multiplier Stepper: Strictly (-) digit (+) with wider container */}
+        <div className="bg-white dark:bg-slate-900 rounded-[18px] border border-[#E0E0E6]/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs flex flex-col items-center w-full transition-colors">
           <QuantityCalculator
             multiplier={multiplier}
             onMultiplierChange={(m) => setMultiplier(m)}
@@ -214,45 +207,47 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {/* 4. Barcode Selection Buttons (DIR DES BOTTON BACH TKHTAR MNHOM LES CODES BARRES) */}
         {adjustedVariants.length > 0 ? (
           <div className="space-y-2.5">
-            {adjustedVariants.length > 1 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {adjustedVariants.map((variant, idx) => {
-                  const isSelected = selectedVariantIndex === idx;
+            {/* Show buttons for only the barcodes that actually exist in the product (1 code = 1 button, 2 codes = 2 buttons) */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {adjustedVariants.map((variant, idx) => {
+                const isSelected = selectedVariantIndex === idx;
 
-                  return (
-                    <button
-                      key={`${variant.type}-${variant.code}-${idx}`}
-                      type="button"
-                      onClick={() => handleVariantSelect(idx)}
-                      style={{
-                        backgroundColor: isSelected ? variant.accentColor : variant.badgeBg,
-                        color: isSelected ? '#FFFFFF' : variant.badgeText,
-                        borderColor: variant.accentColor,
-                      }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border transition-all cursor-pointer select-none active:scale-95 shadow-2xs min-h-[34px] ${
-                        isSelected
-                          ? 'ring-2 ring-offset-1 shadow-xs'
-                          : 'opacity-85 hover:opacity-100'
-                      }`}
-                    >
-                      {variant.hasMarjaneIcon ? (
-                        <div className="w-3.5 h-3.5 rounded-full bg-[#0759A4] flex items-center justify-center p-0.5 shrink-0">
-                          <img
-                            src="/assets/aistudio/psd_2219503b.png"
-                            alt="Marjane"
-                            className="w-2.5 h-2.5 object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <BarcodeIcon className="w-3.5 h-3.5" />
-                      )}
-                      <span>{variant.label}</span>
-                      <span className="text-[10px] font-bold opacity-80">({variant.status})</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                return (
+                  <button
+                    key={`${variant.type}-${variant.code}-${idx}`}
+                    type="button"
+                    onClick={() => handleVariantSelect(idx)}
+                    style={{
+                      backgroundColor: isSelected ? variant.accentColor : variant.badgeBg,
+                      color: isSelected ? '#FFFFFF' : variant.badgeText,
+                      borderColor: variant.accentColor,
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border transition-all cursor-pointer select-none active:scale-95 shadow-2xs min-h-[34px] ${
+                      isSelected
+                        ? 'ring-2 ring-offset-1 shadow-xs'
+                        : 'opacity-85 hover:opacity-100'
+                    }`}
+                  >
+                    {variant.iconType === 'marjane' ? (
+                      <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center p-0.5 shrink-0">
+                        <img
+                          src="/assets/aistudio/psd_2219503b.png"
+                          alt="Marjane"
+                          className="w-3 h-3 object-contain"
+                        />
+                      </div>
+                    ) : variant.iconType === 'internet' ? (
+                      <Globe className="w-3.5 h-3.5 shrink-0" />
+                    ) : variant.iconType === 'plus' ? (
+                      <Plus className="w-3.5 h-3.5 shrink-0" />
+                    ) : (
+                      <BarcodeIcon className="w-3.5 h-3.5 shrink-0" />
+                    )}
+                    <span>{variant.label}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Selected Barcode Display Card */}
             {currentVariant && (
@@ -280,27 +275,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
         )}
       </div>
-
-      {/* Fullscreen Image Zoom Overlay */}
-      {isImageZoomed && product.imageUrl && (
-        <div
-          onClick={() => setIsImageZoomed(false)}
-          className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-black/90 backdrop-blur-md animate-in fade-in duration-150 cursor-pointer"
-        >
-          <div className="relative max-w-lg max-h-[85vh] p-2 bg-white rounded-[20px] shadow-2xl flex flex-col items-center">
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              referrerPolicy="no-referrer"
-              className="w-full h-auto max-h-[75vh] object-contain rounded-[14px]"
-            />
-            <p className="text-center text-xs font-bold text-gray-700 mt-2 truncate max-w-xs">
-              {product.name}
-            </p>
-            <span className="text-[10px] text-gray-400 mt-0.5">Touchez pour fermer</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

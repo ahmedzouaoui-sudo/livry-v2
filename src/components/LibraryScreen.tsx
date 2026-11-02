@@ -2,11 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Croissant, Apple, Beef, UtensilsCrossed, ChevronRight, Search, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department } from '../types';
-import { DEPARTMENT_CONFIGS, filterProducts } from '../utils/productUtils';
+import { DEPARTMENT_CONFIGS, filterProducts, hasProductBarcodes } from '../utils/productUtils';
 import { ProductCard } from './ProductCard';
 
 export const LibraryScreen: React.FC = () => {
-  const { products, setActiveTab, setSelectedProduct } = useApp();
+  const { products, setActiveTab, setSelectedProduct, barcodeVotes } = useApp();
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [deptSearch, setDeptSearch] = useState('');
@@ -18,32 +18,42 @@ export const LibraryScreen: React.FC = () => {
     'Fromage et charcuterie',
   ];
 
-  // Count products by department
+  // Count products by department (strictly products with valid barcodes)
   const countsByDept = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const d of departmentsList) {
-      counts[d] = products.filter((p) => p.isEnabled && p.department === d).length;
+      counts[d] = products.filter(
+        (p) => p.isEnabled && p.department === d && hasProductBarcodes(p, barcodeVotes)
+      ).length;
     }
     return counts;
-  }, [products]);
+  }, [products, barcodeVotes]);
 
-  // Categories in the selected department
+  // Categories in the selected department (strictly products with valid barcodes)
   const categoriesInDept = useMemo(() => {
     if (!selectedDept) return [];
     const set = new Set<string>();
     products
-      .filter((p) => p.isEnabled && p.department === selectedDept)
+      .filter((p) => p.isEnabled && p.department === selectedDept && hasProductBarcodes(p, barcodeVotes))
       .forEach((p) => {
         if (p.category) set.add(p.category);
       });
     return Array.from(set);
-  }, [products, selectedDept]);
+  }, [products, selectedDept, barcodeVotes]);
 
   // Filtered products inside selected department
   const deptProducts = useMemo(() => {
     if (!selectedDept) return [];
-    return filterProducts(products, deptSearch, selectedDept, selectedCategory);
-  }, [products, selectedDept, deptSearch, selectedCategory]);
+    return filterProducts(
+      products,
+      deptSearch,
+      selectedDept,
+      selectedCategory,
+      true,
+      false,
+      barcodeVotes
+    );
+  }, [products, selectedDept, deptSearch, selectedCategory, barcodeVotes]);
 
   const getDeptIcon = (dept: Department, size = 'w-9 h-9') => {
     switch (dept) {

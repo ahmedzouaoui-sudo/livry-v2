@@ -7,6 +7,7 @@ import {
   getProductDisplayStatus,
   formatProductCodeBadge,
   isProductCode0000,
+  getPrimaryBarcode,
 } from '../utils/productUtils';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
@@ -25,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
   const isUnavailableNoBarcode = status === 'UNAVAILABLE_NO_BARCODE';
   const is0000 = isProductCode0000(product.code);
   const codeBadge = formatProductCodeBadge(product.code);
-  const primaryBarcode = product.barcodeMarjane || product.barcodeP2 || product.barcodeInterne;
+  const primaryBarcode = getPrimaryBarcode(product, barcodeVotes);
 
   const handleClick = () => {
     if (isUnavailableNoBarcode) {
