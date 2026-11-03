@@ -13,17 +13,14 @@ import {
   ToggleLeft,
   ToggleRight,
   Edit2,
-  EyeOff,
-  ArrowLeft,
   Trash2,
   Check,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   Eye,
+  EyeOff,
   Filter,
   Copy,
-  Layers,
   Database,
   RefreshCw,
   Code2,
@@ -31,15 +28,25 @@ import {
   AlertTriangle,
   Lightbulb,
   Globe,
-  Terminal,
-  Link,
   Zap,
   Smartphone,
+  Layers,
+  Sparkles,
+  ExternalLink,
+  SlidersHorizontal,
+  FileCode,
+  Tag,
+  Scale,
+  ShoppingBag,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department, Product } from '../types';
-import { DEPARTMENT_CONFIGS, getProductBarcodeVariants, getCleanProductCode } from '../utils/productUtils';
-import { UserDevicesModal } from './UserDevicesModal';
+import {
+  DEPARTMENT_CONFIGS,
+  getProductBarcodeVariants,
+  getCleanProductCode,
+  normalizeSearchText,
+} from '../utils/productUtils';
 import {
   getSupabaseProjectId,
   SUPABASE_URL,
@@ -48,7 +55,23 @@ import {
   resetSupabaseCredentialsToDefault,
 } from '../services/supabaseClient';
 import { SUPABASE_SETUP_SQL } from '../services/supabaseService';
+import {
+  parseProductsFromCsv,
+  exportProductsToCsv,
+  extractProductsFromHtmlOrScript,
+  mergeExtractedProductsWithExisting,
+  MergeResult,
+} from '../utils/csvImporter';
+import { extractPureUnit } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
+import { UserDevicesModal } from './UserDevicesModal';
+
+interface DuplicateConflict {
+  type: 'name' | 'barcode' | 'code';
+  value: string;
+  fieldLabel: string;
+  products: Product[];
+}
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -58,376 +81,527 @@ export const AdminDashboard: React.FC = () => {
     updateProduct,
     addProduct,
     deleteProduct,
-    resetCatalogue,
     clearAllProducts,
     seedInitialCatalogueToSupabase,
     syncWithSupabase,
-    seedSupabase,
-    seedTips,
     supabaseHealth,
     checkSupabaseStatus,
     syncStatus,
-    syncProgress,
     lastSyncTimestamp,
-    importProductsCsv,
-    exportCatalogueCsv,
     setActiveTab,
     showToast,
-    userIp,
     userDevices,
     deviceStats,
     refreshUserDevices,
   } = useApp();
 
-  const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false);
-  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
-  const [copiedSql, setCopiedSql] = useState(false);
-  const [isApiGuideModalOpen, setIsApiGuideModalOpen] = useState(false);
-  const [apiSnippetLang, setApiSnippetLang] = useState<'js' | 'react' | 'php' | 'python' | 'curl'>('js');
-  const [apiTestStatus, setApiTestStatus] = useState<{ testing: boolean; result?: string; success?: boolean; latency?: number }>({ testing: false });
-  const [copiedSnippet, setCopiedSnippet] = useState(false);
-  const [copiedEndpoint, setCopiedEndpoint] = useState(false);
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [copiedUrlVar, setCopiedUrlVar] = useState(false);
-  const [copiedKeyVar, setCopiedKeyVar] = useState(false);
-
-  // Supabase Custom Config Modal
-  const [isCustomConfigModalOpen, setIsCustomConfigModalOpen] = useState(false);
-  const [customUrlInput, setCustomUrlInput] = useState(SUPABASE_URL);
-  const [customKeyInput, setCustomKeyInput] = useState(SUPABASE_ANON_KEY);
-
-  // Safe In-App Confirmation Modals (Replacing window.confirm which is blocked in iframes)
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
-  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
-
-  const supabaseProjectId = getSupabaseProjectId();
-
-  const testSiteConnection = async () => {
-    setApiTestStatus({ testing: true });
-    const start = performance.now();
-    try {
-      const res = await fetch(`https://${supabaseProjectId}.supabase.co/rest/v1/products?select=id,code,produit&limit=3`, {
-        headers: {
-          apikey: 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',
-          Authorization: 'Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',
-        },
-      });
-      const end = performance.now();
-      const latency = Math.round(end - start);
-      if (res.ok) {
-        const data = await res.json();
-        setApiTestStatus({
-          testing: false,
-          success: true,
-          latency,
-          result: `Connexion 100% réussie ! (HTTP 200 - ${data.length} articles tests reçus en ${latency}ms)`,
-        });
-        showToast(`✅ Test réussi (${latency}ms) ! Le site web peut se connecter sans restriction.`);
-      } else {
-        setApiTestStatus({
-          testing: false,
-          success: false,
-          result: `Erreur HTTP ${res.status}: ${res.statusText}`,
-        });
-      }
-    } catch (err: any) {
-      setApiTestStatus({
-        testing: false,
-        success: false,
-        result: `Erreur réseau: ${err.message}`,
-      });
-    }
-  };
-
+  // Redirect if not Admin
   useEffect(() => {
     if (role !== 'Admin') {
       setActiveTab('home');
     }
   }, [role, setActiveTab]);
 
-  // Filters and search
+  // -------------------------------------------------------------------------
+  // 1. STATE & SEARCH CONTROLS
+  // -------------------------------------------------------------------------
   const [adminSearch, setAdminSearch] = useState('');
-  const [filterDept, setFilterDept] = useState<Department | 'ALL'>('ALL');
-  const [filterCategory, setFilterCategory] = useState<string>('ALL');
-  const [filterSpecial, setFilterSpecial] = useState<'ALL' | 'NO_CODE' | 'XXXX' | 'NO_BARCODE' | 'NO_IMAGE'>('ALL');
+  const [selectedUnit, setSelectedUnit] = useState<'ALL' | 'kg' | 'g' | 'pièce'>('ALL');
+  const [filterSpecial, setFilterSpecial] = useState<
+    'ALL' | 'NO_CODE' | 'NO_BARCODE' | 'NO_IMAGE' | 'DUP_NAMES' | 'DUP_BARCODES' | 'VISIBLE' | 'HIDDEN'
+  >('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedDept, setSelectedDept] = useState<Department | 'ALL'>('ALL');
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(50);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Modals
+  const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false);
+  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [conflictModalData, setConflictModalData] = useState<DuplicateConflict | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [isExtractorModalOpen, setIsExtractorModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [csvRawText, setCsvRawText] = useState('');
-  const [csvMode, setCsvMode] = useState<'merge' | 'replace'>('merge');
 
   // Quick inline edit state
   const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
   const [inlineCode, setInlineCode] = useState('');
   const [inlineName, setInlineName] = useState('');
+  const [inlineUnit, setInlineUnit] = useState<'kg' | 'g' | 'pièce'>('pièce');
+
+  // Extraction tool state
+  const [extractorText, setExtractorText] = useState('');
+  const [extractedPreview, setExtractedPreview] = useState<Product[]>([]);
+  const [mergeResult, setMergeResult] = useState<MergeResult | null>(null);
+  const [extractorMode, setExtractorMode] = useState<'html' | 'csv'>('html');
+  const [copiedAlterSql, setCopiedAlterSql] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // New product form state
-  const initialNewProd: Omit<Product, 'id'> = {
-    code: '',
-    name: '',
-    department: 'Boucherie et volaille',
-    category: 'Viandes',
-    barcodeMjValide: '',
-    barcodeMarjane: '',
-    barcodeSecours: '',
-    barcodeMiniSecours: '',
-    barcodeP2: '',
-    barcodeP3: '',
-    imageUrl: '',
-    isEnabled: true,
-  };
-  const [newProd, setNewProd] = useState<Omit<Product, 'id'>>(initialNewProd);
+  // Active & Hidden counts for visibility management
+  const activeProductsCount = useMemo(() => products.filter((p) => p.isEnabled).length, [products]);
+  const hiddenProductsCount = useMemo(() => products.filter((p) => !p.isEnabled).length, [products]);
 
-  // Unique categories for the dropdown filter
-  const availableCategories = useMemo(() => {
-    const list = filterDept === 'ALL'
-      ? products
-      : products.filter((p) => p.department === filterDept);
-    const set = new Set(list.map((p) => p.category).filter(Boolean));
-    return Array.from(set).sort();
-  }, [products, filterDept]);
+  // -------------------------------------------------------------------------
+  // 2. DUPLICATES & ANOMALIES DETECTION LOGIC
+  // -------------------------------------------------------------------------
+  // Map of barcode string -> array of products containing it
+  const barcodeMap = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const p of products) {
+      const bcs = [
+        p.barcodeMarjane,
+        p.barcodeP2,
+        p.barcodeInterne,
+        p.barcodeMiniSecours,
+        p.barcodeSecours,
+        p.barcodeP3,
+      ];
+      for (const bc of bcs) {
+        if (bc && bc.trim() && bc !== '0' && bc !== '-') {
+          const clean = bc.replace(/\D/g, '');
+          if (clean.length >= 8) {
+            const list = map.get(clean) || [];
+            if (!list.some((existing) => existing.id === p.id)) {
+              list.push(p);
+            }
+            map.set(clean, list);
+          }
+        }
+      }
+    }
+    return map;
+  }, [products]);
 
-  // KPI Calculations
+  // Map of normalized product name -> array of products with this name
+  const nameMap = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const p of products) {
+      const norm = normalizeSearchText(p.name);
+      if (norm.length > 1) {
+        const list = map.get(norm) || [];
+        list.push(p);
+        map.set(norm, list);
+      }
+    }
+    return map;
+  }, [products]);
+
+  // Map of short codes -> array of products
+  const codeMap = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const p of products) {
+      const clean = getCleanProductCode(p.code);
+      if (clean && clean !== '-' && clean !== 'XXXX') {
+        const list = map.get(clean) || [];
+        list.push(p);
+        map.set(clean, list);
+      }
+    }
+    return map;
+  }, [products]);
+
+  // Duplicate IDs sets
+  const duplicateNameIds = useMemo(() => {
+    const set = new Set<number>();
+    nameMap.forEach((list) => {
+      if (list.length > 1) {
+        list.forEach((p) => set.add(p.id));
+      }
+    });
+    return set;
+  }, [nameMap]);
+
+  const duplicateBarcodeIds = useMemo(() => {
+    const set = new Set<number>();
+    barcodeMap.forEach((list) => {
+      if (list.length > 1) {
+        list.forEach((p) => set.add(p.id));
+      }
+    });
+    return set;
+  }, [barcodeMap]);
+
+  // -------------------------------------------------------------------------
+  // 3. KPI CALCULATIONS
+  // -------------------------------------------------------------------------
   const totalProducts = products.length;
-  const activeProducts = products.filter((p) => p.isEnabled).length;
-  const withoutCode = products.filter((p) => !p.code || p.code === '-').length;
-  const unavailableCodeXXXX = products.filter((p) => p.code?.toUpperCase() === 'XXXX').length;
-  const withoutImage = products.filter((p) => !p.imageUrl).length;
-  const withoutBarcodes = products.filter((p) => getProductBarcodeVariants(p).length === 0).length;
+  const withoutCodeCount = useMemo(() => {
+    return products.filter((p) => !p.code || p.code.trim() === '' || p.code === '-').length;
+  }, [products]);
 
-  // Filtered List
-  const filteredList = useMemo(() => {
+  const withoutBarcodeCount = useMemo(() => {
+    return products.filter((p) => getProductBarcodeVariants(p).length === 0).length;
+  }, [products]);
+
+  const withoutImageCount = useMemo(() => {
+    return products.filter((p) => !p.imageUrl || p.imageUrl.trim() === '').length;
+  }, [products]);
+
+  const duplicateNamesCount = duplicateNameIds.size;
+  const duplicateBarcodesCount = duplicateBarcodeIds.size;
+
+  // -------------------------------------------------------------------------
+  // 4. CATEGORIES SORTED A-Z
+  // -------------------------------------------------------------------------
+  const sortedCategories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of products) {
+      const cat = p.category?.trim() || 'Général';
+      counts.set(cat, (counts.get(cat) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }))
+      .map(([name, count]) => ({ name, count }));
+  }, [products]);
+
+  // -------------------------------------------------------------------------
+  // 5. FILTERING & SEARCH PIPELINE
+  // -------------------------------------------------------------------------
+  const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      // Special filter tabs
-      if (filterSpecial === 'XXXX' && p.code?.toUpperCase() !== 'XXXX') return false;
-      if (filterSpecial === 'NO_CODE' && (p.code && p.code !== '-')) return false;
-      if (filterSpecial === 'NO_BARCODE' && getProductBarcodeVariants(p).length > 0) return false;
-      if (filterSpecial === 'NO_IMAGE' && p.imageUrl) return false;
+      // Unit filter ('kg' | 'g' | 'pièce')
+      const pureUnit = p.quantite || extractPureUnit(p.name);
+      if (selectedUnit !== 'ALL' && pureUnit !== selectedUnit) {
+        return false;
+      }
 
-      // Department & Category filters
-      if (filterDept !== 'ALL' && p.department !== filterDept) return false;
-      if (filterCategory !== 'ALL' && p.category !== filterCategory) return false;
+      // Department filter
+      if (selectedDept !== 'ALL' && p.department !== selectedDept) {
+        return false;
+      }
 
-      // Text / Number Search
+      // Category filter
+      if (selectedCategory !== 'ALL' && (p.category?.trim() || 'Général') !== selectedCategory) {
+        return false;
+      }
+
+      // Special Anomaly filter
+      if (filterSpecial === 'NO_CODE' && p.code && p.code.trim() !== '' && p.code !== '-') {
+        return false;
+      }
+      if (filterSpecial === 'NO_BARCODE' && getProductBarcodeVariants(p).length > 0) {
+        return false;
+      }
+      if (filterSpecial === 'NO_IMAGE' && p.imageUrl && p.imageUrl.trim() !== '') {
+        return false;
+      }
+      if (filterSpecial === 'DUP_NAMES' && !duplicateNameIds.has(p.id)) {
+        return false;
+      }
+      if (filterSpecial === 'DUP_BARCODES' && !duplicateBarcodeIds.has(p.id)) {
+        return false;
+      }
+      if (filterSpecial === 'VISIBLE' && !p.isEnabled) {
+        return false;
+      }
+      if (filterSpecial === 'HIDDEN' && p.isEnabled) {
+        return false;
+      }
+
+      // Text search
       if (!adminSearch.trim()) return true;
       const q = adminSearch.toLowerCase().trim();
       const codeMatch = p.code?.toLowerCase().includes(q);
       const nameMatch = p.name.toLowerCase().includes(q);
       const catMatch = p.category?.toLowerCase().includes(q);
+      const deptMatch = p.department.toLowerCase().includes(q);
       const barcodeMatch =
         (p.barcodeMarjane && p.barcodeMarjane.includes(q)) ||
         (p.barcodeP2 && p.barcodeP2.includes(q)) ||
         (p.barcodeInterne && p.barcodeInterne.includes(q)) ||
-        (p.barcodeMjValide && p.barcodeMjValide.includes(q)) ||
         (p.barcodeMiniSecours && p.barcodeMiniSecours.includes(q)) ||
         (p.barcodeSecours && p.barcodeSecours.includes(q)) ||
         (p.barcodeP3 && p.barcodeP3.includes(q));
 
-      return codeMatch || nameMatch || catMatch || barcodeMatch;
+      return codeMatch || nameMatch || catMatch || deptMatch || barcodeMatch;
     });
-  }, [products, filterDept, filterCategory, filterSpecial, adminSearch]);
+  }, [
+    products,
+    selectedUnit,
+    selectedDept,
+    selectedCategory,
+    filterSpecial,
+    adminSearch,
+    duplicateNameIds,
+    duplicateBarcodeIds,
+  ]);
 
-  // Pagination calculation
-  const totalPages = pageSize === 0 ? 1 : Math.ceil(filteredList.length / pageSize);
-  const paginatedList = useMemo(() => {
-    if (pageSize === 0) return filteredList;
-    const start = (currentPage - 1) * pageSize;
-    return filteredList.slice(start, start + pageSize);
-  }, [filteredList, currentPage, pageSize]);
-
-  // Reset page when filters change
+  // Reset page when any filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [adminSearch, filterDept, filterCategory, filterSpecial, pageSize]);
+  }, [adminSearch, selectedUnit, filterSpecial, selectedCategory, selectedDept, pageSize]);
 
+  // Pagination calculation
+  const totalPages = pageSize === 0 ? 1 : Math.ceil(filteredProducts.length / pageSize);
+  const paginatedList = useMemo(() => {
+    if (pageSize === 0) return filteredProducts;
+    const start = (currentPage - 1) * pageSize;
+    return filteredProducts.slice(start, start + pageSize);
+  }, [filteredProducts, currentPage, pageSize]);
+
+  // -------------------------------------------------------------------------
+  // 6. DUPLICATE INSPECTION HANDLERS
+  // -------------------------------------------------------------------------
+  const openNameConflict = (product: Product) => {
+    triggerHaptic('medium');
+    const norm = normalizeSearchText(product.name);
+    const conflicts = nameMap.get(norm) || [product];
+    if (conflicts.length > 1) {
+      setConflictModalData({
+        type: 'name',
+        value: product.name,
+        fieldLabel: 'Nom de Produit Répété',
+        products: conflicts,
+      });
+    }
+  };
+
+  const openBarcodeConflict = (barcode: string | undefined, label: string) => {
+    if (!barcode) return;
+    const clean = barcode.replace(/\D/g, '');
+    const conflicts = barcodeMap.get(clean) || [];
+    if (conflicts.length > 1) {
+      triggerHaptic('medium');
+      setConflictModalData({
+        type: 'barcode',
+        value: clean,
+        fieldLabel: `Code-barres (${label}) Répété`,
+        products: conflicts,
+      });
+    }
+  };
+
+  const openCodeConflict = (code: string) => {
+    const clean = getCleanProductCode(code);
+    if (!clean) return;
+    const conflicts = codeMap.get(clean) || [];
+    if (conflicts.length > 1) {
+      triggerHaptic('medium');
+      setConflictModalData({
+        type: 'code',
+        value: clean,
+        fieldLabel: 'Code Court Article Répété',
+        products: conflicts,
+      });
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // 7. ACTIONS (EXPORT, IMPORT, EXTRACTION)
+  // -------------------------------------------------------------------------
   const handleExportCsv = () => {
-    const csvContent = exportCatalogueCsv();
+    triggerHaptic('success');
+    const csvContent = exportProductsToCsv(products);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', url);
-    downloadAnchor.setAttribute(
-      'download',
-      `produits-livry_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `catalogue_marjane_12colonnes_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
     URL.revokeObjectURL(url);
-    showToast('Fichier CSV exporté avec succès');
+    showToast(`✅ Export CSV généré (${products.length} articles, 12 colonnes)`);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProcessExtractor = () => {
+    if (!extractorText.trim()) return;
+    triggerHaptic('light');
+
+    let list: Product[] = [];
+    if (extractorMode === 'csv') {
+      const res = parseProductsFromCsv(extractorText);
+      if (res.error) {
+        showToast(`❌ ${res.error}`);
+        return;
+      }
+      list = res.products;
+    } else {
+      list = extractProductsFromHtmlOrScript(extractorText);
+    }
+
+    if (list.length === 0) {
+      showToast('⚠️ Aucun produit détecté. Vérifiez le texte HTML ou CSV collé.');
+      setExtractedPreview([]);
+      setMergeResult(null);
+      return;
+    }
+
+    const merge = mergeExtractedProductsWithExisting(list, products);
+    setExtractedPreview(list);
+    setMergeResult(merge);
+
+    showToast(
+      `🔍 ${list.length} détectés : +${merge.addedProducts.length} nouveaux, 📸 ${merge.updatedProducts.length} photos enrichies, ⏭️ ${merge.skippedCount} ignorés`
+    );
+  };
+
+  const handleApplyExtractedProducts = async () => {
+    if (!mergeResult && extractedPreview.length === 0) return;
+    triggerHaptic('success');
+
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    if (mergeResult) {
+      // 1. Enrich existing products missing images
+      for (const up of mergeResult.updatedProducts) {
+        await updateProduct(up);
+        updatedCount++;
+      }
+
+      // 2. Add brand-new products or products with different images
+      for (const p of mergeResult.addedProducts) {
+        await addProduct({
+          code: p.code,
+          name: p.name,
+          department: p.department,
+          category: p.category,
+          quantite: p.quantite || extractPureUnit(p.name),
+          barcodeMarjane: p.barcodeMarjane,
+          barcodeP2: p.barcodeP2,
+          barcodeInterne: p.barcodeInterne,
+          barcodeMiniSecours: p.barcodeMiniSecours,
+          barcodeSecours: p.barcodeSecours,
+          barcodeP3: p.barcodeP3,
+          imageUrl: p.imageUrl,
+          isEnabled: true,
+        });
+        addedCount++;
+      }
+    } else {
+      // Direct fallback
+      for (const p of extractedPreview) {
+        await addProduct({
+          code: p.code,
+          name: p.name,
+          department: p.department,
+          category: p.category,
+          quantite: p.quantite || extractPureUnit(p.name),
+          barcodeMarjane: p.barcodeMarjane,
+          barcodeP2: p.barcodeP2,
+          barcodeInterne: p.barcodeInterne,
+          barcodeMiniSecours: p.barcodeMiniSecours,
+          barcodeSecours: p.barcodeSecours,
+          barcodeP3: p.barcodeP3,
+          imageUrl: p.imageUrl,
+          isEnabled: true,
+        });
+        addedCount++;
+      }
+    }
+
+    showToast(`✅ Succès : +${addedCount} articles ajoutés & ${updatedCount} photos mises à jour !`);
+    setIsExtractorModalOpen(false);
+    setExtractorText('');
+    setExtractedPreview([]);
+    setMergeResult(null);
+  };
+
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        if (text) {
-          importProductsCsv(text, csvMode);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          setIsCsvModalOpen(false);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      if (content) {
+        setExtractorText(content);
+        setExtractorMode('csv');
+        setIsExtractorModalOpen(true);
+        const res = parseProductsFromCsv(content);
+        if (!res.error) {
+          setExtractedPreview(res.products);
         }
-      };
-      reader.readAsText(file);
-    }
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
-  const handleManualCsvImport = () => {
-    if (csvRawText.trim()) {
-      importProductsCsv(csvRawText, csvMode);
-      setCsvRawText('');
-      setIsCsvModalOpen(false);
-    }
-  };
-
-  const handleStartInlineEdit = (p: Product) => {
-    setInlineEditingId(p.id);
-    setInlineCode(p.code || '');
-    setInlineName(p.name || '');
-  };
-
-  const handleSaveInlineEdit = (p: Product) => {
-    updateProduct({
-      ...p,
-      code: inlineCode.trim() || '-',
-      name: inlineName.trim() || p.name,
-    });
-    setInlineEditingId(null);
-  };
-
-  const handleSaveEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingProduct) {
-      updateProduct({
-        ...editingProduct,
-        code: editingProduct.code.trim() || '-',
-        name: editingProduct.name.trim(),
-      });
-      setEditingProduct(null);
-    }
-  };
-
-  const handleSaveAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newProd.name.trim()) {
-      addProduct({
-        ...newProd,
-        code: newProd.code.trim() || '-',
-      });
-      setIsAddModalOpen(false);
-      setNewProd(initialNewProd);
-    }
-  };
-
-  const handleDeleteProduct = (p: Product) => {
-    setProductToDelete(p);
-  };
+  // SQL snippet for ALTER TABLE quantite
+  const alterTableSql = `ALTER TABLE public.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce';
+ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce';`;
 
   return (
-    <div className="w-full max-w-[96%] mx-auto px-2 sm:px-4 py-4 pb-24 space-y-4">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#1E293B] via-[#0759A4] to-[#0A3D6B] p-4 sm:p-5 rounded-[20px] text-white shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-[14px] bg-white/10 backdrop-blur-xs flex items-center justify-center border border-white/20 shrink-0">
-            <FileSpreadsheet className="w-6 h-6 text-amber-300" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-xl font-black tracking-tight">Tableur Catalogue CSV & Données</h1>
-              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                {products.length} articles
-              </span>
-              {userIp && (
-                <span className="bg-white/10 text-white/90 border border-white/20 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full">
-                  IP: {userIp}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-white/80">Format tabulaire identique au CSV (11 colonnes) avec édition directe</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab('home')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-[12px] bg-white/15 hover:bg-white/25 text-white font-bold text-xs backdrop-blur-xs transition active:scale-95 cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Écran Pickeur</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => syncWithSupabase(true)}
-            disabled={syncStatus === 'syncing'}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-[12px] bg-white text-[#0759A4] hover:bg-gray-100 font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            <Cloud className={`w-3.5 h-3.5 text-emerald-600 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
-            <span>{syncStatus === 'syncing' ? 'Sync...' : 'Sync Supabase'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Supabase Connection & Live Status Panel */}
-      <div className="bg-white border border-gray-200 rounded-[18px] p-3.5 sm:p-4 shadow-2xs space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="min-h-screen bg-[#F4F5F9] dark:bg-slate-950 text-gray-900 dark:text-slate-100 flex flex-col transition-colors pb-16">
+      
+      {/* ------------------------------------------------------------------- */}
+      {/* BANDEAU KPI SUPÉRIEUR EN DIRECT                                     */}
+      {/* ------------------------------------------------------------------- */}
+      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 shadow-2xs px-4 sm:px-6 py-3 shrink-0">
+        <div className="max-w-[1700px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Brand & Supabase connection badge */}
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 ${
-              supabaseHealth?.tableExists
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                : 'bg-amber-50 text-amber-600 border border-amber-200'
-            }`}>
+            <div className="w-10 h-10 rounded-[12px] bg-[#0759A4] flex items-center justify-center text-white shadow-sm shrink-0">
               <Database className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-[#171717]">Base Supabase :</span>
-                <span className="font-mono text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md border border-gray-200">
-                  {supabaseProjectId}.supabase.co
-                </span>
-                {supabaseHealth?.tableExists ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    En ligne ({supabaseHealth.productCount} produits stockés)
+                <h1 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
+                  Gestionnaire Catalogue Retail & Marjane
+                </h1>
+                {supabaseHealth?.connected ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    Supabase Connecté ({supabaseHealth.productCount} en ligne)
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                    <AlertTriangle className="w-3 h-3 text-amber-600" />
-                    Table "products" à initialiser
+                    <AlertTriangle className="w-3 h-3 text-amber-500" />
+                    En attente connexion
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                {lastSyncTimestamp || 'Synchronisation automatique bidirectionnelle active'}
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                Format 12 colonnes strictes • Détection automatique des doublons • Unités sans chiffres
               </p>
             </div>
           </div>
 
+          {/* Action buttons (Extract, Export, Phones, Sync, SQL) */}
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Extract HTML & Images */}
             <button
               type="button"
-              onClick={() => checkSupabaseStatus()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition active:scale-95 cursor-pointer"
-              title="Tester la connexion Supabase"
+              onClick={() => {
+                triggerHaptic('light');
+                setExtractorMode('html');
+                setIsExtractorModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gradient-to-r from-[#0759A4] to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none"
+              title="Extraction de fiches produits et photos depuis du texte HTML ou script"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-gray-600" />
-              <span>Vérifier</span>
+              <Globe className="w-3.5 h-3.5 text-blue-200" />
+              <span>Extraire HTML & Images</span>
             </button>
 
+            {/* Hidden File input for CSV */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileImport}
+              accept=".csv,.txt"
+              className="hidden"
+            />
+
+            {/* Export CSV (12 Colonnes) */}
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold shadow-2xs active:scale-95 transition cursor-pointer"
+              title="Exporter le catalogue au format strict 12 colonnes"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Exporter CSV (12 col)</span>
+            </button>
+
+            {/* User Devices button */}
             <button
               type="button"
               onClick={() => {
@@ -435,1485 +609,1302 @@ export const AdminDashboard: React.FC = () => {
                 setIsDevicesModalOpen(true);
                 refreshUserDevices();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-black transition active:scale-95 shadow-xs cursor-pointer select-none"
-              title="Consulter les téléphones enregistrés et leur temps d'utilisation de l'app"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none"
+              title="Consulter les téléphones enregistrés et leur temps d'utilisation"
             >
               <Smartphone className="w-3.5 h-3.5 text-white" />
-              <span>Téléphones & Temps ({deviceStats?.totalDevices ?? userDevices.length})</span>
+              <span>Téléphones ({deviceStats?.totalDevices ?? userDevices.length})</span>
               {deviceStats && deviceStats.onlineDevices > 0 && (
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse ml-0.5" />
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsSqlModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-blue-50 hover:bg-blue-100 text-[#0759A4] border border-blue-200 text-xs font-bold transition active:scale-95 cursor-pointer"
-            >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>Script SQL Supabase</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsApiGuideModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black transition active:scale-95 shadow-xs cursor-pointer select-none"
-              title="Paramètres, URL et codes prêts à l'emploi pour connecter votre site web à la base de données"
-            >
-              <Globe className="w-3.5 h-3.5 text-white" />
-              <span>Connecter au Site Web (API)</span>
-            </button>
-
-            {products.length === 0 && (
-              <button
-                type="button"
-                onClick={seedInitialCatalogueToSupabase}
-                disabled={syncStatus === 'syncing'}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#0759A4] hover:bg-[#064a88] text-white text-xs font-bold transition active:scale-95 shadow-xs disabled:opacity-50 cursor-pointer"
-                title="Pousser les 543 articles de base vers Supabase"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>Envoyer les 543 articles vers Supabase</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={seedSupabase}
-              disabled={syncStatus === 'syncing' || products.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition active:scale-95 shadow-xs disabled:opacity-50 cursor-pointer"
-              title="Uploader tous les produits locaux vers Supabase"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>Pousser catalogue ({products.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={seedTips}
-              disabled={syncStatus === 'syncing'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition active:scale-95 shadow-xs disabled:opacity-50 cursor-pointer"
-              title="Envoyer tous les tutoriels & astuces vers Supabase"
-            >
-              <Lightbulb className="w-3.5 h-3.5" />
-              <span>Envoyer Tips vers DB</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Env Vars Helper Box (Répond directement à : où trouver NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) */}
-        <div className="bg-slate-50 border border-slate-200 rounded-[14px] p-3 text-xs">
-          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-            <span className="font-extrabold text-slate-800 flex items-center gap-1.5 text-[11px]">
-              <Database className="w-3.5 h-3.5 text-[#0759A4]" />
-              <span>Vos variables Supabase prêtes à copier (pour .env ou .env.local) :</span>
-            </span>
-            <span className="text-[10px] text-slate-500 font-medium">
-              (Disponibles dans Supabase ⚙️ Project Settings → API Keys)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-[11px]">
-            <div className="bg-white p-2 rounded-[10px] border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
-              <div className="truncate min-w-0">
-                <span className="text-slate-400 font-bold block text-[9px] uppercase">NEXT_PUBLIC_SUPABASE_URL</span>
-                <span className="text-slate-900 font-bold truncate block select-all">https://{supabaseProjectId}.supabase.co</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(`https://${supabaseProjectId}.supabase.co`);
-                  setCopiedUrlVar(true);
-                  showToast('NEXT_PUBLIC_SUPABASE_URL copié !');
-                  setTimeout(() => setCopiedUrlVar(false), 2000);
-                }}
-                className="px-2.5 py-1 rounded-[6px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-sans text-[10px] font-bold flex items-center gap-1 shrink-0 cursor-pointer transition active:scale-95"
-              >
-                {copiedUrlVar ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-600" />}
-                <span>{copiedUrlVar ? 'Copié' : 'Copier'}</span>
-              </button>
-            </div>
-
-            <div className="bg-white p-2 rounded-[10px] border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
-              <div className="truncate min-w-0">
-                <span className="text-slate-400 font-bold block text-[9px] uppercase">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</span>
-                <span className="text-slate-900 font-bold truncate block select-all">sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText('sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp');
-                  setCopiedKeyVar(true);
-                  showToast('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY copié !');
-                  setTimeout(() => setCopiedKeyVar(false), 2000);
-                }}
-                className="px-2.5 py-1 rounded-[6px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-sans text-[10px] font-bold flex items-center gap-1 shrink-0 cursor-pointer transition active:scale-95"
-              >
-                {copiedKeyVar ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-600" />}
-                <span>{copiedKeyVar ? 'Copié' : 'Copier'}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-2.5 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] text-slate-600">
-              💡 Vous avez votre propre projet Supabase ou vous voulez changer de base ?
-            </span>
+            {/* Supabase Sync Button */}
             <button
               type="button"
               onClick={() => {
-                setCustomUrlInput(SUPABASE_URL);
-                setCustomKeyInput(SUPABASE_ANON_KEY);
-                setIsCustomConfigModalOpen(true);
+                triggerHaptic('light');
+                syncWithSupabase(true);
               }}
-              className="px-3 py-1.5 rounded-[8px] bg-[#0759A4] hover:bg-[#064a88] text-white text-[11px] font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+              disabled={syncStatus === 'syncing'}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold transition active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Synchroniser avec Supabase"
             >
-              <Zap className="w-3.5 h-3.5 text-amber-300" />
-              <span>Changer de Projet / Entrer mes clés Supabase</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${syncStatus === 'syncing' ? 'animate-spin text-blue-600' : ''}`} />
+              <span>Sync DB</span>
             </button>
-          </div>
-        </div>
 
-        {/* Database setup notification banner */}
-        {!supabaseHealth?.tableExists && (
-          <div className="bg-amber-50 border border-amber-200 rounded-[14px] p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-amber-900 animate-in fade-in">
-            <div className="flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-bold text-amber-900">
-                  Base Supabase connectée ! Schéma exposé : <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[10px]">api</code>
-                </p>
-                <p className="text-[11px] text-amber-700 mt-0.5">
-                  Pour activer les tables et synchroniser les données, copiez le script SQL ci-dessous et collez-le dans votre <strong>Supabase SQL Editor</strong>.
-                </p>
-              </div>
-            </div>
+            {/* SQL Modal button */}
             <button
               type="button"
               onClick={() => setIsSqlModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#0759A4] hover:bg-[#064a88] text-white text-xs font-bold transition active:scale-95 shrink-0 shadow-xs cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 text-gray-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
+              title="Afficher le script SQL Supabase"
             >
               <Code2 className="w-3.5 h-3.5" />
-              <span>Voir le Script SQL (1 clic)</span>
+              <span>SQL</span>
             </button>
-          </div>
-        )}
 
-        {/* Sync Progress Bar */}
-        {syncProgress && (
-          <div className="bg-blue-50 border border-blue-200 rounded-[12px] p-3 space-y-1.5">
-            <div className="flex justify-between text-xs font-bold text-[#0759A4]">
-              <span>Synchronisation Supabase en cours...</span>
-              <span>{syncProgress.processed} / {syncProgress.total} produits</span>
-            </div>
-            <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-[#0759A4] h-2 transition-all duration-200"
-                style={{ width: `${Math.round((syncProgress.processed / syncProgress.total) * 100)}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* KPI Metrics Grid with Quick Click Filters */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-        <div
-          onClick={() => setFilterSpecial('ALL')}
-          className={`p-3 rounded-[15px] border shadow-2xs cursor-pointer transition select-none ${
-            filterSpecial === 'ALL'
-              ? 'bg-blue-50/80 border-[#0759A4] ring-2 ring-[#0759A4]/20'
-              : 'bg-white border-gray-200 hover:border-blue-300'
-          }`}
-        >
-          <span className="text-[10px] font-bold text-gray-500 uppercase">Total Produits</span>
-          <p className="text-lg font-black text-[#171717] mt-0.5">{totalProducts}</p>
-          <span className="text-[10px] text-gray-400">Tous les articles</span>
-        </div>
-
-        <div
-          onClick={() => setFilterSpecial('NO_CODE')}
-          className={`p-3 rounded-[15px] border shadow-2xs cursor-pointer transition select-none ${
-            filterSpecial === 'NO_CODE'
-              ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/20'
-              : 'bg-white border-gray-200 hover:border-amber-300'
-          }`}
-        >
-          <span className="text-[10px] font-bold text-amber-600 uppercase">Sans Code (-)</span>
-          <p className="text-lg font-black text-amber-700 mt-0.5">{withoutCode}</p>
-          <span className="text-[10px] text-amber-600 font-medium">À renseigner</span>
-        </div>
-
-        <div
-          onClick={() => setFilterSpecial('XXXX')}
-          className={`p-3 rounded-[15px] border shadow-2xs cursor-pointer transition select-none ${
-            filterSpecial === 'XXXX'
-              ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-400/20'
-              : 'bg-white border-gray-200 hover:border-rose-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-rose-600 uppercase">Code XXXX</span>
-            <EyeOff className="w-3.5 h-3.5 text-rose-500" />
-          </div>
-          <p className="text-lg font-black text-rose-700 mt-0.5">{unavailableCodeXXXX}</p>
-          <span className="text-[10px] text-rose-600 font-medium">Masqués côté client</span>
-        </div>
-
-        <div
-          onClick={() => setFilterSpecial('NO_BARCODE')}
-          className={`p-3 rounded-[15px] border shadow-2xs cursor-pointer transition select-none ${
-            filterSpecial === 'NO_BARCODE'
-              ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-400/20'
-              : 'bg-white border-gray-200 hover:border-purple-300'
-          }`}
-        >
-          <span className="text-[10px] font-bold text-purple-600 uppercase">Sans Barcode</span>
-          <p className="text-lg font-black text-purple-700 mt-0.5">{withoutBarcodes}</p>
-          <span className="text-[10px] text-purple-600 font-medium">0 code-barres</span>
-        </div>
-
-        <div
-          onClick={() => setFilterSpecial('NO_IMAGE')}
-          className={`p-3 rounded-[15px] border shadow-2xs cursor-pointer transition select-none ${
-            filterSpecial === 'NO_IMAGE'
-              ? 'bg-orange-50 border-orange-400 ring-2 ring-orange-400/20'
-              : 'bg-white border-gray-200 hover:border-orange-300'
-          }`}
-        >
-          <span className="text-[10px] font-bold text-gray-500 uppercase">Sans Photo</span>
-          <p className="text-lg font-black text-gray-700 mt-0.5">{withoutImage}</p>
-          <span className="text-[10px] text-gray-400">Image manquante</span>
-        </div>
-
-        <div className="bg-white p-3 rounded-[15px] border border-gray-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-emerald-600 uppercase">Actifs</span>
-          <p className="text-lg font-black text-emerald-700 mt-0.5">{activeProducts}</p>
-          <span className="text-[10px] text-emerald-600 font-medium">Visible en rayon</span>
-        </div>
-      </div>
-
-      {/* Action Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-[18px] border border-gray-200 shadow-2xs">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* File input for CSV */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".csv,text/csv"
-            className="hidden"
-          />
-
-          {/* New Product */}
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-[#0759A4] text-white text-xs font-bold shadow-xs hover:bg-blue-800 transition active:scale-95 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Nouveau Produit</span>
-          </button>
-
-          {/* Import CSV Button */}
-          <button
-            type="button"
-            onClick={() => setIsCsvModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border border-[#0759A4]/30 bg-blue-50/50 hover:bg-blue-50 text-[#0759A4] text-xs font-bold transition active:scale-95 cursor-pointer"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Importer CSV</span>
-          </button>
-
-          {/* Export CSV Button */}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-800 text-xs font-bold transition cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Exporter CSV (11 colonnes)</span>
-          </button>
-
-          {/* Vider catalogue (0 produits pour test) */}
-          <button
-            type="button"
-            onClick={() => setIsClearModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border border-rose-300 bg-rose-50/80 text-rose-700 hover:bg-rose-100 text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs"
-            title="Vider tous les produits (0 articles dans l'app et sur Supabase)"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Vider tout (0 produit)</span>
-          </button>
-
-          {/* Restaurer 543 articles originaux */}
-          <button
-            type="button"
-            onClick={() => setIsRestoreModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border border-blue-300 bg-blue-50/80 text-[#0759A4] hover:bg-blue-100 text-xs font-bold transition active:scale-95 cursor-pointer shadow-2xs"
-            title="Restaurer le catalogue par défaut (543 articles) et synchroniser avec Supabase"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Restaurer CSV (543)</span>
-          </button>
-        </div>
-
-        {/* Rows per page */}
-        <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
-          <span>Lignes / page :</span>
-          <select
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-            className="px-2 py-1 rounded-[10px] border border-gray-200 bg-white text-xs font-bold outline-none focus:border-[#0759A4]"
-          >
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-            <option value={0}>Tous ({filteredList.length})</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Filtering & Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-2 bg-white p-3 rounded-[16px] border border-gray-200 shadow-2xs">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={adminSearch}
-            onChange={(e) => setAdminSearch(e.target.value)}
-            placeholder="Rechercher par code (ex: 6037), produit, code-barres ou catégorie..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-[12px] outline-none focus:border-[#0759A4] bg-gray-50/50"
-          />
-          {adminSearch && (
+            {/* Add product button */}
             <button
               type="button"
-              onClick={() => setAdminSearch('')}
-              className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsAddModalOpen(true);
+              }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" />
+              <span>Ajouter</span>
             </button>
-          )}
+          </div>
         </div>
 
-        {/* Department Filter */}
-        <select
-          value={filterDept}
-          onChange={(e) => {
-            setFilterDept(e.target.value as Department | 'ALL');
-            setFilterCategory('ALL');
-          }}
-          className="px-2.5 py-1.5 text-xs font-bold border border-gray-200 rounded-[12px] outline-none focus:border-[#0759A4] bg-white text-gray-800"
-        >
-          <option value="ALL">Tous les Rayons ({products.length})</option>
-          <option value="Boucherie et volaille">Boucherie et volaille ({products.filter((p) => p.department === 'Boucherie et volaille').length})</option>
-          <option value="Fromage et charcuterie">Fromage et charcuterie ({products.filter((p) => p.department === 'Fromage et charcuterie').length})</option>
-          <option value="Fruits et légumes">Fruits et légumes ({products.filter((p) => p.department === 'Fruits et légumes').length})</option>
-          <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie ({products.filter((p) => p.department === 'Boulangerie et pâtisserie').length})</option>
-        </select>
-
-        {/* Category Filter */}
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-2.5 py-1.5 text-xs font-bold border border-gray-200 rounded-[12px] outline-none focus:border-[#0759A4] bg-white text-gray-800"
-        >
-          <option value="ALL">Toutes Catégories</option>
-          {availableCategories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-
-        {filterSpecial !== 'ALL' && (
-          <button
-            type="button"
+        {/* KPI Counter Cards Row */}
+        <div className="max-w-[1700px] mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-3">
+          {/* KPI 1: Total Produits */}
+          <div
             onClick={() => setFilterSpecial('ALL')}
-            className="px-2.5 py-1.5 text-xs font-bold bg-amber-50 text-amber-800 rounded-[12px] border border-amber-300 hover:bg-amber-100 flex items-center gap-1 cursor-pointer shrink-0"
+            className={`p-2.5 sm:p-3 rounded-[14px] border cursor-pointer transition select-none ${
+              filterSpecial === 'ALL'
+                ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 shadow-xs'
+                : 'bg-gray-50 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 hover:bg-gray-100'
+            }`}
           >
-            <X className="w-3.5 h-3.5" />
-            <span>Effacer filtre {filterSpecial}</span>
-          </button>
-        )}
+            <div className="flex items-center justify-between text-gray-500 dark:text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Total Produits</span>
+              <Layers className="w-3.5 h-3.5 text-blue-600" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-gray-900 dark:text-white mt-0.5">
+              {totalProducts}
+            </div>
+          </div>
+
+          {/* KPI 2: Sans Code (Orange / Ambre) */}
+          <div
+            onClick={() => setFilterSpecial(filterSpecial === 'NO_CODE' ? 'ALL' : 'NO_CODE')}
+            className={`p-2.5 sm:p-3 rounded-[14px] border cursor-pointer transition select-none ${
+              filterSpecial === 'NO_CODE'
+                ? 'bg-amber-100/80 dark:bg-amber-950/60 border-amber-400 dark:border-amber-700 shadow-xs ring-1 ring-amber-400'
+                : 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100/50'
+            }`}
+          >
+            <div className="flex items-center justify-between text-amber-800 dark:text-amber-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Sans Code</span>
+              <Tag className="w-3.5 h-3.5 text-amber-600" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-amber-900 dark:text-amber-200 mt-0.5">
+              {withoutCodeCount}
+            </div>
+          </div>
+
+          {/* KPI 3: Sans Code-barre */}
+          <div
+            onClick={() => setFilterSpecial(filterSpecial === 'NO_BARCODE' ? 'ALL' : 'NO_BARCODE')}
+            className={`p-2.5 sm:p-3 rounded-[14px] border cursor-pointer transition select-none ${
+              filterSpecial === 'NO_BARCODE'
+                ? 'bg-orange-100/80 dark:bg-orange-950/60 border-orange-400 dark:border-orange-700 shadow-xs ring-1 ring-orange-400'
+                : 'bg-orange-50/70 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800/60 hover:bg-orange-100/50'
+            }`}
+          >
+            <div className="flex items-center justify-between text-orange-800 dark:text-orange-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Sans Code-barres</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-orange-900 dark:text-orange-200 mt-0.5">
+              {withoutBarcodeCount}
+            </div>
+          </div>
+
+          {/* KPI 4: Noms Répétés (Violet clair) */}
+          <div
+            onClick={() => setFilterSpecial(filterSpecial === 'DUP_NAMES' ? 'ALL' : 'DUP_NAMES')}
+            className={`p-2.5 sm:p-3 rounded-[14px] border cursor-pointer transition select-none ${
+              filterSpecial === 'DUP_NAMES'
+                ? 'bg-purple-100 dark:bg-purple-950/60 border-purple-400 dark:border-purple-700 shadow-xs ring-1 ring-purple-400'
+                : 'bg-purple-50/70 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800/60 hover:bg-purple-100/50'
+            }`}
+          >
+            <div className="flex items-center justify-between text-purple-800 dark:text-purple-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Noms Répétés</span>
+              <span className="w-2 h-2 rounded-full bg-purple-500" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-purple-900 dark:text-purple-200 mt-0.5">
+              {duplicateNamesCount}
+            </div>
+          </div>
+
+          {/* KPI 5: Code-barres Répétés (Rose / Rouge clair) */}
+          <div
+            onClick={() => setFilterSpecial(filterSpecial === 'DUP_BARCODES' ? 'ALL' : 'DUP_BARCODES')}
+            className={`p-2.5 sm:p-3 rounded-[14px] border cursor-pointer transition select-none ${
+              filterSpecial === 'DUP_BARCODES'
+                ? 'bg-rose-100 dark:bg-rose-950/60 border-rose-400 dark:border-rose-700 shadow-xs ring-1 ring-rose-400'
+                : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 hover:bg-rose-100/50'
+            }`}
+          >
+            <div className="flex items-center justify-between text-rose-800 dark:text-rose-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Codes-barres Répétés</span>
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-rose-900 dark:text-rose-200 mt-0.5">
+              {duplicateBarcodesCount}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* CSV Spreadsheet Table Grid */}
-      <div className="bg-white rounded-[18px] border border-gray-200 overflow-hidden shadow-2xs">
-        <div className="p-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-gray-900">
-              {filteredList.length} produit{filteredList.length > 1 ? 's' : ''} trouvé{filteredList.length > 1 ? 's' : ''}
-            </span>
-            {pageSize > 0 && totalPages > 1 && (
-              <span className="text-gray-400 text-[11px]">
-                (Page {currentPage} sur {totalPages})
-              </span>
+      {/* ------------------------------------------------------------------- */}
+      {/* CORPS PRINCIPAL & FILTRES DÉDIÉS                                    */}
+      {/* ------------------------------------------------------------------- */}
+      <div className="flex-1 max-w-[1700px] w-full mx-auto px-3 sm:px-6 py-4 space-y-3 flex flex-col">
+
+        {/* LIGNE 1 DÉDIÉE : GRANDE BARRE DE RECHERCHE + SÉLECTEUR D'UNITÉ */}
+        <div className="bg-white dark:bg-slate-900 rounded-[18px] border border-gray-200 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          {/* Main Search Input */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={adminSearch}
+              onChange={(e) => setAdminSearch(e.target.value)}
+              placeholder="Rechercher par code (ex: 6037), nom de produit, code-barres (EAN-13 / EAN-8), département..."
+              className="w-full pl-9 pr-9 py-2 rounded-[12px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0759A4]"
+            />
+            {adminSearch && (
+              <button
+                type="button"
+                onClick={() => setAdminSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
 
-          {/* Quick Pagination in header */}
-          {pageSize > 0 && totalPages > 1 && (
-            <div className="flex items-center gap-1">
+          {/* Pure Unit Selector ('Toutes' | 'kg' | 'g' | 'pièce') */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-[12px] border border-gray-200 dark:border-slate-700 shrink-0">
+            <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400 px-2 hidden md:inline">
+              Unité :
+            </span>
+            {(['ALL', 'kg', 'g', 'pièce'] as const).map((unit) => (
               <button
+                key={unit}
                 type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-1 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-30 cursor-pointer"
-                aria-label="Page précédente"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setSelectedUnit(unit);
+                }}
+                className={`px-3 py-1 rounded-[8px] text-xs font-black transition cursor-pointer select-none ${
+                  selectedUnit === unit
+                    ? 'bg-[#0759A4] text-white shadow-xs'
+                    : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 hover:bg-white/60 dark:hover:bg-slate-700'
+                }`}
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                {unit === 'ALL' ? 'Toutes' : unit}
               </button>
-              <span className="px-2 font-bold text-gray-700 text-xs">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded-[8px] border border-gray-200 hover:bg-gray-50 disabled:opacity-30 cursor-pointer"
-                aria-label="Page suivante"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
-        {/* Mobile Horizontal Scroll Hint */}
-        <div className="md:hidden px-3 py-1.5 bg-amber-50/80 border-b border-amber-200/80 text-[10px] font-bold text-amber-900 flex items-center justify-between">
-          <span>👉 Glissez horizontalement pour voir les 11 colonnes CSV</span>
-          <span className="bg-amber-100 px-1.5 py-0.5 rounded text-[9px]">13 colonnes</span>
-        </div>
-
-        {/* Scrollable table container */}
-        <div className="overflow-x-auto max-h-[620px] relative overscroll-x-contain">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="sticky top-0 bg-[#F1F5F9] text-gray-700 uppercase tracking-wider font-extrabold border-b-2 border-gray-200 z-10 select-none text-[11px]">
-              <tr>
-                <th className="px-3 py-2.5 border-r border-gray-200 bg-[#F1F5F9] sticky left-0 z-20 w-[95px]">
-                  code
-                </th>
-                <th className="px-3 py-2.5 border-r border-gray-200 min-w-[240px]">produit</th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-blue-800 min-w-[130px]">
-                  marjane
-                </th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-purple-800 min-w-[120px]">
-                  marjane 2
-                </th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-emerald-800 min-w-[130px]">
-                  marjane Interne
-                </th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-teal-800 min-w-[105px]">
-                  marjane mini
-                </th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-amber-800 min-w-[125px]">
-                  marjane sec
-                </th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-fuchsia-800 min-w-[125px]">
-                  marjane sec 2
-                </th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-center min-w-[85px]">image_html</th>
-                <th className="px-2.5 py-2.5 border-r border-gray-200 min-w-[130px]">département</th>
-                <th className="px-2.5 py-2.5 border-r border-gray-200 min-w-[110px]">catégorie</th>
-                <th className="px-2 py-2.5 border-r border-gray-200 text-center w-[60px]">Actif</th>
-                <th className="px-2 py-2.5 text-center w-[80px]">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-medium">
-              {paginatedList.length > 0 ? (
-                paginatedList.map((p) => {
-                  const isXXXX = p.code?.toUpperCase() === 'XXXX';
-                  const isNoCode = !p.code || p.code === '-';
-                  const isInline = inlineEditingId === p.id;
-                  const deptConfig = DEPARTMENT_CONFIGS[p.department];
-
-                  return (
-                    <tr
-                      key={p.id}
-                      className={`hover:bg-blue-50/40 transition-colors ${
-                        !p.isEnabled ? 'bg-gray-50/80 opacity-60' : ''
-                      }`}
-                    >
-                      {/* 1. CODE (Sticky Left Column) */}
-                      <td className="px-3 py-2 border-r border-gray-100 bg-white sticky left-0 z-1 font-mono font-black text-gray-900">
-                        {isInline ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="text"
-                              value={inlineCode}
-                              onChange={(e) => setInlineCode(e.target.value)}
-                              className="w-16 px-1.5 py-0.5 border border-[#0759A4] rounded text-xs font-mono font-bold"
-                              autoFocus
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleSaveInlineEdit(p)}
-                              className="text-emerald-600 hover:text-emerald-800"
-                              title="Enregistrer"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : isXXXX ? (
-                          <span
-                            onClick={() => handleStartInlineEdit(p)}
-                            className="text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer hover:bg-rose-100"
-                            title="Code XXXX masqué. Cliquez pour éditer"
-                          >
-                            <EyeOff className="w-2.5 h-2.5 shrink-0" />
-                            XXXX
-                          </span>
-                        ) : isNoCode ? (
-                          <span
-                            onClick={() => handleStartInlineEdit(p)}
-                            className="text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer hover:bg-amber-100"
-                            title="Sans code. Cliquez pour renseigner"
-                          >
-                            -
-                          </span>
-                        ) : p.code && p.code.trim().replace(/^#\s*/, '') === '0000' ? (
-                          <span
-                            onClick={() => handleStartInlineEdit(p)}
-                            className="text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded text-[11px] font-black cursor-pointer hover:bg-amber-200"
-                            title="Code 0000 (Non adressé). Cliquez pour éditer"
-                          >
-                            Non adressé
-                          </span>
-                        ) : (
-                          <span
-                            onClick={() => handleStartInlineEdit(p)}
-                            className="text-[#171717] bg-gray-100/90 border border-gray-200 px-2 py-0.5 rounded text-xs font-black tracking-wider cursor-pointer hover:bg-gray-200"
-                            title="Cliquez pour modifier directement le code"
-                          >
-                            {getCleanProductCode(p.code)}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* 2. PRODUIT (NAME + THUMBNAIL) */}
-                      <td className="px-3 py-2 border-r border-gray-100">
-                        {isInline ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="text"
-                              value={inlineName}
-                              onChange={(e) => setInlineName(e.target.value)}
-                              className="w-full px-2 py-0.5 border border-[#0759A4] rounded text-xs font-semibold"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleSaveInlineEdit(p)}
-                              className="text-emerald-600 hover:text-emerald-800 shrink-0"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setInlineEditingId(null)}
-                              className="text-gray-400 hover:text-gray-600 shrink-0"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            {p.imageUrl ? (
-                              <img
-                                src={p.imageUrl}
-                                alt=""
-                                referrerPolicy="no-referrer"
-                                onClick={() => setPreviewImageUrl(p.imageUrl || null)}
-                                className="w-7 h-7 object-contain rounded border border-gray-200 bg-white shrink-0 cursor-zoom-in"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-7 h-7 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] shrink-0 font-bold">
-                                ∅
-                              </div>
-                            )}
-                            <span
-                              className="font-bold text-gray-900 line-clamp-1 hover:text-[#0759A4] cursor-pointer"
-                              onClick={() => setEditingProduct(p)}
-                              title={`${p.name} (Cliquez pour modifier)`}
-                            >
-                              {p.name}
-                            </span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* 3. MARJANE */}
-                      <td className="px-2 py-2 border-r border-gray-100 font-mono text-[11px]">
-                        {p.barcodeMarjane ? (
-                          <span className="text-blue-800 bg-blue-50 border border-blue-200/90 px-1.5 py-0.5 rounded font-bold">
-                            {p.barcodeMarjane}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">0</span>
-                        )}
-                      </td>
-
-                      {/* 4. MARJANE 2 */}
-                      <td className="px-2 py-2 border-r border-gray-100 font-mono text-[11px]">
-                        {p.barcodeP2 ? (
-                          <span className="text-purple-800 bg-purple-50 border border-purple-200/90 px-1.5 py-0.5 rounded font-bold">
-                            {p.barcodeP2}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">0</span>
-                        )}
-                      </td>
-
-                      {/* 5. MARJANE INTERNE */}
-                      <td className="px-2 py-2 border-r border-gray-100 font-mono text-[11px]">
-                        {p.barcodeInterne || p.barcodeMjValide ? (
-                          <span className="text-emerald-800 bg-emerald-50 border border-emerald-200/90 px-1.5 py-0.5 rounded font-bold">
-                            {p.barcodeInterne || p.barcodeMjValide}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">0</span>
-                        )}
-                      </td>
-
-                      {/* 6. MARJANE MINI */}
-                      <td className="px-2 py-2 border-r border-gray-100 font-mono text-[11px]">
-                        {p.barcodeMiniSecours ? (
-                          <span className="text-teal-800 bg-teal-50 border border-teal-200/90 px-1.5 py-0.5 rounded font-bold">
-                            {p.barcodeMiniSecours}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">0</span>
-                        )}
-                      </td>
-
-                      {/* 7. MARJANE SEC */}
-                      <td className="px-2 py-2 border-r border-gray-100 font-mono text-[11px]">
-                        {p.barcodeSecours ? (
-                          <span className="text-amber-800 bg-amber-50 border border-amber-200/90 px-1.5 py-0.5 rounded font-bold">
-                            {p.barcodeSecours}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">0</span>
-                        )}
-                      </td>
-
-                      {/* 8. MARJANE SEC 2 */}
-                      <td className="px-2 py-2 border-r border-gray-100 font-mono text-[11px]">
-                        {p.barcodeP3 ? (
-                          <span className="text-fuchsia-800 bg-fuchsia-50 border border-fuchsia-200/90 px-1.5 py-0.5 rounded font-bold">
-                            {p.barcodeP3}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">0</span>
-                        )}
-                      </td>
-
-                      {/* 9. IMAGE_HTML */}
-                      <td className="px-2 py-2 border-r border-gray-100 text-center">
-                        {p.imageUrl ? (
-                          <a
-                            href={p.imageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-mono p-0.5"
-                            title="Ouvrir l'image"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate max-w-[60px]">Lien</span>
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-gray-300">sans</span>
-                        )}
-                      </td>
-
-                      {/* 10. DÉPARTEMENT */}
-                      <td className="px-2.5 py-2 border-r border-gray-100">
-                        <span
-                          className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-[6px] border truncate max-w-[125px]"
-                          style={{
-                            backgroundColor: deptConfig?.tagBg || '#F1F5F9',
-                            color: deptConfig?.tagText || '#334155',
-                            borderColor: `${deptConfig?.accentColor || '#64748B'}30`,
-                          }}
-                        >
-                          {deptConfig?.shortName || p.department}
-                        </span>
-                      </td>
-
-                      {/* 11. CATÉGORIE */}
-                      <td className="px-2.5 py-2 border-r border-gray-100 text-gray-700 font-semibold text-[11px] truncate max-w-[110px]">
-                        {p.category || 'Général'}
-                      </td>
-
-                      {/* 12. ACTIF TOGGLE */}
-                      <td className="px-2 py-2 border-r border-gray-100 text-center">
-                        <button
-                          type="button"
-                          onClick={() => toggleProductStatus(p.id)}
-                          className="transition cursor-pointer"
-                          title={p.isEnabled ? 'Désactiver le produit' : 'Activer le produit'}
-                        >
-                          {p.isEnabled ? (
-                            <ToggleRight className="w-5 h-5 text-emerald-600 inline" />
-                          ) : (
-                            <ToggleLeft className="w-5 h-5 text-gray-300 inline" />
-                          )}
-                        </button>
-                      </td>
-
-                      {/* 13. ACTIONS */}
-                      <td className="px-2 py-2 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setEditingProduct(p)}
-                            className="p-1 text-[#0759A4] hover:bg-blue-50 rounded-[6px] transition cursor-pointer"
-                            title="Modifier tous les champs CSV"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteProduct(p)}
-                            className="p-1 text-rose-500 hover:bg-rose-50 rounded-[6px] transition cursor-pointer"
-                            title="Supprimer le produit"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={13} className="p-10 text-center bg-gray-50/60 text-gray-500">
-                    {products.length === 0 ? (
-                      <div className="max-w-md mx-auto space-y-2">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
-                          <CheckCircle2 className="w-6 h-6" />
-                        </div>
-                        <p className="font-black text-[#171717] text-sm">
-                          Catalogue entièrement vide (0 produit)
-                        </p>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                          Tous les produits ont été retirés. La base de données Supabase est connectée et prête pour vos tests !
-                        </p>
-                        <div className="pt-2 flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="px-3.5 py-1.5 rounded-[10px] bg-[#0759A4] text-white text-xs font-bold hover:bg-blue-800 transition active:scale-95 cursor-pointer shadow-xs"
-                          >
-                            + Ajouter un produit test
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => syncWithSupabase(true)}
-                            className="px-3 py-1.5 rounded-[10px] bg-white border border-gray-300 text-gray-700 text-xs font-bold hover:bg-gray-50 transition active:scale-95 cursor-pointer"
-                          >
-                            Rafraîchir depuis Supabase
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="font-bold text-[#171717]">Aucun produit ne correspond aux filtres.</p>
-                        <p className="text-xs mt-1 text-gray-500">Modifiez vos filtres ou la recherche.</p>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer Pagination */}
-        {pageSize > 0 && totalPages > 1 && (
-          <div className="p-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs">
-            <span className="text-gray-500">
-              Affichage de {(currentPage - 1) * pageSize + 1} à{' '}
-              {Math.min(currentPage * pageSize, filteredList.length)} sur {filteredList.length} articles
+        {/* LIGNE 2 DÉDIÉE : FILTRES ANOMALIES + ONGLETS CATÉGORIES A-Z */}
+        <div className="bg-white dark:bg-slate-900 rounded-[18px] border border-gray-200 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs space-y-2">
+          {/* Quick Anomaly Filter Chips */}
+          <div className="flex items-center gap-1.5 flex-wrap pb-1 border-b border-gray-100 dark:border-slate-800">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1">
+              Filtres :
             </span>
 
-            <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setFilterSpecial('ALL')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none ${
+                filterSpecial === 'ALL'
+                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200'
+              }`}
+            >
+              Tous ({products.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial('NO_CODE')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none ${
+                filterSpecial === 'NO_CODE'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+              }`}
+            >
+              Sans Code ({withoutCodeCount})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial('NO_BARCODE')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none ${
+                filterSpecial === 'NO_BARCODE'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800'
+              }`}
+            >
+              Sans Code-barre ({withoutBarcodeCount})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial('DUP_NAMES')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none ${
+                filterSpecial === 'DUP_NAMES'
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+              }`}
+            >
+              Noms Répétés ({duplicateNamesCount})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial('DUP_BARCODES')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none ${
+                filterSpecial === 'DUP_BARCODES'
+                  ? 'bg-rose-700 text-white'
+                  : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+              }`}
+            >
+              Codes-barres Répétés ({duplicateBarcodesCount})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial(filterSpecial === 'VISIBLE' ? 'ALL' : 'VISIBLE')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none flex items-center gap-1 ${
+                filterSpecial === 'VISIBLE'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+              }`}
+            >
+              <Eye className="w-3 h-3 text-emerald-500" />
+              <span>Visibles ({activeProductsCount})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial(filterSpecial === 'HIDDEN' ? 'ALL' : 'HIDDEN')}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer select-none flex items-center gap-1 ${
+                filterSpecial === 'HIDDEN'
+                  ? 'bg-slate-700 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <EyeOff className="w-3 h-3 text-gray-500" />
+              <span>Masqués ({hiddenProductsCount})</span>
+            </button>
+          </div>
+
+          {/* Sorted Categories A-Z Horizontal Scroll */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1 shrink-0">
+              Catégories (A-Z) :
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('ALL')}
+              className={`px-2.5 py-0.5 rounded-[8px] text-[11px] font-bold transition cursor-pointer select-none shrink-0 ${
+                selectedCategory === 'ALL'
+                  ? 'bg-[#0759A4] text-white'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200'
+              }`}
+            >
+              Toutes
+            </button>
+
+            {sortedCategories.map((c) => (
               <button
+                key={c.name}
                 type="button"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="px-2 py-1 rounded-[8px] border border-gray-200 bg-white font-bold disabled:opacity-30 cursor-pointer"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setSelectedCategory(selectedCategory === c.name ? 'ALL' : c.name);
+                }}
+                className={`px-2.5 py-0.5 rounded-[8px] text-[11px] font-bold transition cursor-pointer select-none shrink-0 flex items-center gap-1 ${
+                  selectedCategory === c.name
+                    ? 'bg-[#0759A4] text-white shadow-xs'
+                    : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                }`}
               >
-                Début
+                <span>{c.name}</span>
+                <span className="text-[10px] opacity-75 font-mono">({c.count})</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-2.5 py-1 rounded-[8px] border border-gray-200 bg-white font-bold disabled:opacity-30 cursor-pointer"
+            ))}
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------------- */}
+        {/* TABLEAU DES 12 COLONNES STRICTES & CELLULES INTERACTIVES            */}
+        {/* ------------------------------------------------------------------- */}
+        <div className="flex-1 bg-white dark:bg-slate-900 rounded-[18px] border border-gray-200 dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-black uppercase tracking-wider text-[10.5px]">
+                  <th className="py-2.5 px-3 whitespace-nowrap">Image</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Code</th>
+                  <th className="py-2.5 px-3 min-w-[200px]">Produit</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Marjane</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Marjane 2</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Marjane Interne</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Marjane Mini</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Marjane Sec</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Marjane Sec 2</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Département</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Catégorie</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap text-center">Quantité</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap text-center">Visibilité</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium">
+                {paginatedList.length > 0 ? (
+                  paginatedList.map((product) => {
+                    const normName = normalizeSearchText(product.name);
+                    const isDuplicateName = (nameMap.get(normName)?.length || 0) > 1;
+                    const cleanCode = getCleanProductCode(product.code);
+                    const isMissingCode = !cleanCode || cleanCode === '-';
+                    const isDuplicateCode = cleanCode && (codeMap.get(cleanCode)?.length || 0) > 1;
+
+                    // Barcode duplicates check helper
+                    const checkBcDuplicate = (bc: string | undefined) => {
+                      if (!bc) return false;
+                      const clean = bc.replace(/\D/g, '');
+                      return (barcodeMap.get(clean)?.length || 0) > 1;
+                    };
+
+                    const isMjDup = checkBcDuplicate(product.barcodeMarjane);
+                    const isP2Dup = checkBcDuplicate(product.barcodeP2);
+                    const isInterneDup = checkBcDuplicate(product.barcodeInterne);
+                    const isMiniDup = checkBcDuplicate(product.barcodeMiniSecours);
+                    const isSecDup = checkBcDuplicate(product.barcodeSecours);
+                    const isSec2Dup = checkBcDuplicate(product.barcodeP3);
+
+                    const pureUnit = product.quantite || extractPureUnit(product.name);
+
+                    return (
+                      <tr
+                        key={product.id}
+                        className={`hover:bg-blue-50/40 dark:hover:bg-slate-800/40 transition-colors ${
+                          !product.isEnabled ? 'opacity-65 bg-gray-50/70 dark:bg-slate-900/50' : ''
+                        }`}
+                      >
+                        {/* 1. image_html */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.imageUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImageUrl(product.imageUrl || null)}
+                              className="w-10 h-10 rounded-[10px] bg-white border border-gray-200 overflow-hidden p-0.5 flex items-center justify-center cursor-pointer hover:scale-105 transition shadow-2xs"
+                              title="Agrandir l'image"
+                            >
+                              <img
+                                src={product.imageUrl}
+                                alt={product.name}
+                                className="w-full h-full object-contain pointer-events-none"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            </button>
+                          ) : (
+                            <div className="w-10 h-10 rounded-[10px] bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-400">
+                              <ShoppingBag className="w-4 h-4 opacity-40" />
+                            </div>
+                          )}
+                        </td>
+
+                        {/* 2. code (Orange si manquant, clic inspecte si dupliqué) */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {isMissingCode ? (
+                            <span className="inline-block px-2 py-0.5 rounded-[6px] bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 font-mono font-bold text-[11px]">
+                              Indisponible (-)
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => isDuplicateCode && openCodeConflict(product.code)}
+                              className={`font-mono text-xs font-black px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isDuplicateCode
+                                  ? 'bg-amber-100 text-amber-900 border-amber-400 cursor-pointer hover:scale-105'
+                                  : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700'
+                              }`}
+                              title={isDuplicateCode ? 'Code dupliqué ! Cliquer pour inspecter' : 'Code article'}
+                            >
+                              {product.code}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 3. produit (Violet clair si répété) */}
+                        <td className="py-2 px-3">
+                          <button
+                            type="button"
+                            onClick={() => isDuplicateName && openNameConflict(product)}
+                            className={`text-left font-bold text-xs leading-snug rounded-[6px] px-1.5 py-0.5 transition ${
+                              isDuplicateName
+                                ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700 hover:ring-2 hover:ring-purple-400 cursor-pointer'
+                                : 'text-gray-900 dark:text-white'
+                            }`}
+                            title={isDuplicateName ? 'Nom en doublon ! Cliquer pour voir les conflits' : product.name}
+                          >
+                            <span>{product.name}</span>
+                            {isDuplicateName && (
+                              <span className="ml-1.5 text-[10px] font-black uppercase text-purple-700 dark:text-purple-300 underline">
+                                (Doublon)
+                              </span>
+                            )}
+                          </button>
+                        </td>
+
+                        {/* 4. marjane (Rose clair si dupliqué) */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.barcodeMarjane ? (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(product.barcodeMarjane, 'Marjane')}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isMjDup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
+                                  : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200'
+                              }`}
+                              title={isMjDup ? 'Code-barres dupliqué ! Cliquer pour inspecter' : 'Code principal'}
+                            >
+                              {product.barcodeMarjane}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          )}
+                        </td>
+
+                        {/* 5. marjane 2 */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.barcodeP2 ? (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(product.barcodeP2, 'Marjane 2')}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isP2Dup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
+                                  : 'bg-orange-50/60 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200'
+                              }`}
+                            >
+                              {product.barcodeP2}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          )}
+                        </td>
+
+                        {/* 6. marjane Interne */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.barcodeInterne ? (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(product.barcodeInterne, 'Marjane Interne')}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isInterneDup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
+                                  : 'bg-purple-50/60 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border-purple-200'
+                              }`}
+                            >
+                              {product.barcodeInterne}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          )}
+                        </td>
+
+                        {/* 7. marjane mini */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.barcodeMiniSecours ? (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(product.barcodeMiniSecours, 'Marjane Mini')}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isMiniDup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
+                                  : 'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200'
+                              }`}
+                            >
+                              {product.barcodeMiniSecours}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          )}
+                        </td>
+
+                        {/* 8. marjane sec */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.barcodeSecours ? (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(product.barcodeSecours, 'Marjane Sec')}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isSecDup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200'
+                              }`}
+                            >
+                              {product.barcodeSecours}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          )}
+                        </td>
+
+                        {/* 9. marjane sec 2 */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {product.barcodeP3 ? (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(product.barcodeP3, 'Marjane Sec 2')}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
+                                isSec2Dup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200'
+                              }`}
+                            >
+                              {product.barcodeP3}
+                            </button>
+                          ) : (
+                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          )}
+                        </td>
+
+                        {/* 10. département */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          <span
+                            className="px-2 py-0.5 rounded-[6px] text-[10px] font-bold"
+                            style={{
+                              backgroundColor: DEPARTMENT_CONFIGS[product.department]?.tagBg || '#EFF6FF',
+                              color: DEPARTMENT_CONFIGS[product.department]?.tagText || '#1E40AF',
+                            }}
+                          >
+                            {DEPARTMENT_CONFIGS[product.department]?.shortName || product.department}
+                          </span>
+                        </td>
+
+                        {/* 11. catégorie */}
+                        <td className="py-2 px-3 whitespace-nowrap text-gray-600 dark:text-slate-300 font-semibold">
+                          {product.category || 'Général'}
+                        </td>
+
+                        {/* 12. quantite (Pure Unité : 'kg' | 'g' | 'pièce') */}
+                        <td className="py-2 px-3 whitespace-nowrap text-center">
+                          <select
+                            value={pureUnit}
+                            onChange={(e) => {
+                              const newUnit = e.target.value as 'kg' | 'g' | 'pièce';
+                              updateProduct({ ...product, quantite: newUnit });
+                              showToast(`Unité modifiée pour ${product.name} : ${newUnit}`);
+                            }}
+                            className={`px-2 py-0.5 rounded-[6px] text-xs font-black border cursor-pointer focus:outline-none focus:ring-1 ${
+                              pureUnit === 'kg'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300'
+                                : pureUnit === 'g'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300'
+                            }`}
+                          >
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="pièce">pièce</option>
+                          </select>
+                        </td>
+
+                        {/* Visibilité (O KHLI LIA L POSSIBILITE F DASH ANANI NKHLI PRODUCT IBANO OLA MAYBANOCH FDASHBOARD) */}
+                        <td className="py-2 px-3 whitespace-nowrap text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('light');
+                              toggleProductStatus(product.id);
+                              showToast(
+                                product.isEnabled
+                                  ? `👁️ Produit masqué : ${product.name}`
+                                  : `✅ Produit rendu visible : ${product.name}`
+                              );
+                            }}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-[11px] font-black transition cursor-pointer shadow-2xs select-none active:scale-95 ${
+                              product.isEnabled
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:hover:bg-emerald-900/90 border border-emerald-300 dark:border-emerald-700'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 border border-gray-300 dark:border-slate-700'
+                            }`}
+                            title={
+                              product.isEnabled
+                                ? 'Visible dans le catalogue (Actif) - Cliquer pour masquer'
+                                : 'Masqué du catalogue (Inactif) - Cliquer pour rendre visible'
+                            }
+                          >
+                            {product.isEnabled ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Visible</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 text-gray-500" />
+                                <span>Masqué</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-2 px-3 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingProduct(product);
+                              }}
+                              className="p-1 rounded-[6px] text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                              title="Modifier la fiche complète"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProductToDelete(product)}
+                              className="p-1 rounded-[6px] text-gray-500 hover:text-rose-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                              title="Supprimer l'article"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={14} className="py-12 text-center text-gray-500 dark:text-slate-400">
+                      <Layers className="w-10 h-10 mx-auto text-gray-300 dark:text-slate-600 mb-2" />
+                      <p className="text-sm font-bold">Aucun produit ne correspond aux filtres sélectionnés</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminSearch('');
+                          setSelectedUnit('ALL');
+                          setFilterSpecial('ALL');
+                          setSelectedCategory('ALL');
+                        }}
+                        className="mt-2 px-3 py-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 rounded-[8px] text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer"
+                      >
+                        Réinitialiser tous les filtres
+                      </button>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table Footer: Pagination */}
+          <div className="p-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 dark:text-slate-400">
+            <div>
+              Affichage de{' '}
+              <span className="font-bold text-gray-900 dark:text-white">
+                {paginatedList.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+              </span>{' '}
+              à{' '}
+              <span className="font-bold text-gray-900 dark:text-white">
+                {Math.min(currentPage * pageSize, filteredProducts.length)}
+              </span>{' '}
+              sur{' '}
+              <span className="font-bold text-gray-900 dark:text-white">{filteredProducts.length}</span>{' '}
+              produits filtrés ({totalProducts} au total)
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline">Lignes par page :</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="px-2 py-1 rounded-[6px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
               >
-                Précédent
-              </button>
-              <span className="px-2 font-black text-gray-800">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-2.5 py-1 rounded-[8px] border border-gray-200 bg-white font-bold disabled:opacity-30 cursor-pointer"
-              >
-                Suivant
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="px-2 py-1 rounded-[8px] border border-gray-200 bg-white font-bold disabled:opacity-30 cursor-pointer"
-              >
-                Fin
-              </button>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={0}>Tous</option>
+              </select>
+
+              <div className="flex items-center gap-1 ml-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="p-1 rounded-[6px] border border-gray-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="px-2 font-bold font-mono">
+                  {currentPage} / {totalPages || 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="p-1 rounded-[6px] border border-gray-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+
       </div>
 
-      {/* CSV Import Modal */}
-      {isCsvModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-[20px] p-5 shadow-2xl border border-gray-200">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-[#0759A4]" />
-                <h3 className="text-sm font-black text-[#171717]">Importer un fichier CSV</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCsvModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs">
-              <p className="text-gray-600">
-                Téléversez un fichier CSV ou collez les données au format standard :
-                <br />
-                <code className="text-[10px] bg-gray-100 p-1 rounded font-mono block mt-1">
-                  code,produit,code-barres Mj valide,code-barres Marjane possible,code-barres mj secoure...
-                </code>
-              </p>
-
-              {/* Import Mode Radio */}
-              <div className="flex items-center gap-4 bg-gray-50 p-2.5 rounded-[12px] border border-gray-200">
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-[#171717]">
-                  <input
-                    type="radio"
-                    name="csvMode"
-                    value="merge"
-                    checked={csvMode === 'merge'}
-                    onChange={() => setCsvMode('merge')}
-                  />
-                  <span>Fusionner & Mettre à jour</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-rose-700">
-                  <input
-                    type="radio"
-                    name="csvMode"
-                    value="replace"
-                    checked={csvMode === 'replace'}
-                    onChange={() => setCsvMode('replace')}
-                  />
-                  <span>Remplacer tout le catalogue</span>
-                </label>
-              </div>
-
-              {/* Upload file trigger */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#0759A4]/40 hover:border-[#0759A4] p-5 rounded-[14px] text-center bg-[#EBF4FC]/40 cursor-pointer transition select-none"
-              >
-                <Upload className="w-6 h-6 text-[#0759A4] mx-auto mb-1.5" />
-                <span className="block font-bold text-[#0759A4]">Cliquer pour choisir le fichier CSV</span>
-                <span className="block text-[10px] text-gray-500 mt-0.5">Compatible format Marjane/Livry</span>
-              </div>
-
-              {/* Or paste CSV content */}
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                  Ou coller le contenu CSV :
-                </label>
-                <textarea
-                  value={csvRawText}
-                  onChange={(e) => setCsvRawText(e.target.value)}
-                  placeholder="code,produit,code-barres Mj valide,code-barres Marjane possible..."
-                  rows={4}
-                  className="w-full p-2 border border-gray-200 rounded-[12px] font-mono text-[11px] outline-none focus:border-[#0759A4]"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsCsvModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-[10px] border border-gray-200 text-gray-600 hover:bg-gray-50 font-bold"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={handleManualCsvImport}
-                  disabled={!csvRawText.trim()}
-                  className="px-4 py-1.5 rounded-[10px] bg-[#0759A4] text-white font-bold hover:bg-blue-800 disabled:opacity-40 transition cursor-pointer"
-                >
-                  Importer le texte
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Product Modal (All 11 CSV fields) */}
-      {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-xl bg-white rounded-[22px] p-5 shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-[#171717]">Modifier l'article</h3>
-                <p className="text-[11px] text-gray-500">Mise à jour directe des 11 colonnes CSV</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingProduct(null)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="space-y-3.5 text-xs">
-              {/* Row 1: Code & Departement & Categorie */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    Code court (2, 3, 4 chiffres)
-                  </label>
-                  <input
-                    type="text"
-                    value={editingProduct.code}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, code: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-[10px] font-mono font-bold text-sm"
-                    placeholder="ex: 6037, -, XXXX"
-                  />
-                  <div className="flex gap-1 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditingProduct({ ...editingProduct, code: '-' })}
-                      className="text-[10px] bg-gray-100 hover:bg-gray-200 px-1.5 py-0.5 rounded font-bold"
-                    >
-                      Mettre &ldquo;-&rdquo;
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingProduct({ ...editingProduct, code: 'XXXX' })}
-                      className="text-[10px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-1.5 py-0.5 rounded font-bold"
-                    >
-                      Mettre &ldquo;XXXX&rdquo;
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Département (Rayon)</label>
-                  <select
-                    value={editingProduct.department}
-                    onChange={(e) =>
-                      setEditingProduct({ ...editingProduct, department: e.target.value as Department })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded-[10px] font-bold bg-white"
-                  >
-                    <option value="Boucherie et volaille">Boucherie et volaille</option>
-                    <option value="Fromage et charcuterie">Fromage et charcuterie</option>
-                    <option value="Fruits et légumes">Fruits et légumes</option>
-                    <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Catégorie</label>
-                  <input
-                    type="text"
-                    value={editingProduct.category}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-[10px] font-semibold"
-                    placeholder="Viandes, Fruits, etc."
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: Nom du produit */}
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">Nom du produit</label>
-                <input
-                  type="text"
-                  value={editingProduct.name}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-[10px] font-bold text-sm"
-                  required
-                />
-              </div>
-
-              {/* Row 3: Codes-Barres Grid matching CSV columns */}
-              <div className="p-3 bg-gray-50 rounded-[16px] border border-gray-200 space-y-2.5">
-                <span className="block text-[11px] font-black uppercase tracking-wider text-gray-700">
-                  Codes-Barres GS1 (Colonnes CSV) :
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-[10px] font-bold text-blue-800 mb-0.5">
-                      1. marjane (Statut: Valide, EAN-13)
-                    </label>
-                    <input
-                      type="text"
-                      value={editingProduct.barcodeMarjane || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, barcodeMarjane: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-purple-800 mb-0.5">
-                      2. marjane 2 (Statut: Possible, EAN-13)
-                    </label>
-                    <input
-                      type="text"
-                      value={editingProduct.barcodeP2 || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, barcodeP2: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-emerald-800 mb-0.5">
-                      3. marjane Interne (Statut: Possible, Interne)
-                    </label>
-                    <input
-                      type="text"
-                      value={editingProduct.barcodeInterne || editingProduct.barcodeMjValide || ''}
-                      onChange={(e) => setEditingProduct({
-                        ...editingProduct,
-                        barcodeInterne: e.target.value,
-                        barcodeMjValide: e.target.value,
-                      })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-teal-800 mb-0.5">
-                      4. marjane mini (Statut: Possible, EAN-8)
-                    </label>
-                    <input
-                      type="text"
-                      value={editingProduct.barcodeMiniSecours || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, barcodeMiniSecours: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="8 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-amber-800 mb-0.5">
-                      5. marjane sec (Statut: Possible, Secours)
-                    </label>
-                    <input
-                      type="text"
-                      value={editingProduct.barcodeSecours || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, barcodeSecours: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-fuchsia-800 mb-0.5">
-                      6. marjane sec 2 (Statut: Possible, Secours 2)
-                    </label>
-                    <input
-                      type="text"
-                      value={editingProduct.barcodeP3 || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, barcodeP3: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 4: Image URL with preview */}
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                  URL de l'image (image_html)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="url"
-                    value={editingProduct.imageUrl || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
-                    className="flex-1 p-2 border border-gray-300 rounded-[10px] text-xs font-mono"
-                    placeholder="https://res.cloudinary.com/..."
-                  />
-                  {editingProduct.imageUrl && (
-                    <img
-                      src={editingProduct.imageUrl}
-                      alt="Aperçu"
-                      className="w-9 h-9 object-contain rounded border border-gray-200 bg-white shrink-0"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Row 5: Actif Toggle */}
-              <div className="flex items-center gap-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-gray-800">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.isEnabled}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, isEnabled: e.target.checked })}
-                    className="w-4 h-4 accent-[#0759A4]"
-                  />
-                  <span>Produit Actif (visible dans la recherche et le rayon)</span>
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2 rounded-[10px] border border-gray-200 font-bold text-gray-600 hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-[10px] bg-[#0759A4] text-white font-bold hover:bg-blue-800 shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Enregistrer les modifications</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add Product Modal (All 11 CSV fields) */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-xl bg-white rounded-[22px] p-5 shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-[#171717]">Ajouter un nouveau produit</h3>
-                <p className="text-[11px] text-gray-500">Ajoute une nouvelle ligne au catalogue CSV</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveAdd} className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    Code court (2, 3, 4 chiffres)
-                  </label>
-                  <input
-                    type="text"
-                    value={newProd.code}
-                    onChange={(e) => setNewProd({ ...newProd, code: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-[10px] font-mono font-bold text-sm"
-                    placeholder="ex: 6037, -"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Département (Rayon)</label>
-                  <select
-                    value={newProd.department}
-                    onChange={(e) =>
-                      setNewProd({ ...newProd, department: e.target.value as Department })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded-[10px] font-bold bg-white"
-                  >
-                    <option value="Boucherie et volaille">Boucherie et volaille</option>
-                    <option value="Fromage et charcuterie">Fromage et charcuterie</option>
-                    <option value="Fruits et légumes">Fruits et légumes</option>
-                    <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">Catégorie</label>
-                  <input
-                    type="text"
-                    value={newProd.category}
-                    onChange={(e) => setNewProd({ ...newProd, category: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-[10px] font-semibold"
-                    placeholder="Viandes, Fruits..."
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">Nom du produit</label>
-                <input
-                  type="text"
-                  value={newProd.name}
-                  onChange={(e) => setNewProd({ ...newProd, name: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-[10px] font-bold text-sm"
-                  placeholder="ex: Beefsteak de bœuf 500g"
-                  required
-                />
-              </div>
-
-              {/* Barcode Grid */}
-              <div className="p-3 bg-gray-50 rounded-[16px] border border-gray-200 space-y-2.5">
-                <span className="block text-[11px] font-black uppercase tracking-wider text-gray-700">
-                  Codes-Barres GS1 :
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-[10px] font-bold text-blue-800 mb-0.5">
-                      1. marjane (Statut: Valide, EAN-13)
-                    </label>
-                    <input
-                      type="text"
-                      value={newProd.barcodeMarjane || ''}
-                      onChange={(e) => setNewProd({ ...newProd, barcodeMarjane: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-purple-800 mb-0.5">
-                      2. marjane 2 (Statut: Possible, EAN-13)
-                    </label>
-                    <input
-                      type="text"
-                      value={newProd.barcodeP2 || ''}
-                      onChange={(e) => setNewProd({ ...newProd, barcodeP2: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-emerald-800 mb-0.5">
-                      3. marjane Interne (Statut: Possible, Interne)
-                    </label>
-                    <input
-                      type="text"
-                      value={newProd.barcodeInterne || newProd.barcodeMjValide || ''}
-                      onChange={(e) => setNewProd({
-                        ...newProd,
-                        barcodeInterne: e.target.value,
-                        barcodeMjValide: e.target.value,
-                      })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-teal-800 mb-0.5">
-                      4. marjane mini (Statut: Possible, EAN-8)
-                    </label>
-                    <input
-                      type="text"
-                      value={newProd.barcodeMiniSecours || ''}
-                      onChange={(e) => setNewProd({ ...newProd, barcodeMiniSecours: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="8 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-amber-800 mb-0.5">
-                      5. marjane sec (Statut: Possible, Secours)
-                    </label>
-                    <input
-                      type="text"
-                      value={newProd.barcodeSecours || ''}
-                      onChange={(e) => setNewProd({ ...newProd, barcodeSecours: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-fuchsia-800 mb-0.5">
-                      6. marjane sec 2 (Statut: Possible, Secours 2)
-                    </label>
-                    <input
-                      type="text"
-                      value={newProd.barcodeP3 || ''}
-                      onChange={(e) => setNewProd({ ...newProd, barcodeP3: e.target.value })}
-                      className="w-full p-1.5 border border-gray-300 rounded-[8px] font-mono text-xs"
-                      placeholder="13 chiffres"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                  URL de l'image (image_html)
-                </label>
-                <input
-                  type="url"
-                  value={newProd.imageUrl || ''}
-                  onChange={(e) => setNewProd({ ...newProd, imageUrl: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-[10px] text-xs font-mono"
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-[10px] border border-gray-200 font-bold text-gray-600 hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-[10px] bg-[#0759A4] text-white font-bold hover:bg-blue-800 shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Ajouter au catalogue</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Supabase SQL Setup Modal */}
-      {isSqlModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-[22px] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
-            {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-900 to-[#0759A4] text-white">
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE D'INSPECTION DE CONFLIT / DOUBLONS                           */}
+      {/* ------------------------------------------------------------------- */}
+      {conflictModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Database className="w-4 h-4 text-emerald-300" />
+                <div className="w-9 h-9 rounded-[10px] bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black">Initialisation Table Supabase</h3>
-                  <p className="text-[11px] text-white/80">Projet : {supabaseProjectId}.supabase.co</p>
+                  <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
+                    Inspection de Doublon : {conflictModalData.fieldLabel}
+                  </h3>
+                  <p className="text-xs text-gray-500 font-mono">
+                    Valeur en conflit : <strong className="text-purple-700 dark:text-purple-400">"{conflictModalData.value}"</strong> ({conflictModalData.products.length} articles trouvés)
+                  </p>
                 </div>
               </div>
+
               <button
                 type="button"
-                onClick={() => setIsSqlModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                onClick={() => setConflictModalData(null)}
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-5 space-y-4 overflow-y-auto">
-              <div className="bg-blue-50 border border-blue-200 rounded-[14px] p-3.5 text-xs text-blue-900 space-y-1.5">
-                <p className="font-bold flex items-center gap-1.5 text-[#0759A4]">
-                  <CheckCircle2 className="w-4 h-4 text-[#0759A4]" />
-                  Étape unique : Initialiser les tables dans Supabase
-                </p>
-                <p className="text-gray-600 leading-relaxed">
-                  1. Cliquez sur <strong>Copier SQL</strong> ci-dessous.<br />
-                  2. Cliquez sur <strong>Ouvrir Supabase SQL</strong> (SQL Editor).<br />
-                  3. Collez et cliquez sur <strong>RUN</strong> pour créer la table <code className="bg-white px-1 py-0.5 rounded border text-blue-800 font-mono">products</code> (avec les 11 colonnes exactes : code, produit, marjane, marjane 2, marjane Interne, marjane mini, marjane sec, marjane sec 2, image_html, département, catégorie) et la table <code className="bg-white px-1 py-0.5 rounded border text-blue-800 font-mono">tips</code> avec le Realtime actif.<br />
-                  4. La synchronisation bidirectionnelle est instantanée entre le site Supabase et l'application !
-                </p>
+            {/* List of conflicting products side by side */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+              <p className="text-xs text-gray-600 dark:text-slate-300">
+                Ces {conflictModalData.products.length} articles partagent la même valeur. Vous pouvez les comparer, corriger l'un d'eux, ou filtrer le tableau principal sur cette anomalie.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {conflictModalData.products.map((p, idx) => (
+                  <div
+                    key={p.id}
+                    className="p-3.5 rounded-[16px] border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/40 space-y-2 relative"
+                  >
+                    <div className="flex items-start gap-3">
+                      {p.imageUrl ? (
+                        <div className="w-14 h-14 rounded-[12px] bg-white border border-gray-200 overflow-hidden p-1 shrink-0 flex items-center justify-center">
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            className="w-full h-full object-contain pointer-events-none"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 rounded-[12px] bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-gray-400 shrink-0">
+                          <ShoppingBag className="w-6 h-6 opacity-30" />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-xs font-black px-2 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200">
+                            {p.code}
+                          </span>
+                          <span className="text-[10px] text-gray-500 font-semibold">
+                            ID: {p.id} • {p.category}
+                          </span>
+                        </div>
+                        <h4 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white mt-1 leading-snug">
+                          {p.name}
+                        </h4>
+                      </div>
+                    </div>
+
+                    {/* Barcodes list */}
+                    <div className="text-[11px] font-mono space-y-1 bg-white dark:bg-slate-900 p-2 rounded-[10px] border border-gray-200 dark:border-slate-800">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 font-sans">Marjane:</span>
+                        <span className={p.barcodeMarjane === conflictModalData.value ? 'font-bold text-rose-600' : ''}>
+                          {p.barcodeMarjane || '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 font-sans">Marjane 2:</span>
+                        <span className={p.barcodeP2 === conflictModalData.value ? 'font-bold text-rose-600' : ''}>
+                          {p.barcodeP2 || '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400 font-sans">Interne:</span>
+                        <span className={p.barcodeInterne === conflictModalData.value ? 'font-bold text-rose-600' : ''}>
+                          {p.barcodeInterne || '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConflictModalData(null);
+                          setEditingProduct(p);
+                        }}
+                        className="px-2.5 py-1 rounded-[8px] bg-blue-50 text-[#0759A4] text-xs font-bold hover:bg-blue-100 transition"
+                      >
+                        Modifier cet article
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConflictModalData(null);
+                          setProductToDelete(p);
+                        }}
+                        className="px-2.5 py-1 rounded-[8px] bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 transition"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold text-gray-700">Script SQL DDL & Politiques RLS :</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
-                      setCopiedSql(true);
-                      showToast('Script SQL copié dans le presse-papier !');
-                      setTimeout(() => setCopiedSql(false), 2500);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0759A4] hover:bg-blue-800 text-white text-xs font-bold rounded-[10px] transition active:scale-95 shadow-xs cursor-pointer"
-                  >
-                    {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedSql ? 'Copié !' : 'Copier SQL'}</span>
-                  </button>
+            {/* Footer */}
+            <div className="p-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminSearch(conflictModalData.value);
+                  setConflictModalData(null);
+                  showToast(`Filtre appliqué pour "${conflictModalData.value}"`);
+                }}
+                className="px-3.5 py-1.5 rounded-[10px] bg-[#0759A4] text-white text-xs font-bold hover:bg-blue-700 transition cursor-pointer"
+              >
+                Filtrer le tableau principal sur cette valeur
+              </button>
+              <button
+                type="button"
+                onClick={() => setConflictModalData(null)}
+                className="px-4 py-1.5 rounded-[10px] bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 text-xs font-bold transition cursor-pointer"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-                  <a
-                    href={`https://supabase.com/dashboard/project/${supabaseProjectId}/sql/new`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-[10px] transition active:scale-95 shadow-xs cursor-pointer"
-                  >
-                    <span>Ouvrir Supabase SQL</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE D'EXTRACTION & IMPORTATION INTELLIGENTE                       */}
+      {/* ------------------------------------------------------------------- */}
+      {isExtractorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-[#0759A4] to-blue-700 text-white flex items-center justify-center shadow-md">
+                  <Sparkles className="w-5 h-5 text-blue-200" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-gray-900 dark:text-white leading-tight">
+                    Extraction Automatique HTML & Images Produit
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    Collez du texte HTML ou un script de page web pour extraire automatiquement noms, photos, catégories et unités
+                  </p>
                 </div>
               </div>
 
+              <button
+                type="button"
+                onClick={() => setIsExtractorModalOpen(false)}
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content body */}
+            <div className="p-4 sm:p-5 space-y-3.5 flex-1 overflow-y-auto">
+              {/* Rules banner (4 User Rules) */}
+              <div className="p-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-[14px] text-xs space-y-1.5">
+                <div className="font-black text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                  <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>Règles d'extraction & gestion des doublons (قواعد الدمج الآلي) :</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px] text-blue-950 dark:text-blue-200 font-medium">
+                  <div className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                    <span><strong>Nouveaux produits :</strong> Ajoutés automatiquement au catalogue avec leur photo et unité pure.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                    <span><strong>Produit sans image :</strong> Enrichi automatiquement avec la nouvelle photo trouvée dans le HTML.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0" />
+                    <span><strong>Même nom, photo différente :</strong> Ajouté comme nouvelle variante du produit dans le dashboard.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-1.5 shrink-0" />
+                    <span><strong>Doublon identique :</strong> Même nom et même image déjà présents = ignoré automatiquement.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mode Switcher */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-[12px] border border-gray-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setExtractorMode('html');
+                    }}
+                    className={`px-3 py-1.5 rounded-[9px] text-xs font-black transition cursor-pointer select-none flex items-center gap-1.5 ${
+                      extractorMode === 'html'
+                        ? 'bg-[#0759A4] text-white shadow-xs'
+                        : 'text-gray-600 dark:text-slate-300 hover:text-gray-900'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Code HTML / Script Web (Images & Produits)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setExtractorMode('csv');
+                    }}
+                    className={`px-3 py-1.5 rounded-[9px] text-xs font-black transition cursor-pointer select-none flex items-center gap-1.5 ${
+                      extractorMode === 'csv'
+                        ? 'bg-[#0759A4] text-white shadow-xs'
+                        : 'text-gray-600 dark:text-slate-300 hover:text-gray-900'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Format CSV (12 Colonnes)</span>
+                  </button>
+                </div>
+
+                {extractorMode === 'csv' && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Charger un fichier .csv</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Textarea for pasting */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-gray-700 dark:text-slate-300">
+                    {extractorMode === 'html'
+                      ? 'Collez le code source HTML, cartes d’articles ou script de la page :'
+                      : 'Collez vos lignes CSV (12 colonnes) :'}
+                  </span>
+                  {extractorText && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExtractorText('');
+                        setExtractedPreview([]);
+                        setMergeResult(null);
+                      }}
+                      className="text-gray-400 hover:text-rose-500 font-bold transition cursor-pointer"
+                    >
+                      Effacer
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  rows={6}
+                  value={extractorText}
+                  onChange={(e) => setExtractorText(e.target.value)}
+                  placeholder={
+                    extractorMode === 'html'
+                      ? 'Collez ici le HTML ou script (ex: <div class="product"><img src="...jpg" alt="Banane 1kg">... ou JSON { "name": "...", "image": "..." })...'
+                      : 'code,produit,marjane,marjane 2,marjane Interne,marjane mini,marjane sec,marjane sec 2,image_html,département,catégorie,quantite\n6037,Banane 1kg,6111242400018,,,,,,https://example.com/banane.jpg,Frais,Fruits,kg'
+                  }
+                  className="w-full p-3 text-xs font-mono bg-gray-50 dark:bg-slate-800 rounded-[14px] border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0759A4] text-gray-900 dark:text-white"
+                />
+              </div>
+
+              {/* Action: Analyser & Extraire */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleProcessExtractor}
+                  disabled={!extractorText.trim()}
+                  className="px-4 py-2 rounded-[11px] bg-gradient-to-r from-[#0759A4] to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                  <span>Extraire les Produits & Détecter les Doublons</span>
+                </button>
+
+                {mergeResult && (
+                  <span className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                    Total détecté : {extractedPreview.length} articles
+                  </span>
+                )}
+              </div>
+
+              {/* KPI Breakdown Cards (after extraction) */}
+              {mergeResult && (
+                <div className="grid grid-cols-3 gap-2 pt-1 animate-in fade-in duration-200">
+                  <div className="p-2.5 rounded-[12px] bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">
+                      Nouveaux à Ajouter
+                    </span>
+                    <span className="text-lg font-black text-emerald-900 dark:text-emerald-200">
+                      +{mergeResult.addedProducts.length}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-[12px] bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-center">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 block">
+                      Photos Enrichies
+                    </span>
+                    <span className="text-lg font-black text-blue-900 dark:text-blue-200">
+                      🔄 {mergeResult.updatedProducts.length}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-[12px] bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-center">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 block">
+                      Doublons Ignorés
+                    </span>
+                    <span className="text-lg font-black text-gray-700 dark:text-slate-300">
+                      ⏭️ {mergeResult.skippedCount}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview table of extracted items */}
+              {mergeResult && (mergeResult.addedProducts.length > 0 || mergeResult.updatedProducts.length > 0) && (
+                <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                      Aperçu des fiches à enregistrer ({mergeResult.addedProducts.length + mergeResult.updatedProducts.length}) :
+                    </h4>
+                  </div>
+                  <div className="max-h-[230px] overflow-y-auto rounded-[12px] border border-gray-200 dark:border-slate-800">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-gray-100 dark:bg-slate-800 sticky top-0 text-[10px] font-bold text-gray-500 uppercase">
+                        <tr>
+                          <th className="p-2 whitespace-nowrap">Image</th>
+                          <th className="p-2 whitespace-nowrap">Code</th>
+                          <th className="p-2">Nom Produit</th>
+                          <th className="p-2 whitespace-nowrap">Catégorie</th>
+                          <th className="p-2 whitespace-nowrap text-center">Unité Pure</th>
+                          <th className="p-2 whitespace-nowrap text-center">Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                        {/* 1. Added products */}
+                        {mergeResult.addedProducts.slice(0, 40).map((p, idx) => (
+                          <tr key={`add-${idx}`} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20">
+                            <td className="p-2 whitespace-nowrap">
+                              {p.imageUrl ? (
+                                <img
+                                  src={p.imageUrl}
+                                  alt={p.name}
+                                  className="w-8 h-8 rounded-[6px] object-contain bg-white border border-gray-200 p-0.5"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-[6px] bg-gray-100 flex items-center justify-center text-gray-400">
+                                  <ShoppingBag className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-2 font-mono font-bold">{p.code || '-'}</td>
+                            <td className="p-2 font-bold text-gray-900 dark:text-white">{p.name}</td>
+                            <td className="p-2 text-gray-500">{p.category || 'Général'}</td>
+                            <td className="p-2 text-center font-mono font-black text-blue-600">
+                              {p.quantite || extractPureUnit(p.name)}
+                            </td>
+                            <td className="p-2 text-center whitespace-nowrap">
+                              <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                + Nouveau
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+
+                        {/* 2. Updated products (Photos enrichies) */}
+                        {mergeResult.updatedProducts.map((p, idx) => (
+                          <tr key={`upd-${idx}`} className="hover:bg-blue-50/40 dark:hover:bg-blue-950/20">
+                            <td className="p-2 whitespace-nowrap">
+                              {p.imageUrl ? (
+                                <img
+                                  src={p.imageUrl}
+                                  alt={p.name}
+                                  className="w-8 h-8 rounded-[6px] object-contain bg-white border border-blue-300 p-0.5"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-[6px] bg-gray-100 flex items-center justify-center text-gray-400">
+                                  <ShoppingBag className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-2 font-mono font-bold">{p.code || '-'}</td>
+                            <td className="p-2 font-bold text-gray-900 dark:text-white">{p.name}</td>
+                            <td className="p-2 text-gray-500">{p.category || 'Général'}</td>
+                            <td className="p-2 text-center font-mono font-black text-blue-600">
+                              {p.quantite || extractPureUnit(p.name)}
+                            </td>
+                            <td className="p-2 text-center whitespace-nowrap">
+                              <span className="px-2 py-0.5 rounded-[6px] text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-300">
+                                📸 Photo enrichie
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsExtractorModalOpen(false)}
+                className="px-4 py-2 rounded-[10px] bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 text-xs font-bold cursor-pointer"
+              >
+                Fermer
+              </button>
+
+              <button
+                type="button"
+                onClick={handleApplyExtractedProducts}
+                disabled={!mergeResult || (mergeResult.addedProducts.length === 0 && mergeResult.updatedProducts.length === 0)}
+                className="px-5 py-2 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-md transition disabled:opacity-40 cursor-pointer flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                <span>
+                  {mergeResult
+                    ? `Enregistrer (+${mergeResult.addedProducts.length} nouveaux, 📸 ${mergeResult.updatedProducts.length} photos)`
+                    : 'Enregistrer au catalogue'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE DU SCRIPT SQL SUPABASE & SCHÉMA TABLE                        */}
+      {/* ------------------------------------------------------------------- */}
+      {isSqlModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <Code2 className="w-5 h-5 text-[#0759A4]" />
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
+                    Script SQL Supabase (12 Colonnes & user_devices)
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Copiez et exécutez ce script dans Supabase Dashboard -&gt; SQL Editor -&gt; Run
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsSqlModalOpen(false)}
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-3 flex-1 overflow-y-auto">
+              {/* Quick ALTER TABLE notice */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[12px] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-blue-900 dark:text-blue-200">
+                    Mise à jour rapide pour la colonne <code>quantite</code> :
+                  </div>
+                  <pre className="text-[11px] font-mono text-blue-800 dark:text-blue-300 mt-0.5">
+                    {alterTableSql}
+                  </pre>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(alterTableSql);
+                    setCopiedAlterSql(true);
+                    setTimeout(() => setCopiedAlterSql(false), 2000);
+                  }}
+                  className="px-3 py-1 bg-[#0759A4] text-white text-xs font-bold rounded-[8px] hover:bg-blue-700 transition shrink-0 cursor-pointer"
+                >
+                  {copiedAlterSql ? 'Copié !' : 'Copier ALTER TABLE'}
+                </button>
+              </div>
+
               <div className="relative">
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-[14px] text-xs font-mono overflow-x-auto max-h-[300px] border border-gray-800 select-all leading-relaxed">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
+                    setCopiedSql(true);
+                    setTimeout(() => setCopiedSql(false), 2000);
+                  }}
+                  className="absolute right-3 top-3 z-10 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-[8px] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSql ? 'Copié !' : 'Copier tout le SQL'}</span>
+                </button>
+
+                <pre className="p-4 bg-slate-950 text-emerald-400 rounded-[14px] text-xs font-mono overflow-x-auto max-h-[380px] leading-relaxed">
                   {SUPABASE_SETUP_SQL}
                 </pre>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={async () => {
-                  const health = await checkSupabaseStatus();
-                  if (health && health.tableExists) {
-                    showToast('Table détectée avec succès sur Supabase !');
-                    setIsSqlModalOpen(false);
-                  } else {
-                    showToast("La table 'products' n'est pas encore détectée. Assurez-vous d'avoir cliqué sur RUN dans Supabase.");
-                  }
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-[10px] transition active:scale-95 shadow-xs cursor-pointer"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Tester la détection maintenant</span>
-              </button>
-
+            <div className="p-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 flex justify-end">
               <button
                 type="button"
                 onClick={() => setIsSqlModalOpen(false)}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-[10px] transition cursor-pointer"
+                className="px-4 py-1.5 rounded-[10px] bg-gray-900 text-white text-xs font-bold cursor-pointer"
               >
                 Fermer
               </button>
@@ -1922,614 +1913,425 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Web Site & API Connection Guide Modal */}
-      {isApiGuideModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-2xl max-h-[90vh] bg-white rounded-[22px] shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#0F172A] via-[#064E3B] to-[#047857] text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-[12px] bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20">
-                  <Globe className="w-5 h-5 text-emerald-300" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-black">Connexion Simple Base de Données ↔ Site Web</h3>
-                  <p className="text-[11px] text-emerald-100">Synchronisez vos produits entre votre site et cette application en direct</p>
-                </div>
-              </div>
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE ÉDITION PRODUIT                                              */}
+      {/* ------------------------------------------------------------------- */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 shrink-0">
+              <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white">
+                Modifier le Produit #{editingProduct.id}
+              </h3>
               <button
                 type="button"
-                onClick={() => setIsApiGuideModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                onClick={() => setEditingProduct(null)}
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto text-xs">
-              {/* Live Connection Test Banner */}
-              <div className="bg-emerald-50/80 border border-emerald-200 rounded-[16px] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-extrabold text-[#064E3B]">Base Supabase Ouverte & Prête :</span>
-                    <span className="font-mono text-[11px] bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-800">
-                      {supabaseProjectId}.supabase.co
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-emerald-800">
-                    L&apos;API REST est accessible sans restriction (CORS et accès anonyme autorisés pour la lecture et l&apos;écriture).
-                  </p>
-                  {apiTestStatus.result && (
-                    <p className={`text-[11px] font-bold mt-1 ${apiTestStatus.success ? 'text-emerald-700' : 'text-rose-700'}`}>
-                      {apiTestStatus.result}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={testSiteConnection}
-                  disabled={apiTestStatus.testing}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-[12px] shadow-xs transition shrink-0 cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${apiTestStatus.testing ? 'animate-spin' : ''}`} />
-                  <span>{apiTestStatus.testing ? 'Test en cours...' : 'Tester Connexion Directe'}</span>
-                </button>
-              </div>
-
-              {/* Paramètres de Connexion (URL + API Key) */}
-              <div className="space-y-2">
-                <h4 className="font-black text-[#171717] flex items-center gap-1.5 text-xs">
-                  <Link className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>1. Paramètres de Connexion à copier dans votre site</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div className="p-3 bg-gray-50 rounded-[14px] border border-gray-200 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase">URL API REST (Endpoint)</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(`https://${supabaseProjectId}.supabase.co/rest/v1/products`);
-                          setCopiedEndpoint(true);
-                          showToast('URL API copiée !');
-                          setTimeout(() => setCopiedEndpoint(false), 2000);
-                        }}
-                        className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-1"
-                      >
-                        {copiedEndpoint ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        <span>{copiedEndpoint ? 'Copié' : 'Copier'}</span>
-                      </button>
-                    </div>
-                    <p className="font-mono text-[11px] text-gray-800 break-all select-all">
-                      https://{supabaseProjectId}.supabase.co/rest/v1/products
-                    </p>
-                  </div>
-
-                  <div className="p-3 bg-gray-50 rounded-[14px] border border-gray-200 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase">Clé API (Anon Publishable)</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText('sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp');
-                          setCopiedKey(true);
-                          showToast('Clé API copiée !');
-                          setTimeout(() => setCopiedKey(false), 2000);
-                        }}
-                        className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-1"
-                      >
-                        {copiedKey ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        <span>{copiedKey ? 'Copié' : 'Copier'}</span>
-                      </button>
-                    </div>
-                    <p className="font-mono text-[11px] text-gray-800 truncate select-all">
-                      sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Code Snippets Section */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-black text-[#171717] flex items-center gap-1.5 text-xs">
-                    <Terminal className="w-3.5 h-3.5 text-[#0759A4]" />
-                    <span>2. Code prêt à coller dans votre site web</span>
-                  </h4>
-
-                  <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-[10px]">
-                    {(['js', 'react', 'php', 'python', 'curl'] as const).map((lang) => (
-                      <button
-                        key={lang}
-                        type="button"
-                        onClick={() => setApiSnippetLang(lang)}
-                        className={`px-2 py-1 rounded-[8px] font-bold text-[10px] transition cursor-pointer ${
-                          apiSnippetLang === lang
-                            ? 'bg-white text-[#0759A4] shadow-xs'
-                            : 'text-gray-500 hover:text-gray-800'
-                        }`}
-                      >
-                        {lang === 'js' ? 'JavaScript' : lang === 'react' ? 'React/Next.js' : lang.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute right-3 top-3 z-10">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        let textToCopy = '';
-                        if (apiSnippetLang === 'js') {
-                          textToCopy = `// 1. Lire tous les produits depuis votre site web\nasync function chargerCatalogue() {\n  const res = await fetch('https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*', {\n    headers: {\n      'apikey': 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',\n      'Authorization': 'Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp'\n    }\n  });\n  const produits = await res.json();\n  console.log('Total articles :', produits.length);\n  return produits;\n}\n\n// 2. Ajouter un produit depuis votre site web\nasync function ajouterProduit(nouveau) {\n  const res = await fetch('https://${supabaseProjectId}.supabase.co/rest/v1/products', {\n    method: 'POST',\n    headers: {\n      'apikey': 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',\n      'Authorization': 'Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',\n      'Content-Type': 'application/json',\n      'Prefer': 'return=representation'\n    },\n    body: JSON.stringify({\n      code: nouveau.code || '-',\n      produit: nouveau.name,\n      département: nouveau.department || 'MARCHE', // MARCHE, STAND, BOUCHERIE, BOULANGERIE\n      catégorie: nouveau.category || 'Général',\n      marjane: nouveau.barcode || '0',\n      is_enabled: true\n    })\n  });\n  return await res.json();\n}`;
-                        } else if (apiSnippetLang === 'react') {
-                          textToCopy = `import { createClient } from '@supabase/supabase-js';\n\nexport const supabase = createClient(\n  'https://${supabaseProjectId}.supabase.co',\n  'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp'\n);\n\n// Lire les produits\nexport async function getProducts() {\n  const { data, error } = await supabase\n    .from('products')\n    .select('*')\n    .order('id', { ascending: true });\n  return data;\n}\n\n// Synchronisation en temps réel (détection automatique des ajouts)\nsupabase\n  .channel('realtime-products')\n  .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {\n    console.log('Catalogue mis à jour !', payload);\n  })\n  .subscribe();`;
-                        } else if (apiSnippetLang === 'php') {
-                          textToCopy = `<?php\n// Récupérer les produits en PHP / WordPress\n$url = 'https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*';\n$apiKey = 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp';\n\n$ch = curl_init($url);\ncurl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\ncurl_setopt($ch, CURLOPT_HTTPHEADER, [\n    'apikey: ' . $apiKey,\n    'Authorization: Bearer ' . $apiKey\n]);\n\n$response = curl_exec($ch);\ncurl_close($ch);\n$products = json_decode($response, true);\necho "Total articles : " . count($products);\n?>`;
-                        } else if (apiSnippetLang === 'python') {
-                          textToCopy = `import requests\n\nurl = "https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*"\nheaders = {\n    "apikey": "sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp",\n    "Authorization": "Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp"\n}\n\nresponse = requests.get(url, headers=headers)\nproducts = response.json()\nprint(f"Total articles : {len(products)}")`;
-                        } else {
-                          textToCopy = `curl -X GET "https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*&limit=5" \\\n  -H "apikey: sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp" \\\n  -H "Authorization: Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp"`;
-                        }
-                        navigator.clipboard.writeText(textToCopy);
-                        setCopiedSnippet(true);
-                        showToast('Code copié dans le presse-papier !');
-                        setTimeout(() => setCopiedSnippet(false), 2000);
-                      }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-[8px] text-[10px] font-bold backdrop-blur-xs transition cursor-pointer"
-                    >
-                      {copiedSnippet ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedSnippet ? 'Copié !' : 'Copier le code'}</span>
-                    </button>
-                  </div>
-
-                  <pre className="p-4 bg-gray-900 text-gray-100 font-mono text-[11px] rounded-[14px] overflow-x-auto max-h-[220px] select-all leading-relaxed border border-gray-800">
-                    {apiSnippetLang === 'js' && `// 1. Lire tous les produits depuis votre site web
-async function chargerCatalogue() {
-  const res = await fetch('https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*', {
-    headers: {
-      'apikey': 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',
-      'Authorization': 'Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp'
-    }
-  });
-  const produits = await res.json();
-  console.log('Total articles :', produits.length);
-  return produits;
-}
-
-// 2. Ajouter un produit depuis votre site web
-async function ajouterProduit(nouveau) {
-  const res = await fetch('https://${supabaseProjectId}.supabase.co/rest/v1/products', {
-    method: 'POST',
-    headers: {
-      'apikey': 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',
-      'Authorization': 'Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp',
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    },
-    body: JSON.stringify({
-      code: nouveau.code || '-',
-      produit: nouveau.name,
-      département: nouveau.department || 'MARCHE', // MARCHE, STAND, BOUCHERIE, BOULANGERIE
-      catégorie: nouveau.category || 'Général',
-      marjane: nouveau.barcode || '0',
-      is_enabled: true
-    })
-  });
-  return await res.json();
-}`}
-                    {apiSnippetLang === 'react' && `import { createClient } from '@supabase/supabase-js';
-
-export const supabase = createClient(
-  'https://${supabaseProjectId}.supabase.co',
-  'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp'
-);
-
-// Lire les produits
-export async function getProducts() {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('id', { ascending: true });
-  return data;
-}
-
-// Synchronisation en temps réel (détection automatique des ajouts)
-supabase
-  .channel('realtime-products')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-    console.log('Catalogue mis à jour !', payload);
-  })
-  .subscribe();`}
-                    {apiSnippetLang === 'php' && `<?php
-// Récupérer les produits en PHP / WordPress
-$url = 'https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*';
-$apiKey = 'sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp';
-
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'apikey: ' . $apiKey,
-    'Authorization: Bearer ' . $apiKey
-]);
-
-$response = curl_exec($ch);
-curl_close($ch);
-$products = json_decode($response, true);
-echo "Total articles : " . count($products);
-?>`}
-                    {apiSnippetLang === 'python' && `import requests
-
-url = "https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*"
-headers = {
-    "apikey": "sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp",
-    "Authorization": "Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp"
-}
-
-response = requests.get(url, headers=headers)
-products = response.json()
-print(f"Total articles : {len(products)}")`}
-                    {apiSnippetLang === 'curl' && `curl -X GET "https://${supabaseProjectId}.supabase.co/rest/v1/products?select=*&limit=5" \\
-  -H "apikey: sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp" \\
-  -H "Authorization: Bearer sb_publishable_Edhz1UUdYBSAmU65NCv08w_Z5u-D2mp"`}
-                  </pre>
-                </div>
-              </div>
-
-              {/* Correspondance des rayons (Guide départements) */}
-              <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-[14px] space-y-2">
-                <h4 className="font-extrabold text-[#0759A4] flex items-center gap-1.5 text-xs">
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>3. Correspondance des Rayons (Marjane / Aswak)</span>
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                  <div className="bg-white p-2 rounded-[10px] border border-blue-100">
-                    <span className="font-black text-emerald-800 block">MARCHE</span>
-                    <span className="text-gray-600">Fruits et légumes (237 art.)</span>
-                  </div>
-                  <div className="bg-white p-2 rounded-[10px] border border-blue-100">
-                    <span className="font-black text-blue-800 block">STAND</span>
-                    <span className="text-gray-600">Fromage et charcuterie (203 art.)</span>
-                  </div>
-                  <div className="bg-white p-2 rounded-[10px] border border-blue-100">
-                    <span className="font-black text-rose-800 block">BOUCHERIE</span>
-                    <span className="text-gray-600">Boucherie et volaille (99 art.)</span>
-                  </div>
-                  <div className="bg-white p-2 rounded-[10px] border border-blue-100">
-                    <span className="font-black text-amber-800 block">BOULANGERIE</span>
-                    <span className="text-gray-600">Boulangerie et pâtisserie (4 art.)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-[11px] text-gray-500 font-medium">
-                La synchronisation entre site et application s&apos;effectue toutes les 12 secondes et en temps réel.
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsApiGuideModalOpen(false)}
-                className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-[10px] transition cursor-pointer"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal: Vider tout le catalogue (0 produit) */}
-      {isClearModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-white rounded-[22px] p-5 shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center gap-3 text-rose-600">
-              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5 text-rose-600" />
-              </div>
-              <div>
-                <h3 className="font-black text-sm text-gray-900 leading-tight">Vider tout le catalogue ?</h3>
-                <span className="text-[11px] text-rose-600 font-bold">Action irréversible (0 article)</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Voulez-vous supprimer <strong>TOUS les {products.length} articles</strong> du catalogue et de la base de données Supabase ? Le catalogue passera à 0 pour vous permettre de tester l&apos;ajout de nouveaux produits.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setIsClearModalOpen(false)}
-                disabled={isClearing}
-                className="px-3.5 py-2 rounded-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                disabled={isClearing}
-                onClick={async () => {
-                  setIsClearing(true);
-                  try {
-                    await clearAllProducts();
-                    showToast('🗑️ Tous les produits ont été supprimés (0 article) !');
-                    setIsClearModalOpen(false);
-                  } catch (err: any) {
-                    showToast(`Erreur lors du vidage: ${err.message}`);
-                  } finally {
-                    setIsClearing(false);
-                  }
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-rose-600 hover:bg-rose-700 text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>{isClearing ? 'Suppression...' : 'Oui, Vider tout (0)'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal: Restaurer le catalogue d'origine (543 articles) */}
-      {isRestoreModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-white rounded-[22px] p-5 shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center gap-3 text-[#0759A4]">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <RotateCcw className="w-5 h-5 text-[#0759A4]" />
-              </div>
-              <div>
-                <h3 className="font-black text-sm text-gray-900 leading-tight">Restaurer le catalogue officiel ?</h3>
-                <span className="text-[11px] text-[#0759A4] font-bold">543 articles Marjane / Aswak</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Voulez-vous recharger les <strong>543 articles officiels</strong> du catalogue et les synchroniser vers votre base de données Supabase ?
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setIsRestoreModalOpen(false)}
-                disabled={isRestoring}
-                className="px-3.5 py-2 rounded-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                disabled={isRestoring}
-                onClick={async () => {
-                  setIsRestoring(true);
-                  try {
-                    await seedInitialCatalogueToSupabase();
-                    setIsRestoreModalOpen(false);
-                  } catch (err: any) {
-                    showToast(`Erreur: ${err.message}`);
-                  } finally {
-                    setIsRestoring(false);
-                  }
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-[#0759A4] hover:bg-blue-800 text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                <RotateCcw className={`w-3.5 h-3.5 ${isRestoring ? 'animate-spin' : ''}`} />
-                <span>{isRestoring ? 'Restauration...' : 'Restaurer 543 articles'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal: Supprimer un seul produit */}
-      {productToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-white rounded-[22px] p-5 shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center gap-3 text-rose-600">
-              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5 text-rose-600" />
-              </div>
-              <div>
-                <h3 className="font-black text-sm text-gray-900 leading-tight">Supprimer ce produit ?</h3>
-                <span className="text-[11px] text-gray-500 font-bold">Code: {productToDelete.code}</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-700 leading-relaxed font-semibold">
-              &ldquo;{productToDelete.name}&rdquo;
-            </p>
-            <p className="text-[11px] text-gray-500">
-              Ce produit sera retiré du catalogue et supprimé de Supabase.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setProductToDelete(null)}
-                className="px-3.5 py-2 rounded-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  deleteProduct(productToDelete.id);
-                  setProductToDelete(null);
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-rose-600 hover:bg-rose-700 text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Supprimer</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Image Preview Modal */}
-      {previewImageUrl && (
-        <div
-          onClick={() => setPreviewImageUrl(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs cursor-pointer"
-        >
-          <div className="relative max-w-md bg-white p-3 rounded-[20px] shadow-2xl">
-            <img
-              src={previewImageUrl}
-              alt="Aperçu grand format"
-              className="w-full h-auto max-h-[70vh] object-contain rounded-[14px]"
-            />
-            <p className="text-center text-xs font-bold text-gray-500 mt-2">Cliquez pour fermer</p>
-          </div>
-        </div>
-      )}
-
-      {/* Custom Supabase Project Configuration Modal */}
-      {isCustomConfigModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-lg bg-white rounded-[24px] p-5 sm:p-6 shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-150 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-[#0759A4]">
-                  <Database className="w-5 h-5" />
-                </div>
+            <div className="p-4 sm:p-5 space-y-3 flex-1 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <h3 className="font-black text-sm sm:text-base text-gray-900 leading-tight">
-                    Lier votre propre base Supabase
-                  </h3>
-                  <p className="text-[11px] text-gray-500 font-medium">
-                    ربط التطبيق مع مشروع Supabase الخاص بك
-                  </p>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Code Article (court)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.code}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, code: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Quantité (Unité Pure sans chiffres)
+                  </label>
+                  <select
+                    value={editingProduct.quantite || extractPureUnit(editingProduct.name)}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        quantite: e.target.value as 'kg' | 'g' | 'pièce',
+                      })
+                    }
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
+                  >
+                    <option value="kg">kg (Kilogramme)</option>
+                    <option value="g">g (Grammes)</option>
+                    <option value="pièce">pièce</option>
+                  </select>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomConfigModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            {/* Step-by-step Guide */}
-            <div className="bg-slate-50 border border-slate-200 rounded-[14px] p-3 text-xs text-slate-700 space-y-1.5">
-              <p className="font-bold text-[#0759A4] flex items-center gap-1">
-                <span>📋 Les 3 étapes pour lier votre projet :</span>
-              </p>
-              <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600 leading-relaxed font-medium">
-                <li>Ouvrez votre projet sur <strong>supabase.com</strong>.</li>
-                <li>Allez dans <strong>Project Settings ⚙️ → API Keys / Data API</strong>.</li>
-                <li>Copiez l&apos;<strong>URL du projet</strong> et la clé <strong>anon / public</strong> puis collez-les ci-dessous.</li>
-                <li>Dans Supabase, allez sur <strong>SQL Editor</strong> et collez le script SQL (bouton vert en bas) pour créer la table.</li>
-              </ol>
-            </div>
-
-            {/* Inputs */}
-            <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  URL du projet Supabase (Project URL)
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  Nom du Produit
                 </label>
                 <input
                   type="text"
-                  value={customUrlInput}
-                  onChange={(e) => setCustomUrlInput(e.target.value)}
-                  placeholder="https://pssizsvkbgabnarlyawj.supabase.co"
-                  className="w-full px-3 py-2 text-xs font-mono bg-gray-50 border border-gray-300 rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#0759A4] focus:bg-white"
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Marjane (Code-barres Principal)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.barcodeMarjane || ''}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, barcodeMarjane: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Marjane 2
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.barcodeP2 || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, barcodeP2: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Marjane Interne
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.barcodeInterne || ''}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, barcodeInterne: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Marjane Mini
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.barcodeMiniSecours || ''}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, barcodeMiniSecours: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Marjane Sec
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.barcodeSecours || ''}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, barcodeSecours: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Marjane Sec 2
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.barcodeP3 || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, barcodeP3: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Clé publique Supabase (Anon / Publishable API Key)
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  URL de l'image (image_html)
                 </label>
-                <textarea
-                  rows={2}
-                  value={customKeyInput}
-                  onChange={(e) => setCustomKeyInput(e.target.value)}
-                  placeholder="sb_publishable_... ou eyJhbGciOi..."
-                  className="w-full px-3 py-2 text-xs font-mono bg-gray-50 border border-gray-300 rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#0759A4] focus:bg-white"
+                <input
+                  type="text"
+                  value={editingProduct.imageUrl || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
+                  className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
                 />
               </div>
-            </div>
 
-            {/* SQL Script Quick Access */}
-            <div className="bg-blue-50 border border-blue-200 rounded-[12px] p-2.5 flex items-center justify-between gap-2">
-              <div className="text-[11px] text-blue-900 font-semibold">
-                Table <code>products</code> manquante ?
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Département
+                  </label>
+                  <select
+                    value={editingProduct.department}
+                    onChange={(e) =>
+                      setEditingProduct({ ...editingProduct, department: e.target.value as Department })
+                    }
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
+                  >
+                    <option value="Fruits et légumes">Fruits et légumes</option>
+                    <option value="Boucherie et volaille">Boucherie et volaille</option>
+                    <option value="Fromage et charcuterie">Fromage et charcuterie</option>
+                    <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                    Catégorie
+                  </label>
+                  <input
+                    type="text"
+                    value={editingProduct.category}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
+                  />
+                </div>
               </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => {
-                  setIsCustomConfigModalOpen(false);
-                  setIsSqlModalOpen(true);
-                }}
-                className="px-2.5 py-1 rounded-[8px] bg-[#0759A4] text-white text-[11px] font-bold hover:bg-[#064a88] transition cursor-pointer flex items-center gap-1 shrink-0"
+                onClick={() => setEditingProduct(null)}
+                className="px-4 py-1.5 rounded-[10px] bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 text-xs font-bold cursor-pointer"
               >
-                <Code2 className="w-3 h-3" />
-                <span>Copier le Script SQL</span>
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  await updateProduct(editingProduct);
+                  setEditingProduct(null);
+                  showToast('✅ Produit mis à jour avec succès !');
+                }}
+                className="px-5 py-1.5 rounded-[10px] bg-[#0759A4] text-white text-xs font-black shadow-md cursor-pointer hover:bg-blue-700 transition"
+              >
+                Enregistrer les Modifications
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE AJOUT RAPIDE PRODUIT                                         */}
+      {/* ------------------------------------------------------------------- */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 shrink-0">
+              <h3 className="text-sm sm:text-base font-black">Ajouter un Nouveau Produit</h3>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => {
-                  resetSupabaseCredentialsToDefault();
-                  showToast('Réinitialisé au projet par défaut !');
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 500);
-                }}
-                className="text-[11px] text-gray-500 hover:text-rose-600 font-bold underline cursor-pointer"
-              >
-                Remettre le projet par défaut
-              </button>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const fd = new FormData(form);
+                const name = fd.get('name') as string;
+                if (!name) return;
 
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                await addProduct({
+                  code: (fd.get('code') as string) || '-',
+                  name: name,
+                  department: fd.get('department') as Department,
+                  category: (fd.get('category') as string) || 'Général',
+                  quantite: (fd.get('quantite') as 'kg' | 'g' | 'pièce') || extractPureUnit(name),
+                  barcodeMarjane: (fd.get('barcodeMarjane') as string) || undefined,
+                  imageUrl: (fd.get('imageUrl') as string) || undefined,
+                  isEnabled: true,
+                });
+
+                setIsAddModalOpen(false);
+                showToast(`✅ Produit "${name}" ajouté !`);
+              }}
+              className="p-4 sm:p-5 space-y-3"
+            >
+              <div>
+                <label className="block text-xs font-bold mb-1">Nom du Produit *</label>
+                <input
+                  name="name"
+                  required
+                  placeholder="ex: Banane Cavendish 1kg"
+                  className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold mb-1">Code Article</label>
+                  <input
+                    name="code"
+                    placeholder="ex: 6037"
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold mb-1">Unité Pure</label>
+                  <select
+                    name="quantite"
+                    defaultValue="kg"
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
+                  >
+                    <option value="kg">kg</option>
+                    <option value="g">g</option>
+                    <option value="pièce">pièce</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold mb-1">Code-barres Principal (EAN)</label>
+                  <input
+                    name="barcodeMarjane"
+                    placeholder="ex: 2000000060378"
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold mb-1">Département</label>
+                  <select
+                    name="department"
+                    defaultValue="Fruits et légumes"
+                    className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold"
+                  >
+                    <option value="Fruits et légumes">Fruits et légumes</option>
+                    <option value="Boucherie et volaille">Boucherie et volaille</option>
+                    <option value="Fromage et charcuterie">Fromage et charcuterie</option>
+                    <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold mb-1">URL de l'image</label>
+                <input
+                  name="imageUrl"
+                  placeholder="https://..."
+                  className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsCustomConfigModalOpen(false)}
-                  className="px-3.5 py-2 rounded-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-1.5 rounded-[10px] bg-gray-200 dark:bg-slate-700 text-xs font-bold"
                 >
                   Annuler
                 </button>
                 <button
-                  type="button"
-                  onClick={() => {
-                    if (!customUrlInput.trim() || !customKeyInput.trim()) {
-                      showToast('Veuillez renseigner l URL et la clé');
-                      return;
-                    }
-                    setCustomSupabaseCredentials(customUrlInput, customKeyInput);
-                    showToast('✅ Clés sauvegardées ! Reconnexion...');
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 600);
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-[#0759A4] hover:bg-[#064a88] text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer"
+                  type="submit"
+                  className="px-5 py-1.5 rounded-[10px] bg-[#0759A4] text-white text-xs font-black shadow-md cursor-pointer"
                 >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Sauvegarder & Reconnecter</span>
+                  Créer le Produit
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE SUPPRESSION                                                  */}
+      {/* ------------------------------------------------------------------- */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-[20px] p-5 max-w-sm w-full space-y-3 text-center border border-gray-200 dark:border-slate-800 shadow-xl">
+            <Trash2 className="w-10 h-10 text-rose-500 mx-auto" />
+            <h4 className="text-base font-black">Confirmer la suppression</h4>
+            <p className="text-xs text-gray-500">
+              Voulez-vous vraiment supprimer "{productToDelete.name}" (#{productToDelete.id}) ?
+            </p>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setProductToDelete(null)}
+                className="px-4 py-2 rounded-[10px] bg-gray-200 dark:bg-slate-700 text-xs font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await deleteProduct(productToDelete.id);
+                  setProductToDelete(null);
+                  showToast('Produit supprimé.');
+                }}
+                className="px-4 py-2 rounded-[10px] bg-rose-600 text-white text-xs font-black"
+              >
+                Supprimer
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Suivi des Téléphones & Temps d'utilisation */}
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE APERÇU IMAGE                                                 */}
+      {/* ------------------------------------------------------------------- */}
+      {previewImageUrl && (
+        <div
+          onClick={() => setPreviewImageUrl(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-pointer"
+        >
+          <div className="relative max-w-lg w-full bg-white dark:bg-slate-900 rounded-[24px] p-4 flex flex-col items-center">
+            <button
+              type="button"
+              onClick={() => setPreviewImageUrl(null)}
+              className="absolute right-3 top-3 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={previewImageUrl}
+              alt="Aperçu grand format"
+              className="max-h-[70vh] w-auto object-contain rounded-[14px]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE SUIVI DES TÉLÉPHONES & TEMPS D'UTILISATION                   */}
+      {/* ------------------------------------------------------------------- */}
       <UserDevicesModal
         isOpen={isDevicesModalOpen}
         onClose={() => setIsDevicesModalOpen(false)}
       />
+
     </div>
   );
 };

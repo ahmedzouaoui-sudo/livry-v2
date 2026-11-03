@@ -64,6 +64,8 @@ export interface Product {
   barcodeSecours?: string; // marjane sec
   barcodeP3?: string; // marjane sec 2
   imageUrl?: string; // image_html
+  département?: string; // alias raw department
+  quantite?: 'kg' | 'g' | 'pièce'; // quantite pure sans chiffres
   isEnabled: boolean;
   barcodeMjValide?: string; // alias
 }

@@ -76,6 +76,32 @@ export function extractProductUnitInfo(productName: string): ProductUnitInfo {
 }
 
 /**
+ * Strictly returns ONLY pure unit without numbers: 'kg' | 'g' | 'pièce'.
+ * Automatically extracted from product title or raw unit input.
+ */
+export function extractPureUnit(nameOrUnitRaw: string | undefined): 'kg' | 'g' | 'pièce' {
+  if (!nameOrUnitRaw) return 'pièce';
+  const clean = String(nameOrUnitRaw).toLowerCase().trim();
+
+  // Pure unit match without numbers
+  if (clean === 'kg' || clean === 'kilo' || clean === 'kilogramme') return 'kg';
+  if (clean === 'g' || clean === 'gramme' || clean === 'gr') return 'g';
+  if (clean === 'pièce' || clean === 'piece' || clean === 'pc' || clean === 'unite' || clean === 'unité') return 'pièce';
+
+  // Detect kg in title (e.g., "Banane 1kg", "Pommes au kg")
+  if (/\b\d*(?:[.,]\d+)?\s*kg\b/i.test(clean) || clean.includes('kg') || clean.includes('/kg') || clean.includes('au kg')) {
+    return 'kg';
+  }
+
+  // Detect grams in title (e.g., "Fromage 200g", "Pâte 500g")
+  if (/\b\d+\s*g\b/i.test(clean) || /\b\d+\s*gr\b/i.test(clean)) {
+    return 'g';
+  }
+
+  return 'pièce';
+}
+
+/**
  * Calculates adjusted weight/count based on multiplier:
  * Example: baseValue = 100g, multiplier = 5 -> totalValue = 500g
  * Result text: "100g × 5 = 500g"

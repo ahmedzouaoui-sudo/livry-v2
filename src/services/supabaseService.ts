@@ -7,6 +7,7 @@ import {
   SUPABASE_URL,
 } from './supabaseClient';
 import { Product, TipPost, Department } from '../types';
+import { extractPureUnit } from '../utils/productWeight';
 
 export interface SupabaseHealthCheckResult {
   connected: boolean;
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   image_html TEXT,
   "département" TEXT NOT NULL,
   "catégorie" TEXT,
+  quantite TEXT DEFAULT 'pièce',
   is_enabled BOOLEAN DEFAULT true,
   worker_number TEXT DEFAULT 'SHARED',
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -52,6 +54,7 @@ CREATE TABLE IF NOT EXISTS public.products (
 ALTER TABLE public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq');
 ALTER SEQUENCE public.products_id_seq OWNED BY public.products.id;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS worker_number TEXT DEFAULT 'SHARED';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce';
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "products_all_access" ON public.products;
@@ -546,6 +549,7 @@ export function mapRowToProduct(row: any): Product {
   ).trim() || 'Général';
 
   const finalImageUrl = cleanImageUrl(row.image_html ?? row.image_url ?? row.image ?? row.imageUrl);
+  const pureUnit = extractPureUnit(row.quantite ?? row.quantité ?? row.unit ?? row.unite ?? nameVal);
 
   return {
     id: idNum,
@@ -553,6 +557,7 @@ export function mapRowToProduct(row: any): Product {
     name: nameVal,
     department: normalizeDepartment(deptRaw, catVal),
     category: catVal,
+    quantite: pureUnit,
     barcodeMarjane: marjane && marjane !== '-' && marjane !== '0' ? marjane : undefined,
     barcodeP2: marjane2 && marjane2 !== '-' && marjane2 !== '0' ? marjane2 : undefined,
     barcodeInterne: marjaneInterne && marjaneInterne !== '-' && marjaneInterne !== '0' ? marjaneInterne : undefined,
@@ -568,6 +573,7 @@ export function mapRowToProduct(row: any): Product {
 // Helper: map Product to Supabase row format
 export function mapProductToRow(p: Product) {
   const dbDept = departmentToDbValue(p.department);
+  const pureUnit = p.quantite || extractPureUnit(p.name);
   return {
     id: p.id,
     code: p.code || '',
@@ -581,6 +587,7 @@ export function mapProductToRow(p: Product) {
     image_html: p.imageUrl || '',
     'département': dbDept,
     'catégorie': p.category || '',
+    quantite: pureUnit,
     is_enabled: p.isEnabled ?? true,
     updated_at: new Date().toISOString(),
   };
