@@ -5,6 +5,43 @@ const STORAGE_KEY_DEVICE_ID = 'finder_device_tracker_id_v1';
 const STORAGE_KEY_SESSION_FLAG = 'finder_device_session_active_v1';
 const STORAGE_KEY_CACHED_TIME = 'finder_device_local_time_seconds_v1';
 const STORAGE_KEY_USER_IP = 'finder_livry_user_ip';
+const STORAGE_KEY_LOCAL_DEVICES = 'finder_tracked_devices_local_v2';
+
+export const USER_DEVICES_SETUP_SQL = `-- =========================================================================
+-- TABLE DES TÉLÉPHONES / APPAREILS CONNECTÉS ET TEMPS D'UTILISATION
+-- À copier et exécuter dans : Supabase Dashboard -> SQL Editor -> New query -> Run
+-- =========================================================================
+
+CREATE TABLE IF NOT EXISTS public.user_devices (
+  device_id TEXT PRIMARY KEY,
+  ip_address TEXT,
+  device_type TEXT NOT NULL DEFAULT 'Mobile',
+  device_brand TEXT,
+  user_agent TEXT,
+  screen_size TEXT,
+  first_seen_at TIMESTAMPTZ DEFAULT NOW(),
+  last_active_at TIMESTAMPTZ DEFAULT NOW(),
+  total_time_seconds INT DEFAULT 0,
+  visits_count INT DEFAULT 1,
+  is_online BOOLEAN DEFAULT true,
+  worker_number TEXT,
+  city TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Activation de la sécurité RLS (Row Level Security) avec accès en lecture/écriture
+ALTER TABLE public.user_devices ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "user_devices_all_access" ON public.user_devices;
+CREATE POLICY "user_devices_all_access" ON public.user_devices FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON TABLE public.user_devices TO anon, authenticated, service_role;
+
+-- Notification pour recharger le cache schéma PostgREST
+NOTIFY pgrst, 'reload schema';
+`;
+
+// In-memory flag to know if Supabase table has been confirmed missing
+let isSupabaseDeviceTableMissing = false;
 
 /**
  * Gets or creates a persistent unique ID for this device / phone.
@@ -22,6 +59,29 @@ export function getOrCreateDeviceId(): string {
   } catch {
     return `phone_guest_${Date.now()}`;
   }
+}
+
+/**
+ * Safe local storage devices retrieval (Local-first resilient fallback).
+ */
+export function getLocalTrackedDevices(): UserDevice[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LOCAL_DEVICES);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save devices to local storage.
+ */
+export function saveLocalTrackedDevices(devices: UserDevice[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_LOCAL_DEVICES, JSON.stringify(devices.slice(0, 500)));
+  } catch {}
 }
 
 /**
@@ -106,84 +166,86 @@ export function detectDeviceDetails(): {
 }
 
 /**
- * Registers or updates this phone entry into Supabase `user_devices` table.
- * Strictly guarantees that every phone entering the app is recorded.
+ * Fetch client IP address safely without hanging or throwing CORS errors.
+ */
+export async function getClientIpSafe(): Promise<string> {
+  try {
+    const cached = localStorage.getItem(STORAGE_KEY_USER_IP);
+    if (cached && cached.trim()) return cached.trim();
+  } catch {}
+
+  const endpoints = [
+    'https://api.ipify.org?format=json',
+    'https://api64.ipify.org?format=json',
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ip) {
+          try {
+            localStorage.setItem(STORAGE_KEY_USER_IP, data.ip);
+          } catch {}
+          return data.ip;
+        }
+      }
+    } catch {}
+  }
+
+  return 'Client Web / Mobile';
+}
+
+/**
+ * Registers or updates this phone entry both locally and in Supabase `user_devices` table.
+ * Guaranteed to never crash and always track the device even if Supabase table is not yet created.
  */
 export async function registerDeviceEntry(providedIp?: string): Promise<{
   success: boolean;
   device?: UserDevice;
+  isLocalOnly?: boolean;
   error?: string;
 }> {
   try {
     const device_id = getOrCreateDeviceId();
     const details = detectDeviceDetails();
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown UA';
+    const nowIso = new Date().toISOString();
 
-    // Retrieve IP
+    // Determine IP
     let ip = providedIp || '';
     if (!ip) {
-      try {
-        ip = localStorage.getItem(STORAGE_KEY_USER_IP) || '';
-      } catch {}
-    }
-
-    if (!ip) {
-      try {
-        const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) });
-        if (res.ok) {
-          const d = await res.json();
-          ip = d.ip || '';
-          if (ip) {
-            localStorage.setItem(STORAGE_KEY_USER_IP, ip);
-          }
-        }
-      } catch {
-        // Fallback
-        ip = 'En attente IP...';
-      }
+      ip = await getClientIpSafe();
     }
 
     // Check if new session
-    const isNewSession = !sessionStorage.getItem(STORAGE_KEY_SESSION_FLAG);
-    if (isNewSession) {
-      try {
-        sessionStorage.setItem(STORAGE_KEY_SESSION_FLAG, 'true');
-      } catch {}
-    }
-
-    // Get current device row from Supabase to preserve cumulative time and count
-    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
-
-    let existingDevice: any = null;
+    let isNewSession = false;
     try {
-      const { data } = await client
-        .from('user_devices')
-        .select('*')
-        .eq('device_id', device_id)
-        .maybeSingle();
-      existingDevice = data;
+      if (!sessionStorage.getItem(STORAGE_KEY_SESSION_FLAG)) {
+        isNewSession = true;
+        sessionStorage.setItem(STORAGE_KEY_SESSION_FLAG, 'true');
+      }
     } catch {
-      // try fallback
-      try {
-        const { data } = await fallbackClient
-          .from('user_devices')
-          .select('*')
-          .eq('device_id', device_id)
-          .maybeSingle();
-        existingDevice = data;
-      } catch {}
+      isNewSession = true;
     }
 
-    const nowIso = new Date().toISOString();
-    const currentVisits = existingDevice ? Number(existingDevice.visits_count || 1) : 0;
+    // 1. Update in local storage first (Guaranteed local survival)
+    const localDevices = getLocalTrackedDevices();
+    let localIndex = localDevices.findIndex((d) => d.device_id === device_id);
+    let existingLocal = localIndex >= 0 ? localDevices[localIndex] : null;
+
+    const currentVisits = existingLocal ? Number(existingLocal.visits_count || 1) : 0;
     const visits_count = isNewSession ? currentVisits + 1 : Math.max(1, currentVisits);
-    const total_time_seconds = existingDevice ? Number(existingDevice.total_time_seconds || 0) : 0;
-    const first_seen_at = existingDevice?.first_seen_at || nowIso;
+    const total_time_seconds = existingLocal ? Number(existingLocal.total_time_seconds || 0) : 0;
+    const first_seen_at = existingLocal?.first_seen_at || nowIso;
 
     const payload: UserDevice = {
       device_id,
-      ip_address: ip || existingDevice?.ip_address || 'Non détectée',
+      ip_address: ip || existingLocal?.ip_address || 'Non détectée',
       device_type: details.device_type,
       device_brand: details.device_brand,
       user_agent: ua,
@@ -196,20 +258,35 @@ export async function registerDeviceEntry(providedIp?: string): Promise<{
       updated_at: nowIso,
     };
 
-    // Upsert into Supabase
-    let { error } = await client.from('user_devices').upsert(payload, { onConflict: 'device_id' });
-    if (error) {
-      // try fallback client
-      const resAlt = await fallbackClient.from('user_devices').upsert(payload, { onConflict: 'device_id' });
-      if (resAlt.error) {
-        console.warn('[DeviceTracker] Erreur upsert device:', error.message || resAlt.error.message);
-        return { success: false, device: payload, error: resAlt.error.message };
-      }
+    if (localIndex >= 0) {
+      localDevices[localIndex] = payload;
+    } else {
+      localDevices.unshift(payload);
     }
+    saveLocalTrackedDevices(localDevices);
 
-    return { success: true, device: payload };
+    // 2. Try to sync to Supabase (if available)
+    try {
+      const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+      const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+
+      // Attempt upsert
+      let { error } = await client.from('user_devices').upsert(payload, { onConflict: 'device_id' });
+      if (error) {
+        const resAlt = await fallbackClient.from('user_devices').upsert(payload, { onConflict: 'device_id' });
+        if (resAlt.error) {
+          isSupabaseDeviceTableMissing = true;
+          return { success: true, device: payload, isLocalOnly: true, error: resAlt.error.message };
+        }
+      }
+
+      isSupabaseDeviceTableMissing = false;
+      return { success: true, device: payload, isLocalOnly: false };
+    } catch (sbErr: any) {
+      isSupabaseDeviceTableMissing = true;
+      return { success: true, device: payload, isLocalOnly: true, error: sbErr.message };
+    }
   } catch (err: any) {
-    console.warn('[DeviceTracker] Exception enregistrement téléphone:', err);
     return { success: false, error: err.message };
   }
 }
@@ -222,59 +299,51 @@ export async function sendDeviceHeartbeat(secondsToAdd = 30): Promise<void> {
     const device_id = getOrCreateDeviceId();
     const nowIso = new Date().toISOString();
 
-    // Cache locally
+    // 1. Always update local storage
+    const localDevices = getLocalTrackedDevices();
+    const idx = localDevices.findIndex((d) => d.device_id === device_id);
+    let newTotal = secondsToAdd;
+
+    if (idx >= 0) {
+      const current = Number(localDevices[idx].total_time_seconds || 0);
+      newTotal = current + secondsToAdd;
+      localDevices[idx].total_time_seconds = newTotal;
+      localDevices[idx].last_active_at = nowIso;
+      localDevices[idx].is_online = true;
+      localDevices[idx].updated_at = nowIso;
+      saveLocalTrackedDevices(localDevices);
+    }
+
     try {
       const current = Number(localStorage.getItem(STORAGE_KEY_CACHED_TIME) || 0);
       localStorage.setItem(STORAGE_KEY_CACHED_TIME, String(current + secondsToAdd));
     } catch {}
 
-    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+    // 2. Try Supabase update if not permanently missing
+    if (!isSupabaseDeviceTableMissing) {
+      const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+      const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
 
-    // Fetch current total time to increment accurately
-    let existing: any = null;
-    try {
-      const { data } = await client
-        .from('user_devices')
-        .select('total_time_seconds, visits_count')
-        .eq('device_id', device_id)
-        .maybeSingle();
-      existing = data;
-    } catch {
-      try {
-        const { data } = await fallbackClient
-          .from('user_devices')
-          .select('total_time_seconds, visits_count')
-          .eq('device_id', device_id)
-          .maybeSingle();
-        existing = data;
-      } catch {}
-    }
+      const updatePayload = {
+        last_active_at: nowIso,
+        total_time_seconds: newTotal,
+        is_online: true,
+        updated_at: nowIso,
+      };
 
-    const currentTotal = existing ? Number(existing.total_time_seconds || 0) : 0;
-    const newTotal = currentTotal + secondsToAdd;
-
-    const updatePayload = {
-      last_active_at: nowIso,
-      total_time_seconds: newTotal,
-      is_online: true,
-      updated_at: nowIso,
-    };
-
-    const { error } = await client
-      .from('user_devices')
-      .update(updatePayload)
-      .eq('device_id', device_id);
-
-    if (error) {
-      await fallbackClient
+      const { error } = await client
         .from('user_devices')
         .update(updatePayload)
         .eq('device_id', device_id);
+
+      if (error) {
+        await fallbackClient
+          .from('user_devices')
+          .update(updatePayload)
+          .eq('device_id', device_id);
+      }
     }
-  } catch (err) {
-    console.warn('[DeviceTracker] Erreur heartbeat:', err);
-  }
+  } catch {}
 }
 
 /**
@@ -284,27 +353,80 @@ export function markDeviceOffline(): void {
   try {
     const device_id = getOrCreateDeviceId();
     const nowIso = new Date().toISOString();
-    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    
-    // Asynchronous non-blocking update
-    Promise.resolve(
-      client
-        .from('user_devices')
-        .update({ is_online: false, last_active_at: nowIso, updated_at: nowIso })
-        .eq('device_id', device_id)
-    ).catch(() => {});
+
+    // Local
+    const localDevices = getLocalTrackedDevices();
+    const idx = localDevices.findIndex((d) => d.device_id === device_id);
+    if (idx >= 0) {
+      localDevices[idx].is_online = false;
+      localDevices[idx].last_active_at = nowIso;
+      saveLocalTrackedDevices(localDevices);
+    }
+
+    // Supabase non-blocking
+    if (!isSupabaseDeviceTableMissing) {
+      const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+      Promise.resolve(
+        client
+          .from('user_devices')
+          .update({ is_online: false, last_active_at: nowIso, updated_at: nowIso })
+          .eq('device_id', device_id)
+      ).catch(() => {});
+    }
   } catch {}
 }
 
 /**
+ * Calculates aggregate statistics for an array of devices.
+ */
+function calculateStats(devices: UserDevice[]): DeviceStats {
+  const now = Date.now();
+  const TWO_MINUTES_MS = 2 * 60 * 1000;
+
+  let totalSeconds = 0;
+  let onlineCount = 0;
+  let mobileCount = 0;
+  let desktopCount = 0;
+
+  for (const d of devices) {
+    const lastActiveMs = d.last_active_at ? new Date(d.last_active_at).getTime() : 0;
+    const isRecentlyActive = now - lastActiveMs < TWO_MINUTES_MS;
+    const isOnline = isRecentlyActive || (d.is_online === true && now - lastActiveMs < 5 * 60 * 1000);
+
+    const timeSec = Number(d.total_time_seconds || 0);
+    totalSeconds += timeSec;
+
+    if (isOnline) onlineCount++;
+
+    const dtype = String(d.device_type || '');
+    if (dtype.includes('Mobile') || dtype.includes('iPhone') || dtype.includes('Android')) {
+      mobileCount++;
+    } else {
+      desktopCount++;
+    }
+  }
+
+  return {
+    totalDevices: devices.length,
+    onlineDevices: onlineCount,
+    totalTimeSeconds: totalSeconds,
+    mobileCount,
+    desktopCount,
+  };
+}
+
+/**
  * Fetches all registered phones / devices and calculates aggregate statistics.
+ * Resilient fallback: If Supabase table is not yet created or returns 404, returns local devices seamlessly!
  */
 export async function fetchUserDevices(): Promise<{
   success: boolean;
   devices: UserDevice[];
   stats: DeviceStats;
+  isLocalOnly: boolean;
   error?: string;
 }> {
+  // 1. Try Supabase
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
     const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
@@ -325,90 +447,83 @@ export async function fetchUserDevices(): Promise<{
       }
     }
 
-    if (error) {
-      return {
-        success: false,
-        devices: [],
-        stats: {
-          totalDevices: 0,
-          onlineDevices: 0,
-          totalTimeSeconds: 0,
-          mobileCount: 0,
-          desktopCount: 0,
-        },
-        error: error.message,
-      };
-    }
+    if (!error && data) {
+      isSupabaseDeviceTableMissing = false;
 
-    const now = Date.now();
-    const TWO_MINUTES_MS = 2 * 60 * 1000;
-
-    let totalSeconds = 0;
-    let onlineCount = 0;
-    let mobileCount = 0;
-    let desktopCount = 0;
-
-    const mapped: UserDevice[] = (data || []).map((row: any) => {
-      const lastActiveMs = row.last_active_at ? new Date(row.last_active_at).getTime() : 0;
-      const isRecentlyActive = now - lastActiveMs < TWO_MINUTES_MS;
-      const isOnline = isRecentlyActive || (row.is_online === true && now - lastActiveMs < 5 * 60 * 1000);
-
-      const timeSec = Number(row.total_time_seconds || 0);
-      totalSeconds += timeSec;
-
-      if (isOnline) onlineCount++;
-
-      const dtype = String(row.device_type || '');
-      if (dtype.includes('Mobile') || dtype.includes('iPhone') || dtype.includes('Android')) {
-        mobileCount++;
-      } else {
-        desktopCount++;
-      }
-
-      return {
+      const mapped: UserDevice[] = data.map((row: any) => ({
         device_id: String(row.device_id || ''),
         ip_address: String(row.ip_address || '-'),
-        device_type: dtype || 'Mobile',
+        device_type: row.device_type || 'Mobile',
         device_brand: row.device_brand || undefined,
         user_agent: String(row.user_agent || ''),
         screen_size: String(row.screen_size || '-'),
         first_seen_at: row.first_seen_at || row.created_at || new Date().toISOString(),
         last_active_at: row.last_active_at || row.updated_at || new Date().toISOString(),
-        total_time_seconds: timeSec,
+        total_time_seconds: Number(row.total_time_seconds || 0),
         visits_count: Number(row.visits_count || 1),
-        is_online: isOnline,
+        is_online: Boolean(row.is_online),
         worker_number: row.worker_number || undefined,
         city: row.city || undefined,
         created_at: row.created_at,
         updated_at: row.updated_at,
-      };
-    });
+      }));
 
-    return {
-      success: true,
-      devices: mapped,
-      stats: {
-        totalDevices: mapped.length,
-        onlineDevices: onlineCount,
-        totalTimeSeconds: totalSeconds,
-        mobileCount,
-        desktopCount,
-      },
+      // Merge with current local device in case Supabase didn't have it yet
+      const currentDeviceId = getOrCreateDeviceId();
+      const hasCurrent = mapped.some((m) => m.device_id === currentDeviceId);
+      if (!hasCurrent) {
+        const localList = getLocalTrackedDevices();
+        const currentLocal = localList.find((l) => l.device_id === currentDeviceId);
+        if (currentLocal) {
+          mapped.unshift(currentLocal);
+        }
+      }
+
+      // Cache to local storage
+      saveLocalTrackedDevices(mapped);
+
+      return {
+        success: true,
+        devices: mapped,
+        stats: calculateStats(mapped),
+        isLocalOnly: false,
+      };
+    }
+  } catch {}
+
+  // 2. Resilient Fallback to Local Storage
+  isSupabaseDeviceTableMissing = true;
+  const localDevices = getLocalTrackedDevices();
+
+  // If local list is empty, ensure at least the current user's phone is listed
+  if (localDevices.length === 0) {
+    const currentId = getOrCreateDeviceId();
+    const details = detectDeviceDetails();
+    const defaultDev: UserDevice = {
+      device_id: currentId,
+      ip_address: '127.0.0.1 (Local)',
+      device_type: details.device_type,
+      device_brand: details.device_brand,
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      screen_size: details.screen_size,
+      first_seen_at: new Date().toISOString(),
+      last_active_at: new Date().toISOString(),
+      total_time_seconds: 30,
+      visits_count: 1,
+      is_online: true,
+      updated_at: new Date().toISOString(),
     };
-  } catch (err: any) {
-    return {
-      success: false,
-      devices: [],
-      stats: {
-        totalDevices: 0,
-        onlineDevices: 0,
-        totalTimeSeconds: 0,
-        mobileCount: 0,
-        desktopCount: 0,
-      },
-      error: err.message,
-    };
+    localDevices.push(defaultDev);
+    saveLocalTrackedDevices(localDevices);
   }
+
+  return {
+    success: true,
+    devices: localDevices,
+    stats: calculateStats(localDevices),
+    isLocalOnly: true,
+    error: 'Table Supabase `user_devices` non trouvée. Données enregistrées localement.',
+  };
 }
 
 /**

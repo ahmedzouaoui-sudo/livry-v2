@@ -21,6 +21,7 @@ import {
   formatUsageDuration,
   formatDateTime,
   formatRelativeTime,
+  USER_DEVICES_SETUP_SQL,
 } from '../services/deviceTrackerService';
 import { triggerHaptic } from '../utils/haptics';
 
@@ -36,6 +37,7 @@ export const UserDevicesModal: React.FC<UserDevicesModalProps> = ({ isOpen, onCl
   const [filterType, setFilterType] = useState<'ALL' | 'ONLINE' | 'MOBILE' | 'DESKTOP'>('ALL');
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [copiedSetupSql, setCopiedSetupSql] = useState(false);
   const [showSqlGuide, setShowSqlGuide] = useState(false);
 
   // Auto-refresh when modal is open every 15 seconds
@@ -401,44 +403,89 @@ ORDER BY last_active_at DESC;`;
             </div>
           )}
 
-          {/* 5. SQL Reference Toggle */}
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setShowSqlGuide(!showSqlGuide)}
-              className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-            >
-              <Database className="w-4 h-4" />
-              <span>
-                {showSqlGuide
-                  ? 'Masquer le code SQL de la table user_devices'
-                  : 'Afficher la commande SQL pour requêter cette table dans Supabase'}
-              </span>
-            </button>
+          {/* 5. SQL Reference Toggle & Table Creation Script */}
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSqlGuide(!showSqlGuide)}
+                className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+              >
+                <Database className="w-4 h-4" />
+                <span>
+                  {showSqlGuide
+                    ? 'Masquer les scripts SQL'
+                    : 'Afficher le script SQL pour créer la table user_devices dans Supabase'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  navigator.clipboard.writeText(USER_DEVICES_SETUP_SQL);
+                  setCopiedSetupSql(true);
+                  showToast('✅ Script SQL de création copié ! Collez-le dans Supabase SQL Editor.');
+                  setTimeout(() => setCopiedSetupSql(false), 2000);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition active:scale-95 cursor-pointer shadow-xs"
+              >
+                {copiedSetupSql ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedSetupSql ? 'Copié !' : 'Copier Script CREATE TABLE user_devices'}</span>
+              </button>
+            </div>
 
             {showSqlGuide && (
-              <div className="mt-3 p-3 bg-gray-900 rounded-[14px] text-gray-100 text-xs font-mono relative border border-gray-800">
-                <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800">
-                  <span className="text-[10px] text-gray-400 uppercase">
-                    Exemple de requête SQL dans Supabase Dashboard
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('light');
-                      navigator.clipboard.writeText(sqlQueryExample);
-                      setCopiedSql(true);
-                      setTimeout(() => setCopiedSql(false), 2000);
-                    }}
-                    className="flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 cursor-pointer font-sans"
-                  >
-                    {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedSql ? 'Copié !' : 'Copier SQL'}</span>
-                  </button>
+              <div className="space-y-3 pt-2">
+                {/* 1. Create table script */}
+                <div className="p-3 bg-gray-950 rounded-[14px] text-gray-100 text-xs font-mono relative border border-gray-800">
+                  <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800">
+                    <span className="text-[10px] text-emerald-400 uppercase font-bold">
+                      1. Script de Création de la table (Supabase SQL Editor -&gt; Run)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        navigator.clipboard.writeText(USER_DEVICES_SETUP_SQL);
+                        setCopiedSetupSql(true);
+                        setTimeout(() => setCopiedSetupSql(false), 2000);
+                      }}
+                      className="flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-sans"
+                    >
+                      {copiedSetupSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedSetupSql ? 'Copié !' : 'Copier'}</span>
+                    </button>
+                  </div>
+                  <pre className="overflow-x-auto text-[11px] leading-relaxed text-emerald-400 max-h-[160px]">
+                    {USER_DEVICES_SETUP_SQL}
+                  </pre>
                 </div>
-                <pre className="overflow-x-auto text-[11px] leading-relaxed text-emerald-400">
-                  {sqlQueryExample}
-                </pre>
+
+                {/* 2. Query example */}
+                <div className="p-3 bg-gray-900 rounded-[14px] text-gray-100 text-xs font-mono relative border border-gray-800">
+                  <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800">
+                    <span className="text-[10px] text-gray-400 uppercase">
+                      2. Requête d'Analyse SQL (Optionnelle)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        navigator.clipboard.writeText(sqlQueryExample);
+                        setCopiedSql(true);
+                        setTimeout(() => setCopiedSql(false), 2000);
+                      }}
+                      className="flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 cursor-pointer font-sans"
+                    >
+                      {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedSql ? 'Copié !' : 'Copier'}</span>
+                    </button>
+                  </div>
+                  <pre className="overflow-x-auto text-[11px] leading-relaxed text-indigo-300">
+                    {sqlQueryExample}
+                  </pre>
+                </div>
               </div>
             )}
           </div>

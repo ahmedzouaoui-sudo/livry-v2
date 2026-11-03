@@ -241,9 +241,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let isCancelled = false;
 
     // 1. Immediate initial registration with existing or cached IP
-    registerDeviceEntry().then(() => {
-      refreshUserDevices();
-    });
+    registerDeviceEntry()
+      .then(() => {
+        if (!isCancelled) refreshUserDevices();
+      })
+      .catch(() => {});
 
     const fetchIp = async () => {
       try {
@@ -252,11 +254,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const data = await res.json();
           if (data && data.ip && !isCancelled) {
             setUserIp(data.ip);
-            localStorage.setItem(STORAGE_KEY_USER_IP, data.ip);
+            try {
+              localStorage.setItem(STORAGE_KEY_USER_IP, data.ip);
+            } catch {}
             // Re-sync with confirmed IP address
-            registerDeviceEntry(data.ip).then(() => {
-              refreshUserDevices();
-            });
+            registerDeviceEntry(data.ip)
+              .then(() => {
+                if (!isCancelled) refreshUserDevices();
+              })
+              .catch(() => {});
           }
         }
       } catch {
@@ -267,32 +273,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const data2 = await res2.json();
             if (data2 && data2.ip && !isCancelled) {
               setUserIp(data2.ip);
-              localStorage.setItem(STORAGE_KEY_USER_IP, data2.ip);
-              registerDeviceEntry(data2.ip).then(() => {
-                refreshUserDevices();
-              });
+              try {
+                localStorage.setItem(STORAGE_KEY_USER_IP, data2.ip);
+              } catch {}
+              registerDeviceEntry(data2.ip)
+                .then(() => {
+                  if (!isCancelled) refreshUserDevices();
+                })
+                .catch(() => {});
             }
           }
         } catch {}
       }
     };
 
-    fetchIp();
+    fetchIp().catch(() => {});
 
     // 2. Active usage time tracking: Heartbeat every 30 seconds while user is using the app
     const HEARTBEAT_INTERVAL_MS = 30000;
     const intervalId = window.setInterval(() => {
       if (typeof document !== 'undefined' && !document.hidden) {
-        sendDeviceHeartbeat(30);
+        sendDeviceHeartbeat(30).catch(() => {});
       }
     }, HEARTBEAT_INTERVAL_MS);
 
     // 3. Visibility and unload listeners
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        sendDeviceHeartbeat(5);
+        sendDeviceHeartbeat(5).catch(() => {});
       } else {
-        registerDeviceEntry();
+        registerDeviceEntry().catch(() => {});
       }
     };
 
