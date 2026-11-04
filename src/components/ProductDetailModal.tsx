@@ -56,9 +56,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const adjustedVariants = useMemo(() => {
     return rawVariants.map((v) => {
       const isFixedCode =
+        v.type === 'marjane Interne' ||
         v.type === 'barcodeInterne' ||
+        v.type === 'marjane mini' ||
         v.type === 'barcodeMiniSecours' ||
+        v.type === 'marjane sec' ||
         v.type === 'barcodeSecours' ||
+        v.type === 'marjane sec 2' ||
         v.type === 'barcodeP3' ||
         v.code.includes('2000014') ||
         v.code.length !== 13;

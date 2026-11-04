@@ -15,6 +15,7 @@ import { SuggestOneScreen } from './components/SuggestOneScreen';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Check } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Department } from './types';
 
 const MainLayout: React.FC = () => {
@@ -110,8 +111,10 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainLayout />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <MainLayout />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

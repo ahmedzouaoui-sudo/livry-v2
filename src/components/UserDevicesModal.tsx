@@ -70,11 +70,11 @@ export const UserDevicesModal: React.FC<UserDevicesModalProps> = ({ isOpen, onCl
       // Text search
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase().trim();
-      return (
-        d.ip_address.toLowerCase().includes(q) ||
-        d.device_type.toLowerCase().includes(q) ||
+      return Boolean(
+        (d.ip_address && d.ip_address.toLowerCase().includes(q)) ||
+        (d.device_type && d.device_type.toLowerCase().includes(q)) ||
         (d.device_brand && d.device_brand.toLowerCase().includes(q)) ||
-        d.device_id.toLowerCase().includes(q)
+        (d.device_id && d.device_id.toLowerCase().includes(q))
       );
     });
   }, [userDevices, filterType, searchQuery]);

@@ -308,17 +308,18 @@ export const AdminDashboard: React.FC = () => {
       // Text search
       if (!adminSearch.trim()) return true;
       const q = adminSearch.toLowerCase().trim();
-      const codeMatch = p.code?.toLowerCase().includes(q);
-      const nameMatch = p.name.toLowerCase().includes(q);
-      const catMatch = p.category?.toLowerCase().includes(q);
-      const deptMatch = p.department.toLowerCase().includes(q);
-      const barcodeMatch =
+      const codeMatch = Boolean(p.code && p.code.toLowerCase().includes(q));
+      const nameMatch = Boolean(p.name && p.name.toLowerCase().includes(q));
+      const catMatch = Boolean(p.category && p.category.toLowerCase().includes(q));
+      const deptMatch = Boolean(p.department && p.department.toLowerCase().includes(q));
+      const barcodeMatch = Boolean(
         (p.barcodeMarjane && p.barcodeMarjane.includes(q)) ||
         (p.barcodeP2 && p.barcodeP2.includes(q)) ||
         (p.barcodeInterne && p.barcodeInterne.includes(q)) ||
         (p.barcodeMiniSecours && p.barcodeMiniSecours.includes(q)) ||
         (p.barcodeSecours && p.barcodeSecours.includes(q)) ||
-        (p.barcodeP3 && p.barcodeP3.includes(q));
+        (p.barcodeP3 && p.barcodeP3.includes(q))
+      );
 
       return codeMatch || nameMatch || catMatch || deptMatch || barcodeMatch;
     });
