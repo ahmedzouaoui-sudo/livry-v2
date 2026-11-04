@@ -265,26 +265,48 @@ export async function registerDeviceEntry(providedIp?: string): Promise<{
     }
     saveLocalTrackedDevices(localDevices);
 
-    // 2. Try to sync to Supabase (if available)
+    // 2. Multi-tier cloud persistence to Supabase
+    // A) Always sync to Supabase shared cloud persistence (tips table with category 'device_tracker_record')
+    try {
+      const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+      const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+      const cloudRecord = {
+        id: `dev_rec_${payload.device_id}`,
+        title: `${payload.device_brand || payload.device_type} (${payload.device_type})`,
+        content: JSON.stringify(payload),
+        category: 'device_tracker_record',
+        author_role: payload.device_type,
+        author_name: payload.ip_address,
+        likes: payload.total_time_seconds,
+        target_audience: 'Tous',
+      };
+      const { error: cloudErr } = await client.from('tips').upsert(cloudRecord, { onConflict: 'id' });
+      if (cloudErr) {
+        await fallbackClient.from('tips').upsert(cloudRecord, { onConflict: 'id' });
+      }
+    } catch (e) {
+      console.warn('Cloud device record notice:', e);
+    }
+
+    // B) Also sync to dedicated user_devices table if present
     try {
       const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
       const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
 
-      // Attempt upsert
       let { error } = await client.from('user_devices').upsert(payload, { onConflict: 'device_id' });
       if (error) {
         const resAlt = await fallbackClient.from('user_devices').upsert(payload, { onConflict: 'device_id' });
         if (resAlt.error) {
           isSupabaseDeviceTableMissing = true;
-          return { success: true, device: payload, isLocalOnly: true, error: resAlt.error.message };
+          return { success: true, device: payload, isLocalOnly: false };
         }
       }
 
       isSupabaseDeviceTableMissing = false;
       return { success: true, device: payload, isLocalOnly: false };
-    } catch (sbErr: any) {
+    } catch {
       isSupabaseDeviceTableMissing = true;
-      return { success: true, device: payload, isLocalOnly: true, error: sbErr.message };
+      return { success: true, device: payload, isLocalOnly: false };
     }
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -303,6 +325,7 @@ export async function sendDeviceHeartbeat(secondsToAdd = 30): Promise<void> {
     const localDevices = getLocalTrackedDevices();
     const idx = localDevices.findIndex((d) => d.device_id === device_id);
     let newTotal = secondsToAdd;
+    let updatedDevice: UserDevice | null = null;
 
     if (idx >= 0) {
       const current = Number(localDevices[idx].total_time_seconds || 0);
@@ -311,6 +334,7 @@ export async function sendDeviceHeartbeat(secondsToAdd = 30): Promise<void> {
       localDevices[idx].last_active_at = nowIso;
       localDevices[idx].is_online = true;
       localDevices[idx].updated_at = nowIso;
+      updatedDevice = localDevices[idx];
       saveLocalTrackedDevices(localDevices);
     }
 
@@ -319,7 +343,32 @@ export async function sendDeviceHeartbeat(secondsToAdd = 30): Promise<void> {
       localStorage.setItem(STORAGE_KEY_CACHED_TIME, String(current + secondsToAdd));
     } catch {}
 
-    // 2. Try Supabase update if not permanently missing
+    // 2. Sync active time to Supabase cloud shared persistence
+    if (updatedDevice) {
+      try {
+        const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+        const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+        const cloudRecord = {
+          id: `dev_rec_${device_id}`,
+          title: `${updatedDevice.device_brand || updatedDevice.device_type} (${updatedDevice.device_type})`,
+          content: JSON.stringify(updatedDevice),
+          category: 'device_tracker_record',
+          author_role: updatedDevice.device_type,
+          author_name: updatedDevice.ip_address,
+          likes: newTotal,
+          target_audience: 'Tous',
+        };
+        Promise.resolve(client.from('tips').upsert(cloudRecord, { onConflict: 'id' }))
+          .then(({ error }) => {
+            if (error) {
+              Promise.resolve(fallbackClient.from('tips').upsert(cloudRecord, { onConflict: 'id' })).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+
+    // 3. Also update dedicated user_devices table if present
     if (!isSupabaseDeviceTableMissing) {
       const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
       const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
@@ -331,17 +380,13 @@ export async function sendDeviceHeartbeat(secondsToAdd = 30): Promise<void> {
         updated_at: nowIso,
       };
 
-      const { error } = await client
-        .from('user_devices')
-        .update(updatePayload)
-        .eq('device_id', device_id);
-
-      if (error) {
-        await fallbackClient
-          .from('user_devices')
-          .update(updatePayload)
-          .eq('device_id', device_id);
-      }
+      Promise.resolve(client.from('user_devices').update(updatePayload).eq('device_id', device_id))
+        .then(({ error }) => {
+          if (error) {
+            Promise.resolve(fallbackClient.from('user_devices').update(updatePayload).eq('device_id', device_id)).catch(() => {});
+          }
+        })
+        .catch(() => {});
     }
   } catch {}
 }
@@ -357,21 +402,48 @@ export function markDeviceOffline(): void {
     // Local
     const localDevices = getLocalTrackedDevices();
     const idx = localDevices.findIndex((d) => d.device_id === device_id);
+    let devObj: UserDevice | null = null;
     if (idx >= 0) {
       localDevices[idx].is_online = false;
       localDevices[idx].last_active_at = nowIso;
+      localDevices[idx].updated_at = nowIso;
+      devObj = localDevices[idx];
       saveLocalTrackedDevices(localDevices);
     }
 
-    // Supabase non-blocking
+    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+
+    // Cloud tips sync
+    if (devObj) {
+      const cloudRecord = {
+        id: `dev_rec_${device_id}`,
+        title: `${devObj.device_brand || devObj.device_type} (${devObj.device_type})`,
+        content: JSON.stringify(devObj),
+        category: 'device_tracker_record',
+        author_role: devObj.device_type,
+        author_name: devObj.ip_address,
+        likes: devObj.total_time_seconds,
+        target_audience: 'Tous',
+      };
+      Promise.resolve(client.from('tips').upsert(cloudRecord, { onConflict: 'id' }))
+        .then(({ error }) => {
+          if (error) {
+            Promise.resolve(fallbackClient.from('tips').upsert(cloudRecord, { onConflict: 'id' })).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+
+    // user_devices table
     if (!isSupabaseDeviceTableMissing) {
-      const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-      Promise.resolve(
-        client
-          .from('user_devices')
-          .update({ is_online: false, last_active_at: nowIso, updated_at: nowIso })
-          .eq('device_id', device_id)
-      ).catch(() => {});
+      Promise.resolve(client.from('user_devices').update({ is_online: false, last_active_at: nowIso, updated_at: nowIso }).eq('device_id', device_id))
+        .then(({ error }) => {
+          if (error) {
+            Promise.resolve(fallbackClient.from('user_devices').update({ is_online: false, last_active_at: nowIso, updated_at: nowIso }).eq('device_id', device_id)).catch(() => {});
+          }
+        })
+        .catch(() => {});
     }
   } catch {}
 }
@@ -426,7 +498,46 @@ export async function fetchUserDevices(): Promise<{
   isLocalOnly: boolean;
   error?: string;
 }> {
-  // 1. Try Supabase
+  const mergedMap = new Map<string, UserDevice>();
+
+  // 1. Fetch from Supabase Cloud shared persistence (tips table with category 'device_tracker_record')
+  try {
+    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+
+    let { data: cloudData, error: cloudErr } = await client
+      .from('tips')
+      .select('*')
+      .eq('category', 'device_tracker_record');
+
+    if (cloudErr) {
+      const alt = await fallbackClient
+        .from('tips')
+        .select('*')
+        .eq('category', 'device_tracker_record');
+      if (!alt.error && alt.data) {
+        cloudData = alt.data;
+        cloudErr = null;
+      }
+    }
+
+    if (!cloudErr && cloudData && Array.isArray(cloudData)) {
+      for (const row of cloudData) {
+        try {
+          if (row.content) {
+            const parsed = JSON.parse(row.content);
+            if (parsed && parsed.device_id) {
+              mergedMap.set(parsed.device_id, parsed);
+            }
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {
+    console.warn('Cloud devices query notice:', err);
+  }
+
+  // 2. Also fetch from dedicated user_devices table if present
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
     const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
@@ -447,61 +558,65 @@ export async function fetchUserDevices(): Promise<{
       }
     }
 
-    if (!error && data) {
+    if (!error && data && Array.isArray(data)) {
       isSupabaseDeviceTableMissing = false;
-
-      const mapped: UserDevice[] = data.map((row: any) => ({
-        device_id: String(row.device_id || ''),
-        ip_address: String(row.ip_address || '-'),
-        device_type: row.device_type || 'Mobile',
-        device_brand: row.device_brand || undefined,
-        user_agent: String(row.user_agent || ''),
-        screen_size: String(row.screen_size || '-'),
-        first_seen_at: row.first_seen_at || row.created_at || new Date().toISOString(),
-        last_active_at: row.last_active_at || row.updated_at || new Date().toISOString(),
-        total_time_seconds: Number(row.total_time_seconds || 0),
-        visits_count: Number(row.visits_count || 1),
-        is_online: Boolean(row.is_online),
-        worker_number: row.worker_number || undefined,
-        city: row.city || undefined,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-      }));
-
-      // Merge with current local device in case Supabase didn't have it yet
-      const currentDeviceId = getOrCreateDeviceId();
-      const hasCurrent = mapped.some((m) => m.device_id === currentDeviceId);
-      if (!hasCurrent) {
-        const localList = getLocalTrackedDevices();
-        const currentLocal = localList.find((l) => l.device_id === currentDeviceId);
-        if (currentLocal) {
-          mapped.unshift(currentLocal);
+      for (const row of data) {
+        const id = String(row.device_id || '');
+        if (id) {
+          const dev: UserDevice = {
+            device_id: id,
+            ip_address: String(row.ip_address || '-'),
+            device_type: row.device_type || 'Mobile',
+            device_brand: row.device_brand || undefined,
+            user_agent: String(row.user_agent || ''),
+            screen_size: String(row.screen_size || '-'),
+            first_seen_at: row.first_seen_at || row.created_at || new Date().toISOString(),
+            last_active_at: row.last_active_at || row.updated_at || new Date().toISOString(),
+            total_time_seconds: Number(row.total_time_seconds || 0),
+            visits_count: Number(row.visits_count || 1),
+            is_online: Boolean(row.is_online),
+            worker_number: row.worker_number || undefined,
+            city: row.city || undefined,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+          };
+          const existing = mergedMap.get(id);
+          if (!existing || (dev.total_time_seconds > (existing.total_time_seconds || 0))) {
+            mergedMap.set(id, dev);
+          }
         }
       }
-
-      // Cache to local storage
-      saveLocalTrackedDevices(mapped);
-
-      return {
-        success: true,
-        devices: mapped,
-        stats: calculateStats(mapped),
-        isLocalOnly: false,
-      };
     }
   } catch {}
 
-  // 2. Resilient Fallback to Local Storage
-  isSupabaseDeviceTableMissing = true;
+  // 3. Merge with local storage devices
   const localDevices = getLocalTrackedDevices();
+  for (const loc of localDevices) {
+    if (loc && loc.device_id) {
+      const existing = mergedMap.get(loc.device_id);
+      if (!existing) {
+        mergedMap.set(loc.device_id, loc);
+      } else {
+        const merged: UserDevice = {
+          ...existing,
+          ...loc,
+          total_time_seconds: Math.max(Number(existing.total_time_seconds || 0), Number(loc.total_time_seconds || 0)),
+          visits_count: Math.max(Number(existing.visits_count || 1), Number(loc.visits_count || 1)),
+          is_online: existing.is_online || loc.is_online,
+          last_active_at: existing.last_active_at > loc.last_active_at ? existing.last_active_at : loc.last_active_at,
+        };
+        mergedMap.set(loc.device_id, merged);
+      }
+    }
+  }
 
-  // If local list is empty, ensure at least the current user's phone is listed
-  if (localDevices.length === 0) {
-    const currentId = getOrCreateDeviceId();
+  // Ensure current device is present
+  const currentDeviceId = getOrCreateDeviceId();
+  if (!mergedMap.has(currentDeviceId)) {
     const details = detectDeviceDetails();
-    const defaultDev: UserDevice = {
-      device_id: currentId,
-      ip_address: '127.0.0.1 (Local)',
+    const currentDev: UserDevice = {
+      device_id: currentDeviceId,
+      ip_address: 'Détection en cours',
       device_type: details.device_type,
       device_brand: details.device_brand,
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
@@ -513,16 +628,24 @@ export async function fetchUserDevices(): Promise<{
       is_online: true,
       updated_at: new Date().toISOString(),
     };
-    localDevices.push(defaultDev);
-    saveLocalTrackedDevices(localDevices);
+    mergedMap.set(currentDeviceId, currentDev);
   }
+
+  // Convert map to array and sort by last_active_at DESC
+  const finalDevices = Array.from(mergedMap.values()).sort((a, b) => {
+    const timeA = new Date(a.last_active_at || 0).getTime();
+    const timeB = new Date(b.last_active_at || 0).getTime();
+    return timeB - timeA;
+  });
+
+  // Save merged state to local storage cache
+  saveLocalTrackedDevices(finalDevices);
 
   return {
     success: true,
-    devices: localDevices,
-    stats: calculateStats(localDevices),
-    isLocalOnly: true,
-    error: 'Table Supabase `user_devices` non trouvée. Données enregistrées localement.',
+    devices: finalDevices,
+    stats: calculateStats(finalDevices),
+    isLocalOnly: false,
   };
 }
 

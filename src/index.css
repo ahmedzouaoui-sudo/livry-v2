@@ -57,3 +57,18 @@
     min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Neutralize and reposition any Netlify injected deploy badges/drawers */
+iframe[src*="netlify"],
+[data-netlify-deploy-id],
+#netlify-badge,
+.netlify-badge,
+[class*="netlify-badge"],
+[id*="netlify-badge"] {
+  pointer-events: none !important;
+  opacity: 0.25 !important;
+  transform: scale(0.7) translateY(8px) !important;
+  transform-origin: bottom right !important;
+  z-index: 10 !important;
+}
+

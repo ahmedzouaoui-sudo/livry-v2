@@ -890,7 +890,9 @@ export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips:
 
     if (error) return { success: false, tips: [], error: error.message };
 
-    const mapped: TipPost[] = (data || []).map((t: any) => ({
+    const mapped: TipPost[] = (data || [])
+      .filter((t: any) => t.category !== 'device_tracker_record')
+      .map((t: any) => ({
       id: String(t.id),
       title: String(t.title || ''),
       content: String(t.content || ''),
