@@ -163,7 +163,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
 
   // Search in incomplete products view
   const [incompleteSearchQuery, setIncompleteSearchQuery] = useState('');
-  const [incompleteFilter, setIncompleteFilter] = useState<'ALL' | 'NO_CODE' | 'NO_BARCODE'>('ALL');
+  const [incompleteFilter, setIncompleteFilter] = useState<'ALL' | 'WITH_CODE_NO_BARCODE' | 'NO_CODE' | 'NO_BARCODE'>('ALL');
 
   // Pre-fill form if an initial product was selected
   useEffect(() => {
@@ -188,6 +188,11 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
     }
   }, [suggestInitialProduct, setSuggestActiveView]);
 
+  // Products that HAVE code but MISSING barcode (User request: "fihom les codes mais bla code barres")
+  const withCodeNoBarcodeProducts = useMemo(() => {
+    return products.filter((p) => hasValidProductCode(p.code) && isProductMissingBarcode(p));
+  }, [products]);
+
   // Count incomplete products (missing code OR missing barcode)
   const incompleteProducts = useMemo(() => {
     return products.filter(isProductIncomplete);
@@ -197,6 +202,9 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
   const filteredIncompleteProducts = useMemo(() => {
     const q = normalizeSearchText(incompleteSearchQuery);
     return incompleteProducts.filter((p) => {
+      if (incompleteFilter === 'WITH_CODE_NO_BARCODE') {
+        if (!hasValidProductCode(p.code) || !isProductMissingBarcode(p)) return false;
+      }
       if (incompleteFilter === 'NO_CODE' && !isProductMissingCode(p)) return false;
       if (incompleteFilter === 'NO_BARCODE' && !isProductMissingBarcode(p)) return false;
 
@@ -378,6 +386,8 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               ? `Support WhatsApp direct au ${WHATSAPP_DISPLAY_NUMBER}`
               : suggestActiveView === 'form'
               ? `Envoi direct sur WhatsApp au ${WHATSAPP_DISPLAY_NUMBER}`
+              : incompleteFilter === 'WITH_CODE_NO_BARCODE'
+              ? `${withCodeNoBarcodeProducts.length} articles avec code sans code-barres`
               : `${incompleteProducts.length} articles sans code ou code-barres`}
           </p>
         </div>
@@ -386,15 +396,15 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
         <div className="w-[72px]" />
       </div>
 
-      {/* Main Content: HUB (2 Carreaux) OR Form OR Missing Products */}
+      {/* Main Content: HUB (3 Options: I Need, Avec code sans code-barres, Tous à compléter) OR Form OR Missing Products */}
       {suggestActiveView === 'hub' ? (
-        /* Hub View: Same concept as Bibliothèque with 2 fluid Carreaux */
+        /* Hub View: 3 fluid Carreaux */
         <div className="flex-1 flex flex-col justify-center items-center my-auto py-4 sm:py-6 w-full">
           <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-5 text-center px-4">
             Sélectionnez une option pour enrichir le catalogue des codes et codes-barres :
           </p>
 
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 w-full max-w-[390px] sm:max-w-[420px] justify-items-center items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-[620px] justify-items-stretch items-stretch px-2">
             {/* Carreau 1: I Need (Direct WhatsApp Screen or Text workflow) */}
             <button
               type="button"
@@ -403,39 +413,85 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 handleResetForm();
                 setSuggestActiveView('form');
               }}
-              className="w-full aspect-square max-w-[185px] max-h-[185px] bg-[#155B48] rounded-[24px] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_14px_rgba(21,91,72,0.22)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-emerald-400/30 relative overflow-hidden group"
+              className="w-full bg-[#155B48] rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-[0_4px_14px_rgba(21,91,72,0.22)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-emerald-400/30 relative overflow-hidden group min-h-[160px]"
             >
-              <div className="w-[66px] h-[66px] sm:w-[78px] sm:h-[78px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-2 group-hover:scale-108 transition-transform">
-                <WhatsAppIcon className="w-9 h-9 sm:w-10 sm:h-10 text-white fill-current" />
+              <div className="w-[56px] h-[56px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-1.5 group-hover:scale-105 transition-transform">
+                <WhatsAppIcon className="w-8 h-8 sm:w-9 sm:h-9 text-white fill-current" />
               </div>
-              <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug line-clamp-2 px-1">
-                I Need
-              </span>
-              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-200 mt-1.5 group-hover:translate-x-0.5 transition-transform">
-                <span>{WHATSAPP_DISPLAY_NUMBER}</span>
+              <div>
+                <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug line-clamp-1 block">
+                  I Need
+                </span>
+                <span className="text-[10px] text-emerald-100 font-medium block">
+                  Demande WhatsApp
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-200 mt-1 group-hover:translate-x-0.5 transition-transform">
+                <span>WhatsApp</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </button>
 
-            {/* Carreau 2: Compléter les produits (suggest fih ga3 les produit) */}
+            {/* Carreau 2: Tous les produits à compléter */}
             <button
               type="button"
               onClick={() => {
                 triggerHaptic('light');
+                setIncompleteFilter('ALL');
                 setSuggestActiveView('missing');
               }}
-              className="w-full aspect-square max-w-[185px] max-h-[185px] bg-[#B43167] rounded-[24px] p-3 sm:p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_14px_rgba(180,49,103,0.22)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-rose-300/30 relative overflow-hidden group"
+              className="w-full bg-[#B43167] rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-[0_4px_14px_rgba(180,49,103,0.22)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-rose-300/30 relative overflow-hidden group min-h-[160px]"
             >
-              <div className="w-[66px] h-[66px] sm:w-[78px] sm:h-[78px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-2 group-hover:scale-108 transition-transform relative">
-                <HeartHandshake className="w-9 h-9 sm:w-10 sm:h-10 text-white stroke-[2.2]" />
+              <div className="w-[56px] h-[56px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-1.5 group-hover:scale-105 transition-transform relative">
+                <HeartHandshake className="w-8 h-8 sm:w-9 sm:h-9 text-white stroke-[2.2]" />
               </div>
-              <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug line-clamp-2 px-1">
-                Compléter les produits
-              </span>
-              <div className="flex items-center gap-1 text-[11px] font-bold text-rose-200 mt-1.5 group-hover:translate-x-0.5 transition-transform">
+              <div>
+                <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug line-clamp-1 block">
+                  Tous à compléter
+                </span>
+                <span className="text-[10px] text-rose-100 font-medium block">
+                  Sans code ou code-barres
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-bold text-rose-200 mt-1 group-hover:translate-x-0.5 transition-transform">
                 <span>{incompleteProducts.length} articles</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
+            </button>
+
+            {/* Carreau 3: Avec Code mais Sans Code-barres (DEMANDE UTILISATEUR: "ZID BLASA F AIDEZ NOUS FIHA LES PRODUIT LI FIHOM LES CODES MAIS BLA CODE BARRES") */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setIncompleteFilter('WITH_CODE_NO_BARCODE');
+                setSuggestActiveView('missing');
+              }}
+              className="col-span-2 sm:col-span-1 w-full bg-gradient-to-br from-[#D97706] to-[#EA580C] rounded-[22px] p-3.5 sm:p-4 flex flex-row sm:flex-col items-center justify-between text-left sm:text-center shadow-[0_4px_14px_rgba(217,119,6,0.25)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-amber-300/30 relative overflow-hidden group min-h-[84px] sm:min-h-[160px]"
+            >
+              <div className="flex sm:flex-col items-center gap-3 sm:gap-2">
+                <div className="w-[50px] h-[50px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform relative">
+                  <Barcode className="w-7 h-7 sm:w-9 sm:h-9 text-white stroke-[2.2]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 sm:justify-center">
+                    <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug">
+                      Avec code, sans code-barres
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-black/25 text-white text-[9px] font-black sm:hidden">
+                      {withCodeNoBarcodeProducts.length}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-amber-100 font-medium block">
+                    فيهم الكود وبلا كودبار • Compléter
+                  </span>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-amber-100 mt-1 group-hover:translate-x-0.5 transition-transform">
+                <span>{withCodeNoBarcodeProducts.length} articles</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+              <ChevronRight className="w-5 h-5 text-amber-200 sm:hidden shrink-0" />
             </button>
           </div>
         </div>
@@ -951,20 +1007,38 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
           {/* Header of Missing Products View */}
           <div className="bg-white dark:bg-slate-900 rounded-[16px] border border-gray-200/80 dark:border-slate-800 p-3 shadow-2xs space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-950/60 text-[#B43167] flex items-center justify-center">
-                <HeartHandshake className="w-4 h-4 stroke-[2.5]" />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
+                  : 'bg-rose-50 dark:bg-rose-950/60 text-[#B43167]'
+              }`}>
+                {incompleteFilter === 'WITH_CODE_NO_BARCODE' ? (
+                  <Barcode className="w-4 h-4 stroke-[2.5]" />
+                ) : (
+                  <HeartHandshake className="w-4 h-4 stroke-[2.5]" />
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white leading-tight">
-                    Compléter les produits
+                    {incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                      ? 'Avec code & sans code-barres'
+                      : 'Compléter les produits'}
                   </h3>
-                  <span className="px-1.5 py-0.2 rounded-full bg-rose-100 dark:bg-rose-900/60 text-[#B43167] dark:text-rose-300 text-[10px] font-black">
-                    {incompleteProducts.length}
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                      ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
+                      : 'bg-rose-100 dark:bg-rose-900/60 text-[#B43167] dark:text-rose-300'
+                  }`}>
+                    {incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                      ? withCodeNoBarcodeProducts.length
+                      : incompleteProducts.length}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                  Tous les articles nécessitant un code ou un code-barres via WhatsApp ({WHATSAPP_DISPLAY_NUMBER})
+                  {incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                    ? `فيهم الكود وبلا كودبار • ${withCodeNoBarcodeProducts.length} articles avec code à compléter via WhatsApp`
+                    : `Tous les articles nécessitant un code ou un code-barres via WhatsApp (${WHATSAPP_DISPLAY_NUMBER})`}
                 </p>
               </div>
             </div>
@@ -985,18 +1059,42 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
               <button
                 type="button"
-                onClick={() => setIncompleteFilter('ALL')}
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIncompleteFilter('ALL');
+                }}
                 className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 ${
                   incompleteFilter === 'ALL'
-                    ? 'bg-[#171717] dark:bg-blue-600 text-white'
+                    ? 'bg-[#171717] dark:bg-blue-600 text-white shadow-xs'
                     : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
                 }`}
               >
                 Tous ({incompleteProducts.length})
               </button>
+
+              {/* Dedicated filter: Avec code sans code-barres */}
               <button
                 type="button"
-                onClick={() => setIncompleteFilter('NO_CODE')}
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIncompleteFilter('WITH_CODE_NO_BARCODE');
+                }}
+                className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 flex items-center gap-1 ${
+                  incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800'
+                }`}
+              >
+                <Barcode className="w-3 h-3 text-current" />
+                <span>Avec code sans code-barres ({withCodeNoBarcodeProducts.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIncompleteFilter('NO_CODE');
+                }}
                 className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 ${
                   incompleteFilter === 'NO_CODE'
                     ? 'bg-amber-500 text-white'
@@ -1007,7 +1105,10 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
               </button>
               <button
                 type="button"
-                onClick={() => setIncompleteFilter('NO_BARCODE')}
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIncompleteFilter('NO_BARCODE');
+                }}
                 className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 ${
                   incompleteFilter === 'NO_BARCODE'
                     ? 'bg-rose-500 text-white'
