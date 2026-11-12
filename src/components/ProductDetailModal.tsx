@@ -1,5 +1,19 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, ShoppingBag, Share2, Check, Barcode as BarcodeIcon, Sparkles, Globe, Plus } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import {
+  ArrowLeft,
+  ShoppingBag,
+  Share2,
+  Check,
+  Barcode as BarcodeIcon,
+  Sparkles,
+  Globe,
+  Plus,
+  Edit3,
+  Lock,
+  Shield,
+  X,
+  KeyRound,
+} from 'lucide-react';
 import { Product } from '../types';
 import { DEPARTMENT_CONFIGS, getEffectiveBarcodeVariants, formatProductCodeBadge, isProductCode0000 } from '../utils/productUtils';
 import { BarcodeCard } from './BarcodeCard';
@@ -7,6 +21,7 @@ import { QuantityCalculator } from './QuantityCalculator';
 import { extractProductUnitInfo, recalculateBarcodeWithMultiplier } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
 import { useApp } from '../context/AppContext';
+import { ProductEditModal } from './ProductEditModal';
 
 interface ProductDetailModalProps {
   product: Product;
@@ -21,10 +36,19 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   onCopySuccess,
 }) => {
-  const { barcodeVotes, openSuggestForProduct } = useApp();
+  const { role, setRole, barcodeVotes, openSuggestForProduct, showToast } = useApp();
   const [imgError, setImgError] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
+
+  // Direct In-Place Edit Modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Admin PIN verification modal (for quick unlock directly from product page)
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const pinInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSelectedVariantIndex(0);
@@ -37,6 +61,33 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       document.body.style.overflow = originalOverflow;
     };
   }, []);
+
+  useEffect(() => {
+    if (isPinModalOpen) {
+      setTimeout(() => pinInputRef.current?.focus(), 100);
+    } else {
+      setAdminPin('');
+      setPinError(false);
+    }
+  }, [isPinModalOpen]);
+
+  const handleVerifyPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPin === '1997') {
+      triggerHaptic('success');
+      setRole('Admin');
+      setIsPinModalOpen(false);
+      setAdminPin('');
+      setPinError(false);
+      showToast('🔒 Mode Administrateur déverrouillé !');
+      setIsEditModalOpen(true);
+    } else {
+      triggerHaptic('warning');
+      setPinError(true);
+      setAdminPin('');
+      pinInputRef.current?.focus();
+    }
+  };
 
   const unitInfo = useMemo(() => extractProductUnitInfo(product.name), [product.name]);
   const [multiplier, setMultiplier] = useState<number>(initialQuantity || 1);
@@ -107,7 +158,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-[#F8F7FC] dark:bg-slate-950 text-[#171717] dark:text-slate-100 flex flex-col w-full h-full overflow-y-auto animate-in fade-in duration-150 transition-colors">
       {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 py-2.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-[#E0E0E6]/80 dark:border-slate-800 shrink-0">
+      <div className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 py-2.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-[#E0E0E6]/80 dark:border-slate-800 shrink-0 gap-2">
         <button
           type="button"
           onClick={() => {
@@ -127,14 +178,45 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {deptConfig.shortName}
         </span>
 
-        <button
-          type="button"
-          onClick={handleShare}
-          className="p-2 rounded-[12px] text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 active:scale-95 transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center border border-gray-200 dark:border-slate-700"
-          title="Partager"
-        >
-          {copiedShare ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
-        </button>
+        {/* Right Action Buttons: Admin Edit & Share */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {role === 'Admin' ? (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsEditModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-[#0759A4] hover:bg-[#064a88] text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none"
+              title="Modifier directement cet article (Admin)"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-white" />
+              <span>Modifier</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsPinModalOpen(true);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-[12px] bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer select-none border border-gray-200 dark:border-slate-700"
+              title="Déverrouiller le mode Admin pour modifier cet article"
+            >
+              <Lock className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-[11px] font-bold">Admin</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleShare}
+            className="p-2 rounded-[12px] text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 active:scale-95 transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center border border-gray-200 dark:border-slate-700"
+            title="Partager"
+          >
+            {copiedShare ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Main Full-Screen Body */}
@@ -278,7 +360,110 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </button>
           </div>
         )}
+
+        {/* Admin Direct In-Place Edit Banner */}
+        {role === 'Admin' && (
+          <div className="bg-gradient-to-r from-blue-50 via-indigo-50/40 to-blue-50 dark:from-slate-800/90 dark:via-blue-950/40 dark:to-slate-800/90 border border-blue-200/80 dark:border-blue-900/60 rounded-[18px] p-3 flex items-center justify-between gap-3 shadow-2xs mt-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-[10px] bg-[#0759A4] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-[#0759A4] dark:text-blue-400">Mode Admin Actif</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-[6px] bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-mono font-bold">
+                    ID #{product.id}
+                  </span>
+                </div>
+                <p className="text-[10.5px] text-gray-600 dark:text-slate-400 truncate mt-0.5">
+                  Modifier les codes, le nom, l'unité ou la photo de cet article
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsEditModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none shrink-0"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Modifier</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* 5. Direct In-Place Product Edit Modal */}
+      {isEditModalOpen && (
+        <ProductEditModal
+          isOpen={isEditModalOpen}
+          product={product}
+          onClose={() => setIsEditModalOpen(false)}
+          onDeleted={() => onClose()}
+        />
+      )}
+
+      {/* 6. Quick Admin PIN Unlock Modal from Product Page */}
+      {isPinModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-[22px] p-5 shadow-2xl border border-gray-200 dark:border-slate-800 animate-in zoom-in-95 duration-150 relative text-gray-900 dark:text-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsPinModalOpen(false)}
+              className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center space-y-2 mb-4">
+              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-[#0759A4] dark:text-blue-400">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-black text-gray-900 dark:text-white">
+                Modifier cet Article
+              </h3>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                Entrez le code PIN Admin pour modifier la fiche produit directement
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyPin} className="space-y-3">
+              <input
+                ref={pinInputRef}
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                value={adminPin}
+                onChange={(e) => {
+                  setAdminPin(e.target.value);
+                  setPinError(false);
+                }}
+                placeholder="Code PIN (1997)"
+                className={`w-full text-center text-lg font-mono font-black tracking-widest py-2 rounded-[12px] bg-gray-50 dark:bg-slate-800 border outline-none transition ${
+                  pinError
+                    ? 'border-red-500 ring-2 ring-red-200 dark:ring-red-950'
+                    : 'border-gray-300 dark:border-slate-700 focus:border-[#0759A4] focus:ring-2 focus:ring-blue-100'
+                }`}
+              />
+
+              {pinError && (
+                <p className="text-center text-[10.5px] font-bold text-red-600 dark:text-red-400 animate-shake">
+                  Code PIN incorrect. Réessayez.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white font-black text-xs shadow-md active:scale-95 transition cursor-pointer"
+              >
+                Déverrouiller &amp; Modifier
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

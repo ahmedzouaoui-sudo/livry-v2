@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   Camera,
@@ -16,6 +16,9 @@ import {
   FileText,
   Image as ImageIcon,
   Send,
+  Edit3,
+  Shield,
+  X,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department, Product } from '../types';
@@ -29,6 +32,7 @@ import {
   hasValidProductCode,
 } from '../utils/productUtils';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
+import { ProductEditModal } from './ProductEditModal';
 import { triggerHaptic } from '../utils/haptics';
 
 // WhatsApp Contact Configuration
@@ -129,6 +133,8 @@ interface SuggestOneScreenProps {
 
 export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) => {
   const {
+    role,
+    setRole,
     products,
     updateProduct,
     showToast,
@@ -137,6 +143,57 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
     suggestActiveView,
     setSuggestActiveView,
   } = useApp();
+
+  // Admin Direct In-Place Edit state
+  const [editingProductForAdmin, setEditingProductForAdmin] = useState<Product | null>(null);
+
+  // Admin PIN verification modal (for quick unlock in Aidez-nous)
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [pendingAdminProduct, setPendingAdminProduct] = useState<Product | null>(null);
+  const pinInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isPinModalOpen) {
+      setTimeout(() => pinInputRef.current?.focus(), 100);
+    } else {
+      setAdminPin('');
+      setPinError(false);
+    }
+  }, [isPinModalOpen]);
+
+  const handleVerifyPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPin === '1997') {
+      triggerHaptic('success');
+      setRole('Admin');
+      setIsPinModalOpen(false);
+      setAdminPin('');
+      setPinError(false);
+      showToast('🔒 Mode Administrateur déverrouillé !');
+      if (pendingAdminProduct) {
+        setEditingProductForAdmin(pendingAdminProduct);
+        setPendingAdminProduct(null);
+      }
+    } else {
+      triggerHaptic('warning');
+      setPinError(true);
+      setAdminPin('');
+      pinInputRef.current?.focus();
+    }
+  };
+
+  const handleAdminEditClick = (p: Product, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    triggerHaptic('light');
+    if (role === 'Admin') {
+      setEditingProductForAdmin(p);
+    } else {
+      setPendingAdminProduct(p);
+      setIsPinModalOpen(true);
+    }
+  };
 
   // Mode toggles: 'screen' (Capture) vs 'text' (Texte)
   const [iNeedMode, setINeedMode] = useState<'screen' | 'text'>('screen');
@@ -598,6 +655,41 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
             /* CODEBARRE"                                                   */
             /* ============================================================ */
             <div className="bg-white dark:bg-slate-900 rounded-[20px] border border-gray-200/80 dark:border-slate-800 p-3.5 sm:p-5 shadow-2xs space-y-4">
+              {/* Admin Direct Edit Banner in Aidez-nous Form */}
+              {role === 'Admin' ? (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Shield className="w-4 h-4 text-[#0759A4] dark:text-blue-400 shrink-0" />
+                    <div>
+                      <p className="text-xs font-black text-[#0759A4] dark:text-blue-300 leading-tight">Mode Admin Actif</p>
+                      <p className="text-[10.5px] text-gray-500 dark:text-slate-400 truncate">
+                        Enregistrez le code ou code-barres directement dans la base
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingProductForAdmin(editingExistingProduct)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer shrink-0"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Modifier l'article</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleAdminEditClick(editingExistingProduct)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-bold transition cursor-pointer border border-gray-200 dark:border-slate-700"
+                    title="Déverrouiller le mode Admin pour modifier cet article"
+                  >
+                    <Lock className="w-3 h-3 text-gray-400" />
+                    <span className="text-[10px]">Modifier (Admin)</span>
+                  </button>
+                </div>
+              )}
+
               {/* Product Identity Box */}
               <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-800/80 rounded-[14px] p-3 border border-gray-200/80 dark:border-slate-700">
                 <div className="w-14 h-14 rounded-[10px] bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
@@ -629,6 +721,17 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                     </span>
                   </div>
                 </div>
+
+                {role === 'Admin' && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingProductForAdmin(editingExistingProduct)}
+                    className="p-2 rounded-[10px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+                    title="Modifier cet article"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-white" />
+                  </button>
+                )}
               </div>
 
               {/* Mode Selector: Screen vs Text */}
@@ -1139,6 +1242,17 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   >
                     {/* 1. White Image Thumbnail Box */}
                     <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-1.5 p-1.5 shadow-2xs">
+                      {/* Admin Edit Shortcut Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleAdminEditClick(p, e)}
+                        className="absolute top-1 left-1 px-1.5 py-0.5 rounded-[6px] bg-[#0759A4] hover:bg-blue-700 text-white font-black text-[9px] shadow-sm flex items-center gap-1 active:scale-95 transition cursor-pointer z-10"
+                        title="Modifier directement cet article (Admin)"
+                      >
+                        <Edit3 className="w-2.5 h-2.5 text-white" />
+                        <span>{role === 'Admin' ? 'Modifier' : 'Admin'}</span>
+                      </button>
+
                       {p.imageUrl ? (
                         <img
                           src={p.imageUrl}
@@ -1193,10 +1307,23 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                       <span className="text-[9px] text-white/80 font-mono truncate">
                         {primaryBarcode || 'Sans code-barres'}
                       </span>
-                      <span className="px-1.5 py-0.5 rounded-[6px] bg-white text-gray-900 text-[9.5px] font-black shadow-2xs group-hover:scale-105 transition-transform shrink-0 flex items-center gap-0.5">
-                        <WhatsAppIcon className="w-2.5 h-2.5 text-[#25D366]" />
-                        <span>Aider</span>
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {role === 'Admin' && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleAdminEditClick(p, e)}
+                            className="px-1.5 py-0.5 rounded-[6px] bg-white hover:bg-gray-100 text-[#0759A4] text-[9.5px] font-black shadow-2xs active:scale-95 transition cursor-pointer flex items-center gap-0.5"
+                            title="Modifier directement l'article (Admin)"
+                          >
+                            <Edit3 className="w-2.5 h-2.5 text-[#0759A4]" />
+                            <span>Modifier</span>
+                          </button>
+                        )}
+                        <span className="px-1.5 py-0.5 rounded-[6px] bg-white text-gray-900 text-[9.5px] font-black shadow-2xs group-hover:scale-105 transition-transform shrink-0 flex items-center gap-0.5">
+                          <WhatsAppIcon className="w-2.5 h-2.5 text-[#25D366]" />
+                          <span>Aider</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1222,6 +1349,91 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
         onClose={() => setIsScannerOpen(false)}
         onScanSuccess={handleScanSuccess}
       />
+
+      {/* Product Direct In-Place Edit Modal for Admin */}
+      {editingProductForAdmin && (
+        <ProductEditModal
+          isOpen={Boolean(editingProductForAdmin)}
+          product={editingProductForAdmin}
+          onClose={() => setEditingProductForAdmin(null)}
+          onSaved={(updated) => {
+            if (editingExistingProduct && editingExistingProduct.id === updated.id) {
+              setEditingExistingProduct(updated);
+              setProductName(updated.name);
+              setProductCode(updated.code && updated.code !== '-' ? updated.code : '');
+              setBarcode(updated.barcodeMarjane || updated.barcodeP2 || updated.barcodeInterne || '');
+            }
+          }}
+          onDeleted={() => {
+            setEditingProductForAdmin(null);
+            setEditingExistingProduct(null);
+            setSuggestActiveView('missing');
+          }}
+        />
+      )}
+
+      {/* Admin PIN Verification Modal for Aidez-nous */}
+      {isPinModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-[22px] p-5 shadow-2xl border border-gray-200 dark:border-slate-800 animate-in zoom-in-95 duration-150 relative text-gray-900 dark:text-slate-100">
+            <button
+              type="button"
+              onClick={() => {
+                setIsPinModalOpen(false);
+                setPendingAdminProduct(null);
+              }}
+              className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center space-y-2 mb-4">
+              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-[#0759A4] dark:text-blue-400">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-black text-gray-900 dark:text-white">
+                Modifier cet Article (Admin)
+              </h3>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                Entrez le code PIN Admin pour modifier la fiche produit directement depuis Aidez-nous
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyPin} className="space-y-3">
+              <input
+                ref={pinInputRef}
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                value={adminPin}
+                onChange={(e) => {
+                  setAdminPin(e.target.value);
+                  setPinError(false);
+                }}
+                placeholder="Code PIN (1997)"
+                className={`w-full text-center text-lg font-mono font-black tracking-widest py-2 rounded-[12px] bg-gray-50 dark:bg-slate-800 border outline-none transition ${
+                  pinError
+                    ? 'border-red-500 ring-2 ring-red-200 dark:ring-red-950'
+                    : 'border-gray-300 dark:border-slate-700 focus:border-[#0759A4] focus:ring-2 focus:ring-blue-100'
+                }`}
+              />
+
+              {pinError && (
+                <p className="text-center text-[10.5px] font-bold text-red-600 dark:text-red-400 animate-shake">
+                  Code PIN incorrect. Réessayez.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white font-black text-xs shadow-md active:scale-95 transition cursor-pointer"
+              >
+                Déverrouiller &amp; Modifier
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

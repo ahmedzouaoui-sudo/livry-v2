@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, ShoppingBag, Database } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Database, Edit3 } from 'lucide-react';
 import { Department, Product } from '../types';
 import {
   DEPARTMENT_CONFIGS,
@@ -163,6 +163,20 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
               >
                 {/* 1. White Image Thumbnail Box */}
                 <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-1.5 p-1.5 shadow-2xs">
+                  {role === 'Admin' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHaptic('light');
+                        onSelectProduct(product);
+                      }}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-[#0759A4] text-white hover:bg-blue-700 transition shadow-xs z-10 cursor-pointer"
+                      title="Modifier cet article (Admin)"
+                    >
+                      <Edit3 className="w-3 h-3 text-white" />
+                    </button>
+                  )}
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}

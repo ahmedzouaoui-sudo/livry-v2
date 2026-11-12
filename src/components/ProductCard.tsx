@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, ChevronRight, CheckCircle2, Edit3 } from 'lucide-react';
 import { Product } from '../types';
 import {
   DEPARTMENT_CONFIGS,
@@ -18,7 +18,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
-  const { barcodeVotes, openSuggestForProduct } = useApp();
+  const { role, barcodeVotes, openSuggestForProduct } = useApp();
   const [imgError, setImgError] = useState(false);
   const deptConfig = DEPARTMENT_CONFIGS[product.department] || DEPARTMENT_CONFIGS['Fruits et légumes'];
   const variants = getEffectiveBarcodeVariants(product, barcodeVotes);
@@ -109,10 +109,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
         )}
       </div>
 
-      {/* Status Pill on the Right: White pill */}
-      <div className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-[6px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
-        <CheckCircle2 className="w-3 h-3 text-white" />
-        <span className="hidden xs:inline">Valide</span>
+      {/* Status Pill & Admin Edit Button on the Right */}
+      <div className="shrink-0 flex items-center gap-1.5">
+        {role === 'Admin' && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerHaptic('light');
+              onClick();
+            }}
+            className="p-1.5 rounded-[8px] bg-white/25 hover:bg-white/40 text-white transition active:scale-90 cursor-pointer shadow-2xs"
+            title="Modifier cet article (Admin)"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-white" />
+          </button>
+        )}
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-[6px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
+          <CheckCircle2 className="w-3 h-3 text-white" />
+          <span className="hidden xs:inline">Valide</span>
+        </div>
       </div>
     </div>
   );
