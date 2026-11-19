@@ -407,7 +407,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
       {/* 6. Quick Admin PIN Unlock Modal from Product Page */}
       {isPinModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-[22px] p-5 shadow-2xl border border-gray-200 dark:border-slate-800 animate-in zoom-in-95 duration-150 relative text-gray-900 dark:text-slate-100">
             <button
               type="button"

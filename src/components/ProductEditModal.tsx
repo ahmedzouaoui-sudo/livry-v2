@@ -5,12 +5,6 @@ import {
   Trash2,
   Image as ImageIcon,
   Barcode as BarcodeIcon,
-  Tag,
-  Scale,
-  Building,
-  AlertTriangle,
-  Check,
-  ExternalLink,
 } from 'lucide-react';
 import { Department, Product } from '../types';
 import { useApp } from '../context/AppContext';
@@ -32,7 +26,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   onSaved,
   onDeleted,
 }) => {
-  const { updateProduct, deleteProduct, setSelectedProduct, showToast } = useApp();
+  const { updateProduct, deleteProduct, selectedProduct, setSelectedProduct, showToast } = useApp();
 
   const [formData, setFormData] = useState<Product>({ ...product });
   const [isSaving, setIsSaving] = useState(false);
@@ -53,8 +47,8 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!formData.name.trim()) {
       showToast('⚠️ Le nom du produit est obligatoire');
       return;
@@ -81,7 +75,11 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       };
 
       await updateProduct(cleanedProduct);
-      setSelectedProduct(cleanedProduct);
+
+      // Only refresh selectedProduct if the detail page for this product is currently open
+      if (selectedProduct && selectedProduct.id === cleanedProduct.id) {
+        setSelectedProduct(cleanedProduct);
+      }
 
       if (onSaved) {
         onSaved(cleanedProduct);
@@ -90,7 +88,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       triggerHaptic('success');
       showToast(`✅ "${cleanedProduct.name}" mis à jour avec succès !`);
       onClose();
-    } catch (err: any) {
+    } catch {
       triggerHaptic('warning');
       showToast('❌ Erreur lors de la sauvegarde du produit');
     } finally {
@@ -103,14 +101,16 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
       setIsDeleting(true);
       triggerHaptic('warning');
       await deleteProduct(formData.id);
-      setSelectedProduct(null);
+      if (selectedProduct && selectedProduct.id === formData.id) {
+        setSelectedProduct(null);
+      }
       if (onDeleted) {
         onDeleted(formData.id);
       }
       triggerHaptic('success');
       showToast(`🗑️ Article #${formData.id} supprimé.`);
       onClose();
-    } catch (err) {
+    } catch {
       showToast('❌ Erreur lors de la suppression');
     } finally {
       setIsDeleting(false);
@@ -118,7 +118,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="relative w-full max-w-2xl max-h-[92vh] bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/90 dark:bg-slate-800/80 shrink-0">

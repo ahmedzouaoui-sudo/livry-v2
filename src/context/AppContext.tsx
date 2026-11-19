@@ -446,9 +446,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  const getProductFingerprint = (p: Product): string =>
+    [
+      p.id,
+      p.code,
+      p.name,
+      p.department,
+      p.category,
+      p.quantite || '',
+      p.isEnabled ? '1' : '0',
+      p.imageUrl || '',
+      p.barcodeMarjane || '',
+      p.barcodeP2 || '',
+      p.barcodeInterne || '',
+      p.barcodeMiniSecours || '',
+      p.barcodeSecours || '',
+      p.barcodeP3 || '',
+    ].join('|');
+
   const checkForUpdates = useCallback(
     async (isSilent = true): Promise<void> => {
       if (syncingRef.current) return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      syncingRef.current = true;
       try {
         const health = await checkSupabaseHealth();
         setSupabaseHealth(health);
@@ -456,72 +476,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return;
         }
 
-        const res = await fetchProductsFromSupabase();
-        if (res.success) {
+        const [res, tipsRes, votesRes] = await Promise.all([
+          fetchProductsFromSupabase(),
+          fetchTipsFromSupabase(),
+          fetchBarcodeVotesFromSupabase(),
+        ]);
+
+        if (res.success && res.products.length > 0) {
           const remoteList = res.products;
           const currentList = productsRef.current;
 
-          const currentIds = new Set(currentList.map((p) => `${p.id}_${p.code}_${p.name}_${p.imageUrl || ''}`));
+          const currentFingerprints = new Set(currentList.map(getProductFingerprint));
           const hasDifferentItems =
             remoteList.length !== currentList.length ||
-            remoteList.some((p) => !currentIds.has(`${p.id}_${p.code}_${p.name}_${p.imageUrl || ''}`));
+            remoteList.some((p) => !currentFingerprints.has(getProductFingerprint(p)));
 
-          if (hasDifferentItems && remoteList.length > 0) {
-            setPendingProducts(remoteList);
-            setDataUpdateStatus('update-available');
-            const diff = remoteList.length - currentList.length;
-            const diffMsg =
-              diff > 0
-                ? `${diff} nouveau${diff > 1 ? 'x' : ''} produit${diff > 1 ? 's' : ''} disponible${diff > 1 ? 's' : ''}`
-                : `Mise à jour prête (${remoteList.length} articles)`;
-            setPendingUpdateMessage(diffMsg);
+          if (hasDifferentItems) {
+            setProducts(remoteList);
+            // Keep currently opened product modal fresh if its data changed remotely
+            setSelectedProduct((prevSelected) => {
+              if (!prevSelected) return prevSelected;
+              const updatedMatch = remoteList.find((item) => item.id === prevSelected.id);
+              if (!updatedMatch) return prevSelected;
+              return getProductFingerprint(updatedMatch) !== getProductFingerprint(prevSelected)
+                ? updatedMatch
+                : prevSelected;
+            });
+
+            const nowTime = new Date().toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+            const note = `À jour automatiquement (${remoteList.length} articles à ${nowTime})`;
+            setLastSyncTimestamp(note);
+            localStorage.setItem(STORAGE_KEY_LAST_SYNC, note);
+            setSyncStatus('synced');
 
             if (!isSilent) {
-              triggerHaptic('medium');
-              showToast(`🔔 ${diffMsg} ! Cliquez sur 'Mise à jour' en bleu pour actualiser.`);
+              triggerHaptic('success');
+              showToast(`✅ Catalogue mis à jour (${remoteList.length} articles)`);
             }
           } else {
-            setDataUpdateStatus('up-to-date');
-            setPendingProducts(null);
-            setPendingUpdateMessage(null);
             if (!isSilent) {
               triggerHaptic('success');
               showToast(`✅ Votre catalogue est déjà à jour (${currentList.length} articles)`);
             }
           }
+
+          setDataUpdateStatus('up-to-date');
+          setPendingProducts(null);
+          setPendingUpdateMessage(null);
+        }
+
+        if (tipsRes.success) {
+          setTips(tipsRes.tips);
+        }
+
+        if (votesRes.success && Object.keys(votesRes.votes).length > 0) {
+          setBarcodeVotes((prev) => ({
+            ...prev,
+            ...votesRes.votes,
+          }));
         }
       } catch (err) {
-        console.warn('[CheckForUpdates] Error:', err);
+        console.warn('[AutoUpdate] Error:', err);
+      } finally {
+        syncingRef.current = false;
       }
     },
     [showToast]
   );
 
   const applyUpdate = useCallback(async (): Promise<void> => {
-    if (pendingProducts && pendingProducts.length > 0) {
-      setDataUpdateStatus('updating');
-      setProducts(pendingProducts);
-      const appliedCount = pendingProducts.length;
-      setPendingProducts(null);
-      setPendingUpdateMessage(null);
-      setDataUpdateStatus('up-to-date');
-
-      const nowTime = new Date().toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      const note = `À jour (${appliedCount} articles synchronisés à ${nowTime})`;
-      setLastSyncTimestamp(note);
-      localStorage.setItem(STORAGE_KEY_LAST_SYNC, note);
-
-      triggerHaptic('success');
-      showToast(`✅ Données mises à jour avec succès : ${appliedCount} articles actifs !`);
-      return;
-    }
-
     setDataUpdateStatus('updating');
     setSyncStatus('syncing');
-    showToast('Vérification des mises à jour...');
 
     try {
       const res = await fetchProductsFromSupabase();
@@ -553,7 +581,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSyncStatus('error');
       showToast(`❌ Erreur : ${err.message}`);
     }
-  }, [pendingProducts, showToast]);
+  }, [showToast]);
 
   const dismissPendingUpdate = useCallback(() => {
     setPendingUpdateMessage(null);
@@ -571,10 +599,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [applyUpdate, checkForUpdates]
   );
 
-  // Initial check on mount
+  // Initial automatic sync + Supabase Realtime auto-updates
   useEffect(() => {
     let isMounted = true;
     let votesChannel: any = null;
+    let productsChannel: any = null;
+    let tipsChannel: any = null;
+    let realtimeDebounce: ReturnType<typeof setTimeout> | null = null;
+
+    const triggerDebouncedAutoSync = () => {
+      if (realtimeDebounce) clearTimeout(realtimeDebounce);
+      realtimeDebounce = setTimeout(() => {
+        if (isMounted) {
+          checkForUpdates(true).catch(() => {});
+        }
+      }, 800);
+    };
 
     const initCheck = async () => {
       const health = await checkSupabaseHealth();
@@ -584,17 +624,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (health.connected && health.tableExists) {
         await checkForUpdates(true);
 
-        const tipsRes = await fetchTipsFromSupabase();
-        if (isMounted && tipsRes.success) {
-          setTips(tipsRes.tips);
+        try {
+          productsChannel = supabasePublic
+            .channel('public:products_live')
+            .on(
+              'postgres_changes',
+              { event: '*', schema: 'public', table: 'products' },
+              () => {
+                triggerDebouncedAutoSync();
+              }
+            )
+            .subscribe();
+        } catch (e) {
+          console.warn('Realtime subscription notice for products:', e);
         }
 
-        const votesRes = await fetchBarcodeVotesFromSupabase();
-        if (isMounted && votesRes.success && Object.keys(votesRes.votes).length > 0) {
-          setBarcodeVotes((prev) => ({
-            ...prev,
-            ...votesRes.votes,
-          }));
+        try {
+          tipsChannel = supabasePublic
+            .channel('public:tips_live')
+            .on(
+              'postgres_changes',
+              { event: '*', schema: 'public', table: 'tips' },
+              async () => {
+                const freshTips = await fetchTipsFromSupabase();
+                if (freshTips.success && isMounted) {
+                  setTips(freshTips.tips);
+                }
+              }
+            )
+            .subscribe();
+        } catch (e) {
+          console.warn('Realtime subscription notice for tips:', e);
         }
 
         try {
@@ -623,6 +683,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     initCheck();
     return () => {
       isMounted = false;
+      if (realtimeDebounce) clearTimeout(realtimeDebounce);
+      if (productsChannel) {
+        try {
+          supabasePublic.removeChannel(productsChannel);
+        } catch {}
+      }
+      if (tipsChannel) {
+        try {
+          supabasePublic.removeChannel(tipsChannel);
+        } catch {}
+      }
       if (votesChannel) {
         try {
           supabasePublic.removeChannel(votesChannel);
@@ -631,27 +702,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [checkForUpdates]);
 
-  // Periodic check
+  // Continuous automatic background updates (interval + tab focus + network reconnect)
   useEffect(() => {
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') {
         checkForUpdates(true).catch(console.warn);
       }
-    }, 45000);
+    }, 30000);
 
-    const handleTabFocus = () => {
+    const handleAutoRefresh = () => {
       if (document.visibilityState === 'visible') {
         checkForUpdates(true).catch(console.warn);
       }
     };
 
-    window.addEventListener('focus', handleTabFocus);
-    document.addEventListener('visibilitychange', handleTabFocus);
+    window.addEventListener('focus', handleAutoRefresh);
+    window.addEventListener('online', handleAutoRefresh);
+    document.addEventListener('visibilitychange', handleAutoRefresh);
 
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener('focus', handleTabFocus);
-      document.removeEventListener('visibilitychange', handleTabFocus);
+      window.removeEventListener('focus', handleAutoRefresh);
+      window.removeEventListener('online', handleAutoRefresh);
+      document.removeEventListener('visibilitychange', handleAutoRefresh);
     };
   }, [checkForUpdates]);
 
