@@ -59,8 +59,14 @@ const MainLayout: React.FC = () => {
         }}
       />
 
-      {/* Main Content Router - Pure Barcodes & Astuces */}
-      <main className="flex-1 w-full max-w-[850px] mx-auto flex flex-col px-2 sm:px-4">
+      {/* Main Content Router - Full width on PC for Admin Data Dashboard */}
+      <main
+        className={
+          activeTab === 'admin'
+            ? 'flex-1 w-full flex flex-col'
+            : 'flex-1 w-full max-w-[850px] mx-auto flex flex-col px-2 sm:px-4'
+        }
+      >
         {activeTab === 'admin' ? (
           <AdminDashboard />
         ) : activeTab === 'tips' ? (

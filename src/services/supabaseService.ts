@@ -574,13 +574,15 @@ export function mapRowToProduct(row: any): Product {
 export function mapProductToRow(p: Product) {
   const dbDept = departmentToDbValue(p.department);
   const pureUnit = p.quantite || extractPureUnit(p.name);
+  const primaryMarjane = p.barcodeMarjane || p.barcodeMjValide || '0';
+
   return {
     id: p.id,
     code: p.code || '',
     produit: p.name || '',
-    marjane: p.barcodeMarjane || '0',
+    marjane: primaryMarjane,
     'marjane 2': p.barcodeP2 || '0',
-    'marjane Interne': p.barcodeInterne || p.barcodeMjValide || '0',
+    'marjane Interne': p.barcodeInterne || '0',
     'marjane mini': p.barcodeMiniSecours || '0',
     'marjane sec': p.barcodeSecours || '0',
     'marjane sec 2': p.barcodeP3 || '0',
@@ -877,11 +879,21 @@ export async function seedProductsToSupabase(
 export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips: TipPost[]; error?: string }> {
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    let { data, error } = await client.from('tips').select('*').order('likes', { ascending: false });
+    let { data, error } = await client
+      .from('tips')
+      .select('*')
+      .neq('category', 'device_tracker_record')
+      .neq('category', 'daily_catalog_backup')
+      .order('likes', { ascending: false });
 
     if (error) {
       const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
-      const resAlt = await fallbackClient.from('tips').select('*').order('likes', { ascending: false });
+      const resAlt = await fallbackClient
+        .from('tips')
+        .select('*')
+        .neq('category', 'device_tracker_record')
+        .neq('category', 'daily_catalog_backup')
+        .order('likes', { ascending: false });
       if (!resAlt.error) {
         data = resAlt.data;
         error = null;
@@ -891,7 +903,7 @@ export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips:
     if (error) return { success: false, tips: [], error: error.message };
 
     const mapped: TipPost[] = (data || [])
-      .filter((t: any) => t.category !== 'device_tracker_record')
+      .filter((t: any) => t.category !== 'device_tracker_record' && t.category !== 'daily_catalog_backup')
       .map((t: any) => ({
       id: String(t.id),
       title: String(t.title || ''),

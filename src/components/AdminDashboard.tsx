@@ -38,6 +38,7 @@ import {
   Tag,
   Scale,
   ShoppingBag,
+  HardDrive,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department, Product } from '../types';
@@ -46,6 +47,7 @@ import {
   getProductBarcodeVariants,
   getCleanProductCode,
   normalizeSearchText,
+  getCategoryColorTheme,
 } from '../utils/productUtils';
 import {
   getSupabaseProjectId,
@@ -65,6 +67,7 @@ import {
 import { extractPureUnit } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
 import { UserDevicesModal } from './UserDevicesModal';
+import { DailyBackupsModal } from './DailyBackupsModal';
 
 interface DuplicateConflict {
   type: 'name' | 'barcode' | 'code';
@@ -93,6 +96,7 @@ export const AdminDashboard: React.FC = () => {
     userDevices,
     deviceStats,
     refreshUserDevices,
+    isDarkMode,
   } = useApp();
 
   // Redirect if not Admin
@@ -119,6 +123,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Modals
   const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false);
+  const [isBackupsModalOpen, setIsBackupsModalOpen] = useState(false);
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
   const [conflictModalData, setConflictModalData] = useState<DuplicateConflict | null>(null);
@@ -535,8 +540,8 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
       {/* ------------------------------------------------------------------- */}
       {/* BANDEAU KPI SUPÉRIEUR EN DIRECT                                     */}
       {/* ------------------------------------------------------------------- */}
-      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 shadow-2xs px-4 sm:px-6 py-3 shrink-0">
-        <div className="max-w-[1700px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 shadow-2xs px-3 sm:px-5 lg:px-6 py-3 shrink-0">
+        <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Brand & Supabase connection badge */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[12px] bg-[#0759A4] flex items-center justify-center text-white shadow-sm shrink-0">
@@ -620,6 +625,20 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               )}
             </button>
 
+            {/* Daily Backups button */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsBackupsModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none"
+              title="Sauvegardes automatiques quotidiennes (Cloud & Local) et restauration en 1 clic"
+            >
+              <HardDrive className="w-3.5 h-3.5 text-emerald-100" />
+              <span>Backups</span>
+            </button>
+
             {/* Supabase Sync Button */}
             <button
               type="button"
@@ -662,7 +681,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
         </div>
 
         {/* KPI Counter Cards Row */}
-        <div className="max-w-[1700px] mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-3">
+        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-3">
           {/* KPI 1: Total Produits */}
           <div
             onClick={() => setFilterSpecial('ALL')}
@@ -758,7 +777,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
       {/* ------------------------------------------------------------------- */}
       {/* CORPS PRINCIPAL & FILTRES DÉDIÉS                                    */}
       {/* ------------------------------------------------------------------- */}
-      <div className="flex-1 max-w-[1700px] w-full mx-auto px-3 sm:px-6 py-4 space-y-3 flex flex-col">
+      <div className="flex-1 w-full px-3 sm:px-5 lg:px-6 py-4 space-y-3 flex flex-col">
 
         {/* LIGNE 1 DÉDIÉE : GRANDE BARRE DE RECHERCHE + SÉLECTEUR D'UNITÉ */}
         <div className="bg-white dark:bg-slate-900 rounded-[18px] border border-gray-200 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
@@ -921,24 +940,43 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               Toutes
             </button>
 
-            {sortedCategories.map((c) => (
-              <button
-                key={c.name}
-                type="button"
-                onClick={() => {
-                  triggerHaptic('light');
-                  setSelectedCategory(selectedCategory === c.name ? 'ALL' : c.name);
-                }}
-                className={`px-2.5 py-0.5 rounded-[8px] text-[11px] font-bold transition cursor-pointer select-none shrink-0 flex items-center gap-1 ${
-                  selectedCategory === c.name
-                    ? 'bg-[#0759A4] text-white shadow-xs'
-                    : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                <span>{c.name}</span>
-                <span className="text-[10px] opacity-75 font-mono">({c.count})</span>
-              </button>
-            ))}
+            {sortedCategories.map((c) => {
+              const catTheme = getCategoryColorTheme(c.name);
+              const isSelected = selectedCategory === c.name;
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setSelectedCategory(isSelected ? 'ALL' : c.name);
+                  }}
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: catTheme.solid,
+                          color: '#FFFFFF',
+                          borderColor: catTheme.solid,
+                        }
+                      : {
+                          backgroundColor: isDarkMode ? catTheme.pillBgDark : catTheme.pillBgLight,
+                          color: isDarkMode ? catTheme.pillTextDark : catTheme.pillTextLight,
+                          borderColor: isDarkMode ? catTheme.pillBorderDark : catTheme.pillBorderLight,
+                        }
+                  }
+                  className={`px-2.5 py-1 rounded-[8px] text-[11px] font-bold border transition cursor-pointer select-none shrink-0 flex items-center gap-1.5 ${
+                    isSelected ? 'shadow-xs ring-2 ring-offset-1 ring-black/15 dark:ring-white/25' : 'hover:brightness-95 dark:hover:brightness-110'
+                  }`}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: isSelected ? '#FFFFFF' : catTheme.solid }}
+                  />
+                  <span>{c.name}</span>
+                  <span className="text-[10px] opacity-80 font-mono">({c.count})</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -990,12 +1028,17 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                     const isSec2Dup = checkBcDuplicate(product.barcodeP3);
 
                     const pureUnit = product.quantite || extractPureUnit(product.name);
+                    const catTheme = getCategoryColorTheme(product.category);
 
                     return (
                       <tr
                         key={product.id}
-                        className={`hover:bg-blue-50/40 dark:hover:bg-slate-800/40 transition-colors ${
-                          !product.isEnabled ? 'opacity-65 bg-gray-50/70 dark:bg-slate-900/50' : ''
+                        style={{
+                          backgroundColor: isDarkMode ? catTheme.rowBgDark : catTheme.rowBgLight,
+                          borderLeft: `4px solid ${catTheme.solid}`,
+                        }}
+                        className={`hover:brightness-[0.97] dark:hover:brightness-110 transition-all ${
+                          !product.isEnabled ? 'opacity-60' : ''
                         }`}
                       >
                         {/* 1. image_html */}
@@ -1045,14 +1088,19 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           )}
                         </td>
 
-                        {/* 3. produit (Violet clair si répété) */}
-                        <td className="py-2 px-3">
+                        {/* 3. produit (Fond coloré selon la catégorie + Violet si répété) */}
+                        <td
+                          className="py-2 px-3"
+                          style={{
+                            backgroundColor: isDarkMode ? catTheme.productBgDark : catTheme.productBgLight,
+                          }}
+                        >
                           <button
                             type="button"
                             onClick={() => isDuplicateName && openNameConflict(product)}
                             className={`text-left font-bold text-xs leading-snug rounded-[6px] px-1.5 py-0.5 transition ${
                               isDuplicateName
-                                ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700 hover:ring-2 hover:ring-purple-400 cursor-pointer'
+                                ? 'bg-purple-100 dark:bg-purple-950/90 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700 hover:ring-2 hover:ring-purple-400 cursor-pointer'
                                 : 'text-gray-900 dark:text-white'
                             }`}
                             title={isDuplicateName ? 'Nom en doublon ! Cliquer pour voir les conflits' : product.name}
@@ -1195,8 +1243,21 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                         </td>
 
                         {/* 11. catégorie */}
-                        <td className="py-2 px-3 whitespace-nowrap text-gray-600 dark:text-slate-300 font-semibold">
-                          {product.category || 'Général'}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] text-[10.5px] font-black border"
+                            style={{
+                              backgroundColor: isDarkMode ? catTheme.pillBgDark : catTheme.pillBgLight,
+                              color: isDarkMode ? catTheme.pillTextDark : catTheme.pillTextLight,
+                              borderColor: isDarkMode ? catTheme.pillBorderDark : catTheme.pillBorderLight,
+                            }}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full shrink-0"
+                              style={{ backgroundColor: catTheme.solid }}
+                            />
+                            {product.category || 'Général'}
+                          </span>
                         </td>
 
                         {/* 12. quantite (Pure Unité : 'kg' | 'g' | 'pièce') */}
@@ -2331,6 +2392,14 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
       <UserDevicesModal
         isOpen={isDevicesModalOpen}
         onClose={() => setIsDevicesModalOpen(false)}
+      />
+
+      {/* ------------------------------------------------------------------- */}
+      {/* MODALE SAUVEGARDES QUOTIDIENNES (BACKUP AUTOMATIQUE & RESTAURATION) */}
+      {/* ------------------------------------------------------------------- */}
+      <DailyBackupsModal
+        isOpen={isBackupsModalOpen}
+        onClose={() => setIsBackupsModalOpen(false)}
       />
 
     </div>

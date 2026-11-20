@@ -39,6 +39,219 @@ export const DEPARTMENT_CONFIGS: Record<Department, DepartmentConfig> = {
   },
 };
 
+export interface CategoryColorTheme {
+  solid: string;
+  rowBgLight: string;
+  rowBgDark: string;
+  productBgLight: string;
+  productBgDark: string;
+  pillBgLight: string;
+  pillTextLight: string;
+  pillBorderLight: string;
+  pillBgDark: string;
+  pillTextDark: string;
+  pillBorderDark: string;
+}
+
+const CATEGORY_COLOR_PRESETS: Record<string, CategoryColorTheme> = {
+  // Fruits et légumes (Greens / Teals / Lime)
+  fruits: {
+    solid: '#059669',
+    rowBgLight: '#ECFDF5',
+    rowBgDark: 'rgba(5, 150, 105, 0.14)',
+    productBgLight: '#D1FAE5',
+    productBgDark: 'rgba(5, 150, 105, 0.24)',
+    pillBgLight: '#D1FAE5',
+    pillTextLight: '#065F46',
+    pillBorderLight: '#6EE7B7',
+    pillBgDark: 'rgba(5, 150, 105, 0.28)',
+    pillTextDark: '#6EE7B7',
+    pillBorderDark: 'rgba(110, 231, 183, 0.35)',
+  },
+  legumes: {
+    solid: '#16A34A',
+    rowBgLight: '#F0FDF4',
+    rowBgDark: 'rgba(22, 163, 74, 0.14)',
+    productBgLight: '#DCFCE7',
+    productBgDark: 'rgba(22, 163, 74, 0.24)',
+    pillBgLight: '#DCFCE7',
+    pillTextLight: '#166534',
+    pillBorderLight: '#86EFAC',
+    pillBgDark: 'rgba(22, 163, 74, 0.28)',
+    pillTextDark: '#86EFAC',
+    pillBorderDark: 'rgba(134, 239, 172, 0.35)',
+  },
+  'herbes et salades': {
+    solid: '#0D9488',
+    rowBgLight: '#F0FDFA',
+    rowBgDark: 'rgba(13, 148, 136, 0.15)',
+    productBgLight: '#CCFBF1',
+    productBgDark: 'rgba(13, 148, 136, 0.26)',
+    pillBgLight: '#CCFBF1',
+    pillTextLight: '#115E59',
+    pillBorderLight: '#5EEAD4',
+    pillBgDark: 'rgba(13, 148, 136, 0.28)',
+    pillTextDark: '#5EEAD4',
+    pillBorderDark: 'rgba(94, 234, 212, 0.35)',
+  },
+  champignon: {
+    solid: '#65A30D',
+    rowBgLight: '#F7FEE7',
+    rowBgDark: 'rgba(101, 163, 13, 0.15)',
+    productBgLight: '#ECFCCB',
+    productBgDark: 'rgba(101, 163, 13, 0.25)',
+    pillBgLight: '#ECFCCB',
+    pillTextLight: '#3F6212',
+    pillBorderLight: '#BEF264',
+    pillBgDark: 'rgba(101, 163, 13, 0.28)',
+    pillTextDark: '#BEF264',
+    pillBorderDark: 'rgba(190, 242, 100, 0.35)',
+  },
+
+  // Boucherie et volaille (Reds / Rose)
+  viandes: {
+    solid: '#DC2626',
+    rowBgLight: '#FEF2F2',
+    rowBgDark: 'rgba(220, 38, 38, 0.15)',
+    productBgLight: '#FEE2E2',
+    productBgDark: 'rgba(220, 38, 38, 0.26)',
+    pillBgLight: '#FEE2E2',
+    pillTextLight: '#991B1B',
+    pillBorderLight: '#FCA5A5',
+    pillBgDark: 'rgba(220, 38, 38, 0.28)',
+    pillTextDark: '#FCA5A5',
+    pillBorderDark: 'rgba(252, 165, 165, 0.35)',
+  },
+  volaille: {
+    solid: '#E11D48',
+    rowBgLight: '#FFF1F2',
+    rowBgDark: 'rgba(225, 29, 72, 0.15)',
+    productBgLight: '#FFE4E6',
+    productBgDark: 'rgba(225, 29, 72, 0.26)',
+    pillBgLight: '#FFE4E6',
+    pillTextLight: '#9F1239',
+    pillBorderLight: '#FDA4AF',
+    pillBgDark: 'rgba(225, 29, 72, 0.28)',
+    pillTextDark: '#FDA4AF',
+    pillBorderDark: 'rgba(253, 164, 175, 0.35)',
+  },
+
+  // Fromage et charcuterie (Sky Blue / Fuchsia Berry)
+  fromages: {
+    solid: '#0284C7',
+    rowBgLight: '#F0F9FF',
+    rowBgDark: 'rgba(2, 132, 199, 0.15)',
+    productBgLight: '#E0F2FE',
+    productBgDark: 'rgba(2, 132, 199, 0.26)',
+    pillBgLight: '#E0F2FE',
+    pillTextLight: '#075985',
+    pillBorderLight: '#7DD3FC',
+    pillBgDark: 'rgba(2, 132, 199, 0.28)',
+    pillTextDark: '#7DD3FC',
+    pillBorderDark: 'rgba(125, 211, 252, 0.35)',
+  },
+  charcuterie: {
+    solid: '#C026D3',
+    rowBgLight: '#FDF4FF',
+    rowBgDark: 'rgba(192, 38, 211, 0.15)',
+    productBgLight: '#FAE8FF',
+    productBgDark: 'rgba(192, 38, 211, 0.26)',
+    pillBgLight: '#FAE8FF',
+    pillTextLight: '#86198F',
+    pillBorderLight: '#F0ABFC',
+    pillBgDark: 'rgba(192, 38, 211, 0.28)',
+    pillTextDark: '#F0ABFC',
+    pillBorderDark: 'rgba(240, 171, 252, 0.35)',
+  },
+
+  // Boulangerie et pâtisserie (Amber / Orange / Yellow / Violet)
+  'pains et baguettes': {
+    solid: '#D97706',
+    rowBgLight: '#FFFBEB',
+    rowBgDark: 'rgba(217, 119, 6, 0.15)',
+    productBgLight: '#FEF3C7',
+    productBgDark: 'rgba(217, 119, 6, 0.26)',
+    pillBgLight: '#FEF3C7',
+    pillTextLight: '#92400E',
+    pillBorderLight: '#FCD34D',
+    pillBgDark: 'rgba(217, 119, 6, 0.28)',
+    pillTextDark: '#FCD34D',
+    pillBorderDark: 'rgba(252, 211, 77, 0.35)',
+  },
+  viennoiseries: {
+    solid: '#EA580C',
+    rowBgLight: '#FFF7ED',
+    rowBgDark: 'rgba(234, 88, 12, 0.15)',
+    productBgLight: '#FFEDD5',
+    productBgDark: 'rgba(234, 88, 12, 0.26)',
+    pillBgLight: '#FFEDD5',
+    pillTextLight: '#9A3412',
+    pillBorderLight: '#FDBA74',
+    pillBgDark: 'rgba(234, 88, 12, 0.28)',
+    pillTextDark: '#FDBA74',
+    pillBorderDark: 'rgba(253, 186, 116, 0.35)',
+  },
+  'gateaux traditionnels': {
+    solid: '#CA8A04',
+    rowBgLight: '#FEFCE8',
+    rowBgDark: 'rgba(202, 138, 4, 0.15)',
+    productBgLight: '#FEF9C3',
+    productBgDark: 'rgba(202, 138, 4, 0.26)',
+    pillBgLight: '#FEF9C3',
+    pillTextLight: '#854D0E',
+    pillBorderLight: '#FDE047',
+    pillBgDark: 'rgba(202, 138, 4, 0.28)',
+    pillTextDark: '#FDE047',
+    pillBorderDark: 'rgba(253, 224, 71, 0.35)',
+  },
+  'patisseries et galettes': {
+    solid: '#7C3AED',
+    rowBgLight: '#F5F3FF',
+    rowBgDark: 'rgba(124, 58, 237, 0.15)',
+    productBgLight: '#EDE9FE',
+    productBgDark: 'rgba(124, 58, 237, 0.26)',
+    pillBgLight: '#EDE9FE',
+    pillTextLight: '#5B21B6',
+    pillBorderLight: '#C4B5FD',
+    pillBgDark: 'rgba(124, 58, 237, 0.28)',
+    pillTextDark: '#C4B5FD',
+    pillBorderDark: 'rgba(196, 181, 253, 0.35)',
+  },
+};
+
+const FALLBACK_CATEGORY_PALETTE: CategoryColorTheme[] = [
+  CATEGORY_COLOR_PRESETS.fromages,
+  CATEGORY_COLOR_PRESETS.fruits,
+  CATEGORY_COLOR_PRESETS['pains et baguettes'],
+  CATEGORY_COLOR_PRESETS.viandes,
+  CATEGORY_COLOR_PRESETS['patisseries et galettes'],
+  CATEGORY_COLOR_PRESETS['herbes et salades'],
+  CATEGORY_COLOR_PRESETS.viennoiseries,
+  CATEGORY_COLOR_PRESETS.charcuterie,
+];
+
+/**
+ * Returns a consistent, high-contrast color theme for any product category.
+ */
+export function getCategoryColorTheme(category?: string): CategoryColorTheme {
+  const norm = normalizeSearchText(category || 'Général');
+  if (CATEGORY_COLOR_PRESETS[norm]) {
+    return CATEGORY_COLOR_PRESETS[norm];
+  }
+  // Partial keyword matching for variations (e.g. "Légumes bio", "Fromage râpé")
+  for (const [key, theme] of Object.entries(CATEGORY_COLOR_PRESETS)) {
+    if (norm.includes(key) || key.includes(norm)) {
+      return theme;
+    }
+  }
+  // Deterministic hash fallback for any custom category
+  let hash = 0;
+  for (let i = 0; i < norm.length; i++) {
+    hash = (hash * 31 + norm.charCodeAt(i)) >>> 0;
+  }
+  return FALLBACK_CATEGORY_PALETTE[hash % FALLBACK_CATEGORY_PALETTE.length];
+}
+
 /**
  * Validates a barcode value strictly according to requirements:
  * Exclude "0", "0.0", "-", "", "sans", "XXXX", null, undefined.

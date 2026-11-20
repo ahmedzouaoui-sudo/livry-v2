@@ -33,6 +33,7 @@ import {
 } from '../services/deviceTrackerService';
 import { supabasePublic } from '../services/supabaseClient';
 import { triggerHaptic } from '../utils/haptics';
+import { ensureDailyBackup } from '../services/dailyBackupService';
 
 export type ActiveTab = 'home' | 'library' | 'admin' | 'tips' | 'suggest';
 
@@ -492,6 +493,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             remoteList.some((p) => !currentFingerprints.has(getProductFingerprint(p)));
 
           if (hasDifferentItems) {
+            // Safety backup: if remote suddenly has many fewer products (e.g. accidental DB wipe),
+            // preserve the larger local catalog in a dedicated backup key before updating
+            if (currentList.length >= remoteList.length + 20) {
+              try {
+                localStorage.setItem('finder_livry_products_backup_v3', JSON.stringify(currentList));
+              } catch {}
+            }
             setProducts(remoteList);
             // Keep currently opened product modal fresh if its data changed remotely
             setSelectedProduct((prevSelected) => {
@@ -526,6 +534,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setDataUpdateStatus('up-to-date');
           setPendingProducts(null);
           setPendingUpdateMessage(null);
+
+          // Automatic daily backup once per day (throttled & guarded against empty wipes)
+          if (remoteList.length >= 10) {
+            ensureDailyBackup(remoteList).catch(() => {});
+          }
         }
 
         if (tipsRes.success) {
@@ -727,6 +740,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       document.removeEventListener('visibilitychange', handleAutoRefresh);
     };
   }, [checkForUpdates]);
+
+  // Automatic Nightly File Backup scheduler (startup + every 15 min for 22:00 nightly window & midnight rollover)
+  useEffect(() => {
+    const runNightlyBackupCheck = () => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      if (productsRef.current.length >= 10) {
+        ensureDailyBackup(productsRef.current).catch(() => {});
+      }
+    };
+
+    const startupTimer = window.setTimeout(runNightlyBackupCheck, 4500);
+    const nightlyInterval = window.setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        runNightlyBackupCheck();
+      }
+    }, 15 * 60 * 1000);
+
+    window.addEventListener('online', runNightlyBackupCheck);
+
+    return () => {
+      clearTimeout(startupTimer);
+      clearInterval(nightlyInterval);
+      window.removeEventListener('online', runNightlyBackupCheck);
+    };
+  }, []);
 
   const toggleProductStatus = useCallback(async (id: number) => {
     const target = productsRef.current.find((p) => p.id === id);
