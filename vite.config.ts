@@ -1,14 +1,55 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+function appVersionManifestPlugin(buildId: string, buildTime: number): Plugin {
+  const versionPayload = JSON.stringify(
+    {
+      buildId,
+      buildTime,
+      builtAt: new Date(buildTime).toISOString(),
+    },
+    null,
+    2
+  );
+
   return {
+    name: 'livry-version-manifest',
+    configureServer(server) {
+      server.middlewares.use('/version.json', (_req, res) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.end(versionPayload);
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: versionPayload,
+      });
+    },
+  };
+}
+
+export default defineConfig(() => {
+  const buildTime = Date.now();
+  const buildId = `v-${buildTime}`;
+
+  return {
+    define: {
+      __APP_BUILD_ID__: JSON.stringify(buildId),
+      __APP_BUILD_TIME__: JSON.stringify(buildTime),
+    },
     plugins: [
       react(),
       tailwindcss(),
+      appVersionManifestPlugin(buildId, buildTime),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: [
@@ -46,6 +87,18 @@ export default defineConfig(() => {
           clientsClaim: true,
           skipWaiting: true,
           cleanupOutdatedCaches: true,
+          globIgnores: ['**/version.json', '**/dist-netlify.zip', '**/_headers', '**/_redirects'],
+          navigateFallbackDenylist: [/^\/version\.json/],
+          runtimeCaching: [
+            {
+              urlPattern: /\/version\.json(\?.*)?$/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /\/index\.html(\?.*)?$/i,
+              handler: 'NetworkOnly',
+            },
+          ],
         },
         devOptions: {
           enabled: true,

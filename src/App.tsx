@@ -16,6 +16,8 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Check } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ForceUpdateOverlay } from './components/ForceUpdateOverlay';
+import { checkServerVersion } from './services/versionGuardService';
 import { Department } from './types';
 
 const MainLayout: React.FC = () => {
@@ -116,11 +118,68 @@ const MainLayout: React.FC = () => {
 };
 
 export default function App() {
+  const [versionLock, setVersionLock] = React.useState<{
+    isOutdated: boolean;
+    remoteBuildId?: string;
+  }>({ isOutdated: false });
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const verifyAppVersion = async () => {
+      const result = await checkServerVersion();
+      if (isMounted && result.outdated) {
+        setVersionLock({
+          isOutdated: true,
+          remoteBuildId: result.remoteBuildId,
+        });
+      }
+    };
+
+    verifyAppVersion();
+
+    const intervalId = window.setInterval(verifyAppVersion, 30 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        verifyAppVersion();
+      }
+    };
+
+    const handleOutdatedEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ remoteBuildId?: string }>;
+      if (isMounted) {
+        setVersionLock((prev) => ({
+          isOutdated: true,
+          remoteBuildId: customEvent?.detail?.remoteBuildId || prev.remoteBuildId,
+        }));
+      }
+    };
+
+    window.addEventListener('focus', verifyAppVersion);
+    window.addEventListener('online', verifyAppVersion);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('livry:version-outdated', handleOutdatedEvent);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', verifyAppVersion);
+      window.removeEventListener('online', verifyAppVersion);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('livry:version-outdated', handleOutdatedEvent);
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <MainLayout />
-      </AppProvider>
+      {versionLock.isOutdated ? (
+        <ForceUpdateOverlay remoteBuildId={versionLock.remoteBuildId} />
+      ) : (
+        <AppProvider>
+          <MainLayout />
+        </AppProvider>
+      )}
     </ErrorBoundary>
   );
 }
