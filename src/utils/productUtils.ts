@@ -15,7 +15,7 @@ export const DEPARTMENT_CONFIGS: Record<Department, DepartmentConfig> = {
     shortName: 'Fruits & Légumes',
     icon: 'Apple',
     bgColor: '#E8F5E9',
-    accentColor: '#155B48',
+    accentColor: '#2E7D32',
     tagBg: '#DCFCE7',
     tagText: '#14532D',
   },

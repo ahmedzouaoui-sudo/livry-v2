@@ -68,7 +68,7 @@ export interface Product {
   quantite?: 'kg' | 'g' | 'pièce'; // quantite pure sans chiffres
   isEnabled: boolean;
   isVerified100?: boolean; // Code-barres vérifié 100% khdam par Admin
-  verificationStatus?: 'none' | '50' | '100'; // '100' = icône bleue, '50' = icône orange
+  verificationStatus?: 'none' | 'broken' | '50' | '100'; // '100' = bleue, '50' = orange, 'broken' = rouge (makhdamch daba)
   barcodeMjValide?: string; // alias
 }
 
@@ -130,4 +130,70 @@ export interface DeviceStats {
   totalTimeSeconds: number;
   mobileCount: number;
   desktopCount: number;
+}
+
+export type ActivityCategory =
+  | 'AUTH'
+  | 'PRODUCT'
+  | 'VERIFICATION'
+  | 'IMPORT_EXPORT'
+  | 'BACKUP'
+  | 'GUIDE'
+  | 'TIPS'
+  | 'BARCODE_VOTE'
+  | 'SYSTEM';
+
+export interface AppActivityLog {
+  id: string;
+  timestamp: string;
+  localDateTime: string;
+  category: ActivityCategory;
+  action: string;
+  actorRole: Role;
+  deviceId: string;
+  ipAddress: string;
+  target?: string;
+  details: string;
+}
+
+export interface GuideStepConfig {
+  id: number;
+  shortLabel: string;
+  badge: string;
+  headlineLine1: string;
+  headlineLine2: string;
+  description: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+}
+
+export interface GuideConfig {
+  version: number;
+  updatedAt: string;
+  topBrandTitle: string;
+  footerHint: string;
+  steps: [GuideStepConfig, GuideStepConfig, GuideStepConfig];
+  slide1: {
+    beforeBadge: string;
+    beforeImageUrl: string;
+    beforeCaption: string;
+    afterBadge: string;
+    afterBarcodeSample: string;
+    afterCaption: string;
+    floatingPillText: string;
+  };
+  slide2: {
+    showcaseImageUrl: string;
+    repere1Title: string;
+    repere1Text: string;
+    repere2Title: string;
+    repere2Text: string;
+  };
+  slide3: {
+    card1Title: string;
+    card1Subtitle: string;
+    card2Title: string;
+    card2Subtitle: string;
+    card2PhoneDisplay: string;
+  };
 }

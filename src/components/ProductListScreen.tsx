@@ -75,7 +75,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
 
   return (
     <div className="w-full max-w-[800px] mx-auto px-2.5 sm:px-4 py-2 pb-20 flex flex-col min-h-[calc(100dvh-60px)] pb-safe">
-      {/* Top Header with Back Button (Article count removed per user request) */}
+      {/* Top Header with Back Button */}
       <div className="flex items-center gap-2 mb-2.5">
         <button
           type="button"
@@ -83,14 +83,14 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
             triggerHaptic('light');
             onBack();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] text-[#0759A4] bg-white border border-[#E0E0E6]/80 shadow-2xs hover:bg-[#EBF4FC] active:scale-95 transition font-bold text-xs shrink-0 cursor-pointer select-none"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-gray-800 dark:text-slate-100 glass-surface hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition font-bold text-xs shrink-0 cursor-pointer select-none"
           aria-label="Retour"
         >
-          <ArrowLeft className="w-4 h-4 text-[#0759A4]" />
+          <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
           <span>Retour</span>
         </button>
 
-        <h1 className="text-xs sm:text-sm font-bold text-[#171717] truncate flex-1">
+        <h1 className="text-xs sm:text-sm font-extrabold text-gray-900 dark:text-white truncate flex-1 tracking-tight">
           {title}
         </h1>
 
@@ -101,7 +101,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
               triggerHaptic('medium');
               setActiveTab('admin');
             }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-[#FDF0F5] hover:bg-[#FCE4EC] text-[#B43167] border border-[#B43167]/30 text-[11px] font-black transition active:scale-95 cursor-pointer shadow-2xs shrink-0 select-none"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/60 backdrop-blur-md hover:bg-blue-100/90 dark:hover:bg-blue-900/70 text-[#0759A4] dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/70 text-[11px] font-black transition active:scale-95 cursor-pointer shadow-2xs shrink-0 select-none"
             title="Ouvrir le panneau Données"
           >
             <Database className="w-3.5 h-3.5" />
@@ -110,19 +110,19 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
         )}
       </div>
 
-      {/* Categories Filter Tabs */}
+      {/* Categories Filter Bar */}
       {categories.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar select-none touch-pan-x">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-2.5 no-scrollbar select-none touch-pan-x">
           <button
             type="button"
             onClick={() => {
               triggerHaptic('light');
               setSelectedCategory('ALL');
             }}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none border ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none tabular-nums ${
               selectedCategory === 'ALL'
-                ? 'bg-[#171717] text-white border-[#171717] shadow-xs'
-                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
+                : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
             }`}
           >
             Toutes ({filtered.length})
@@ -135,10 +135,10 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                 triggerHaptic('light');
                 setSelectedCategory(cat);
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none border ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none ${
                 selectedCategory === cat
-                  ? 'bg-[#0759A4] text-white border-[#0759A4] shadow-xs'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  ? 'bg-[#0759A4] text-white shadow-xs'
+                  : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
               }`}
             >
               {cat}
@@ -159,7 +159,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
               <div
                 key={product.id}
                 onClick={() => handleProductClick(product)}
-                className="rounded-[14px] sm:rounded-[16px] p-2 sm:p-2.5 flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer select-none border border-black/5"
+                className="rounded-[15px] sm:rounded-[17px] p-2 sm:p-2.5 flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer select-none border border-black/10 dark:border-white/15"
                 style={{ backgroundColor: productDeptConfig.accentColor }}
               >
                 {/* 1. White Image Thumbnail Box */}
@@ -172,7 +172,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                         triggerHaptic('light');
                         onSelectProduct(product);
                       }}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-[#0759A4] text-white hover:bg-blue-700 transition shadow-xs z-10 cursor-pointer"
+                      className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-[#0759A4] text-white hover:bg-blue-700 transition shadow-xs z-10 cursor-pointer"
                       title="Modifier cet article (Admin)"
                     >
                       <Edit3 className="w-3 h-3 text-white" />
@@ -195,7 +195,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                 {/* 2. Code Badge: Limouni (Orange) if Indisponible, White otherwise */}
                 <div className="mb-1 flex items-center gap-1.5 flex-wrap">
                   <span
-                    className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[5px] shadow-2xs tracking-wider"
+                    className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[6px] shadow-2xs tracking-wider tabular-nums"
                     style={{
                       backgroundColor: codeBadge === 'Indisponible' ? '#EA580C' : '#FFFFFF',
                       color: codeBadge === 'Indisponible' ? '#FFFFFF' : productDeptConfig.accentColor,
@@ -212,7 +212,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                         triggerHaptic('light');
                         openSuggestForProduct(product);
                       }}
-                      className="px-1.5 py-0.5 rounded-[4px] bg-[#EA580C] hover:bg-[#C2410C] text-white text-[9px] font-black shadow-2xs active:scale-95 transition cursor-pointer select-none border border-white/20"
+                      className="px-1.5 py-0.5 rounded-[5px] bg-[#EA580C] hover:bg-[#C2410C] text-white text-[9px] font-black shadow-2xs active:scale-95 transition cursor-pointer select-none border border-white/20"
                       title="Ajouter le code court manquant"
                     >
                       <span>Aidez-nous</span>
@@ -236,7 +236,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
 
                 {/* 4. Barcode preview if available */}
                 {primaryBarcode && (
-                  <p className="text-[9px] font-mono text-white/80 truncate mt-1">
+                  <p className="text-[9px] font-mono text-white/85 truncate mt-1 tabular-nums">
                     {primaryBarcode}
                   </p>
                 )}
@@ -244,9 +244,9 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
             );
           })
         ) : (
-          <div className="col-span-2 sm:col-span-3 md:col-span-4 bg-white rounded-[16px] p-6 text-center border border-gray-100 shadow-2xs mt-3">
-            <p className="text-xs font-bold text-[#171717]">Aucun produit dans ce rayon</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">
+          <div className="col-span-2 sm:col-span-3 md:col-span-4 glass-surface rounded-2xl p-6 text-center mt-3">
+            <p className="text-xs font-bold text-gray-800 dark:text-slate-200">Aucun produit dans ce rayon</p>
+            <p className="text-[10.5px] text-gray-500 dark:text-slate-400 mt-0.5">
               Tous les produits affichés disposent d'un code-barres actif.
             </p>
           </div>

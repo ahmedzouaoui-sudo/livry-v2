@@ -60,7 +60,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
   const barcodeContent = (
     <div
       ref={containerRef}
-      className={`relative flex flex-col items-center bg-white p-3 sm:p-4 rounded-[16px] border border-gray-100 shadow-inner select-none ${
+      className={`relative flex flex-col items-center bg-white p-3 sm:p-4 rounded-[16px] border border-gray-200 shadow-inner select-none ${
         isFullscreen
           ? 'fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-white/98 backdrop-blur-md pb-safe'
           : ''
@@ -77,7 +77,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
             aria-label="Plein écran"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            <span className="text-[11px] font-bold text-gray-600 hidden xs:inline">
+            <span className="text-[11px] font-bold text-gray-500 hidden xs:inline">
               {isFullscreen ? 'Réduire' : 'Plein écran'}
             </span>
           </button>
@@ -99,7 +99,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-gray-600" />
+                <Copy className="w-3.5 h-3.5 text-gray-500" />
                 <span>Copier</span>
               </>
             )}
@@ -125,7 +125,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
               fontSize="16"
               fontWeight="bold"
               fontFamily="monospace"
-              fill="#1F2937"
+              fill="#111827"
               textAnchor="end"
             >
               {ean13Data.firstDigit}
@@ -160,7 +160,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
                     fontSize="15"
                     fontWeight="bold"
                     fontFamily="monospace"
-                    fill="#1F2937"
+                    fill="#111827"
                     textAnchor="middle"
                   >
                     {ean8Data.leftText}
@@ -171,7 +171,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
                     fontSize="15"
                     fontWeight="bold"
                     fontFamily="monospace"
-                    fill="#1F2937"
+                    fill="#111827"
                     textAnchor="middle"
                   >
                     {ean8Data.rightText}
@@ -185,7 +185,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
                     fontSize="15"
                     fontWeight="bold"
                     fontFamily="monospace"
-                    fill="#1F2937"
+                    fill="#111827"
                     textAnchor="middle"
                   >
                     {ean13Data.leftText}
@@ -196,7 +196,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
                     fontSize="15"
                     fontWeight="bold"
                     fontFamily="monospace"
-                    fill="#1F2937"
+                    fill="#111827"
                     textAnchor="middle"
                   >
                     {ean13Data.rightText}
@@ -210,7 +210,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
 
       {/* Formatted Full Monospace Code */}
       <div className="mt-2 text-center w-full">
-        <span className="font-mono text-sm sm:text-base font-black tracking-widest text-gray-900 bg-gray-50 px-3 py-1 rounded-[10px] border border-gray-200 inline-block">
+        <span className="font-mono text-sm sm:text-base font-black tracking-widest text-gray-900 bg-gray-50 px-3 py-1 rounded-[10px] border border-gray-200 inline-block tabular-nums">
           {formattedDigits}
         </span>
       </div>
@@ -224,7 +224,7 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="w-full py-3 bg-[#0759A4] text-white text-xs sm:text-sm font-bold rounded-[14px] shadow-md hover:bg-blue-800 active:scale-95 transition cursor-pointer"
+            className="w-full py-3 bg-[#0759A4] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-[14px] shadow-md active:scale-95 transition cursor-pointer"
           >
             Fermer le plein écran
           </button>

@@ -41,7 +41,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
   return (
     <div
       onClick={handleClick}
-      className="group relative flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-[14px] sm:rounded-[16px] shadow-2xs hover:shadow-sm transition-all duration-150 select-none cursor-pointer active:scale-[0.99] border border-black/5"
+      className="group relative flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-[15px] sm:rounded-[17px] shadow-2xs hover:shadow-md transition-all duration-150 select-none cursor-pointer active:scale-[0.99] border border-black/10 dark:border-white/15"
       style={{ backgroundColor: deptConfig.accentColor }}
     >
       {/* Thumbnail with White Box Background */}
@@ -66,7 +66,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
         <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
           {/* Code Badge: Limouni (Orange) if Indisponible, White otherwise */}
           <span
-            className="px-1.5 py-0.5 rounded-[5px] font-black text-[10px] sm:text-[11px] shadow-2xs shrink-0"
+            className="px-1.5 py-0.5 rounded-[6px] font-mono font-black text-[10px] sm:text-[11px] shadow-2xs shrink-0 tabular-nums"
             style={{
               backgroundColor: codeBadge === 'Indisponible' ? '#EA580C' : '#FFFFFF',
               color: codeBadge === 'Indisponible' ? '#FFFFFF' : deptConfig.accentColor,
@@ -84,7 +84,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
                 triggerHaptic('light');
                 openSuggestForProduct(product);
               }}
-              className="px-2 py-0.5 rounded-[5px] bg-[#EA580C] hover:bg-[#C2410C] text-white text-[9.5px] font-extrabold flex items-center gap-1 shadow-2xs active:scale-95 transition cursor-pointer select-none border border-white/20"
+              className="px-2 py-0.5 rounded-[6px] bg-[#EA580C] hover:bg-[#C2410C] text-white text-[9.5px] font-extrabold flex items-center gap-1 shadow-2xs active:scale-95 transition cursor-pointer select-none border border-white/20"
               title="Ajouter le code court manquant"
             >
               <span>Aidez-nous</span>
@@ -110,7 +110,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
 
         {/* Primary Barcode Preview */}
         {primaryBarcode && (
-          <p className="text-[9.5px] font-mono text-white/80 truncate mt-0.5">
+          <p className="text-[9.5px] font-mono text-white/85 truncate mt-0.5 tabular-nums">
             Code-barres : <span className="font-semibold text-white">{primaryBarcode}</span>
           </p>
         )}
@@ -126,13 +126,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
               triggerHaptic('light');
               onClick();
             }}
-            className="p-1.5 rounded-[8px] bg-white/25 hover:bg-white/40 text-white transition active:scale-90 cursor-pointer shadow-2xs"
+            className="p-1.5 rounded-[9px] bg-white/25 hover:bg-white/40 text-white transition active:scale-90 cursor-pointer shadow-2xs"
             title="Modifier cet article (Admin)"
           >
             <Edit3 className="w-3.5 h-3.5 text-white" />
           </button>
         )}
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-[6px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-[7px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
           <CheckCircle2 className="w-3 h-3 text-white" />
           <span className="hidden xs:inline">Valide</span>
         </div>

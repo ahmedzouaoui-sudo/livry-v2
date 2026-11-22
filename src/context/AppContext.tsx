@@ -8,6 +8,7 @@ import {
   BarcodeVoteRecord,
   UserDevice,
   DeviceStats,
+  GuideConfig,
 } from '../types';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { parseProductsFromCsv, exportProductsToCsv } from '../utils/csvImporter';
@@ -20,6 +21,7 @@ import {
   deleteAllProductsFromSupabase,
   fetchTipsFromSupabase,
   upsertTipInSupabase,
+  deleteTipInSupabase,
   seedTipsToSupabase,
   fetchBarcodeVotesFromSupabase,
   saveBarcodeVoteToSupabase,
@@ -34,6 +36,19 @@ import {
 import { supabasePublic } from '../services/supabaseClient';
 import { triggerHaptic } from '../utils/haptics';
 import { ensureDailyBackup } from '../services/dailyBackupService';
+import { sanitizeImageUrl } from '../utils/securityUtils';
+import { logAppEvent } from '../services/activityLogService';
+import {
+  validatePersistedAdminSession,
+  clearAdminSession,
+  syncAdminAuthConfigFromCloud,
+} from '../services/adminAuthService';
+import {
+  DEFAULT_GUIDE_CONFIG,
+  getLocalGuideConfig,
+  fetchGuideConfigFromCloud,
+  saveGuideConfigToCloud,
+} from '../services/guideContentService';
 
 export type ActiveTab = 'home' | 'library' | 'admin' | 'tips' | 'suggest';
 
@@ -122,6 +137,11 @@ interface AppContextType {
   updateTip: (updated: TipPost) => void;
   deleteTip: (id: string) => void;
   likeTip: (id: string) => void;
+
+  // Editable Full-Page Guide Configuration
+  guideConfig: GuideConfig;
+  updateGuideConfig: (nextConfig: GuideConfig) => Promise<{ success: boolean; error?: string }>;
+  resetGuideConfig: () => Promise<void>;
 }
 
 const STORAGE_KEY_PRODUCTS = 'finder_livry_products_v3';
@@ -322,10 +342,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [refreshUserDevices]);
 
-  const [role, setRoleState] = useState<Role>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_ROLE);
-    return (saved as Role) || 'Pickeur';
-  });
+  // Role starts safely as Pickeur and upgrades ONLY after cryptographic session validation
+  const [role, setRoleState] = useState<Role>('Pickeur');
+  const roleRef = useRef<Role>('Pickeur');
+  useEffect(() => {
+    roleRef.current = role;
+  }, [role]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await syncAdminAuthConfigFromCloud();
+      const valid = await validatePersistedAdminSession();
+      if (!cancelled) {
+        setRoleState(valid ? 'Admin' : 'Pickeur');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const [guideConfig, setGuideConfig] = useState<GuideConfig>(() => getLocalGuideConfig());
 
   const [products, setProducts] = useState<Product[]>(() => {
     try {
@@ -546,6 +584,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setTips(tipsRes.tips);
         }
 
+        fetchGuideConfigFromCloud()
+          .then((cfg) => setGuideConfig(cfg))
+          .catch(() => {});
+
         if (votesRes.success && Object.keys(votesRes.votes).length > 0) {
           setBarcodeVotes((prev) => ({
             ...prev,
@@ -566,7 +608,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSyncStatus('syncing');
 
     try {
-      const res = await fetchProductsFromSupabase();
+      const [res, tipsRes, freshGuide] = await Promise.all([
+        fetchProductsFromSupabase(),
+        fetchTipsFromSupabase(),
+        fetchGuideConfigFromCloud().catch(() => null),
+      ]);
+      if (tipsRes.success) {
+        setTips(tipsRes.tips);
+      }
+      if (freshGuide) {
+        setGuideConfig(freshGuide);
+      }
       if (res.success) {
         const remoteList = res.products;
         setProducts(remoteList);
@@ -582,6 +634,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLastSyncTimestamp(note);
         localStorage.setItem(STORAGE_KEY_LAST_SYNC, note);
         setSyncStatus('synced');
+
+        logAppEvent({
+          category: 'SYSTEM',
+          action: 'MANUAL_SYNC',
+          actorRole: roleRef.current,
+          target: 'Catalogue Supabase',
+          details: `Synchronisation manuelle réussie (${remoteList.length} articles).`,
+        }).catch(() => {});
 
         triggerHaptic('success');
         showToast(`✅ Catalogue à jour : ${remoteList.length} articles disponibles !`);
@@ -660,9 +720,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               'postgres_changes',
               { event: '*', schema: 'public', table: 'tips' },
               async () => {
-                const freshTips = await fetchTipsFromSupabase();
+                const [freshTips, freshGuide] = await Promise.all([
+                  fetchTipsFromSupabase(),
+                  fetchGuideConfigFromCloud().catch(() => null),
+                ]);
                 if (freshTips.success && isMounted) {
                   setTips(freshTips.tips);
+                }
+                if (freshGuide && isMounted) {
+                  setGuideConfig(freshGuide);
                 }
               }
             )
@@ -773,35 +839,138 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = { ...target, isEnabled: !target.isEnabled };
     setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
     upsertProductInSupabase(updated).catch(() => {});
+
+    logAppEvent({
+      category: 'PRODUCT',
+      action: 'PRODUCT_VISIBILITY_CHANGED',
+      actorRole: roleRef.current,
+      target: `#${target.id} ${target.name}`,
+      details: updated.isEnabled
+        ? `Produit rendu Visible (${target.code})`
+        : `Produit Masqué (${target.code})`,
+    }).catch(() => {});
   }, []);
 
-  const updateProduct = useCallback(async (updated: Product) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  const updateProduct = useCallback(async (updatedRaw: Product) => {
+    const prev = productsRef.current.find((p) => p.id === updatedRaw.id);
+    const sanitizedImg = updatedRaw.imageUrl ? sanitizeImageUrl(updatedRaw.imageUrl) : undefined;
+    const updated: Product = {
+      ...updatedRaw,
+      imageUrl: sanitizedImg || undefined,
+    };
+
+    setProducts((prevList) => prevList.map((p) => (p.id === updated.id ? updated : p)));
     upsertProductInSupabase(updated).catch(() => {});
+
+    const formatVStatus = (v?: string) => {
+      if (v === '100') return '100% Khdam (Bleu)';
+      if (v === '50') return '50% Khdam (Orange)';
+      if (v === 'broken') return 'Makhdamch daba (Rouge)';
+      return 'Aucune';
+    };
+
+    if (prev) {
+      const changes: string[] = [];
+      const prevV = prev.verificationStatus || (prev.isVerified100 ? '100' : 'none');
+      const nextV = updated.verificationStatus || (updated.isVerified100 ? '100' : 'none');
+
+      if (prev.code !== updated.code) changes.push(`Code: "${prev.code}" → "${updated.code}"`);
+      if (prev.name !== updated.name) changes.push(`Nom: "${prev.name}" → "${updated.name}"`);
+      if (prev.department !== updated.department) changes.push(`Rayon: "${prev.department}" → "${updated.department}"`);
+      if (prev.category !== updated.category) changes.push(`Catégorie: "${prev.category}" → "${updated.category}"`);
+      if (prev.quantite !== updated.quantite) changes.push(`Unité: "${prev.quantite || '-'}" → "${updated.quantite || '-'}"`);
+      if (prev.isEnabled !== updated.isEnabled) changes.push(`Visibilité: ${prev.isEnabled ? 'Visible' : 'Masqué'} → ${updated.isEnabled ? 'Visible' : 'Masqué'}`);
+      if ((prev.imageUrl || '') !== (updated.imageUrl || '')) changes.push(`Image modifiée`);
+      if ((prev.barcodeMarjane || '') !== (updated.barcodeMarjane || '')) changes.push(`Marjane: "${prev.barcodeMarjane || '-'}" → "${updated.barcodeMarjane || '-'}"`);
+      if ((prev.barcodeP2 || '') !== (updated.barcodeP2 || '')) changes.push(`Marjane 2: "${prev.barcodeP2 || '-'}" → "${updated.barcodeP2 || '-'}"`);
+      if ((prev.barcodeInterne || '') !== (updated.barcodeInterne || '')) changes.push(`Interne: "${prev.barcodeInterne || '-'}" → "${updated.barcodeInterne || '-'}"`);
+      if ((prev.barcodeMiniSecours || '') !== (updated.barcodeMiniSecours || '')) changes.push(`Mini: "${prev.barcodeMiniSecours || '-'}" → "${updated.barcodeMiniSecours || '-'}"`);
+      if ((prev.barcodeSecours || '') !== (updated.barcodeSecours || '')) changes.push(`Sec: "${prev.barcodeSecours || '-'}" → "${updated.barcodeSecours || '-'}"`);
+      if ((prev.barcodeP3 || '') !== (updated.barcodeP3 || '')) changes.push(`Sec 2: "${prev.barcodeP3 || '-'}" → "${updated.barcodeP3 || '-'}"`);
+      if (prevV !== nextV) changes.push(`Statut Icône: ${formatVStatus(prevV)} → ${formatVStatus(nextV)}`);
+
+      const onlyVerificationChanged = changes.length === 1 && prevV !== nextV;
+      logAppEvent({
+        category: onlyVerificationChanged ? 'VERIFICATION' : 'PRODUCT',
+        action: onlyVerificationChanged
+          ? `BADGE_STATUS_${nextV.toUpperCase()}`
+          : 'PRODUCT_UPDATED',
+        actorRole: roleRef.current,
+        target: `#${updated.id} ${updated.name} (Code: ${updated.code})`,
+        details: changes.length > 0 ? changes.join(' | ') : 'Produit ré-enregistré sans changement.',
+      }).catch(() => {});
+    } else {
+      logAppEvent({
+        category: 'PRODUCT',
+        action: 'PRODUCT_UPDATED',
+        actorRole: roleRef.current,
+        target: `#${updated.id} ${updated.name}`,
+        details: `Mise à jour produit (${updated.code}).`,
+      }).catch(() => {});
+    }
   }, []);
 
   const addProduct = useCallback(async (newProduct: Omit<Product, 'id'>) => {
     const maxId = productsRef.current.reduce((max, p) => Math.max(max, p.id), 0);
-    const productWithId: Product = { ...newProduct, id: maxId + 1 };
+    const sanitizedImg = newProduct.imageUrl ? sanitizeImageUrl(newProduct.imageUrl) : undefined;
+    const productWithId: Product = {
+      ...newProduct,
+      imageUrl: sanitizedImg || undefined,
+      id: maxId + 1,
+    };
     setProducts((prev) => [productWithId, ...prev]);
     upsertProductInSupabase(productWithId).catch(() => {});
+
+    logAppEvent({
+      category: 'PRODUCT',
+      action: 'PRODUCT_CREATED',
+      actorRole: roleRef.current,
+      target: `#${productWithId.id} ${productWithId.name}`,
+      details: `Nouveau produit ajouté (Code: ${productWithId.code}, Rayon: ${productWithId.department}, Unité: ${productWithId.quantite || 'pièce'}).`,
+    }).catch(() => {});
   }, []);
 
   const deleteProduct = useCallback(async (id: number) => {
+    const target = productsRef.current.find((p) => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
     deleteProductInSupabase(id).catch(() => {});
+
+    logAppEvent({
+      category: 'PRODUCT',
+      action: 'PRODUCT_DELETED',
+      actorRole: roleRef.current,
+      target: target ? `#${id} ${target.name} (${target.code})` : `#${id}`,
+      details: target
+        ? `Article "${target.name}" (Code: ${target.code}) supprimé du catalogue.`
+        : `Article #${id} supprimé du catalogue.`,
+    }).catch(() => {});
   }, []);
 
   const resetCatalogue = useCallback(() => {
     setProducts(INITIAL_PRODUCTS);
     localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
+    logAppEvent({
+      category: 'SYSTEM',
+      action: 'CATALOGUE_RESET',
+      actorRole: roleRef.current,
+      target: 'Catalogue Local',
+      details: `Réinitialisation aux ${INITIAL_PRODUCTS.length} articles par défaut.`,
+    }).catch(() => {});
     showToast('Catalogue réinitialisé aux produits par défaut.');
   }, [showToast]);
 
   const clearAllProducts = useCallback(async () => {
+    const previousCount = productsRef.current.length;
     setProducts([]);
     localStorage.removeItem(STORAGE_KEY_PRODUCTS);
     await deleteAllProductsFromSupabase();
+    logAppEvent({
+      category: 'SYSTEM',
+      action: 'CATALOGUE_CLEARED',
+      actorRole: roleRef.current,
+      target: 'Catalogue Complet',
+      details: `Suppression de tous les produits (${previousCount} articles supprimés).`,
+    }).catch(() => {});
     showToast('Tous les produits ont été supprimés.');
   }, [showToast]);
 
@@ -812,6 +981,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.success) {
         setProducts(INITIAL_PRODUCTS);
         setSyncStatus('synced');
+        logAppEvent({
+          category: 'IMPORT_EXPORT',
+          action: 'SUPABASE_SEED_INITIAL',
+          actorRole: roleRef.current,
+          target: 'Supabase Products',
+          details: `Base Supabase initialisée avec ${res.count} articles.`,
+        }).catch(() => {});
         showToast(`Base Supabase initialisée avec ${res.count} articles.`);
       } else {
         setSyncStatus('error');
@@ -829,6 +1005,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await seedProductsToSupabase(productsRef.current);
       if (res.success) {
         setSyncStatus('synced');
+        logAppEvent({
+          category: 'IMPORT_EXPORT',
+          action: 'SUPABASE_PUSH_ALL',
+          actorRole: roleRef.current,
+          target: 'Supabase Products',
+          details: `${res.count} articles envoyés vers Supabase.`,
+        }).catch(() => {});
         showToast(`${res.count} articles envoyés vers Supabase.`);
       } else {
         setSyncStatus('error');
@@ -872,6 +1055,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           seedProductsToSupabase(merged).catch(console.warn);
         }
 
+        logAppEvent({
+          category: 'IMPORT_EXPORT',
+          action: 'CSV_IMPORTED',
+          actorRole: roleRef.current,
+          target: `Catalogue (${mode})`,
+          details: `Import CSV réussi : ${parsed.length} articles (mode: ${mode}).`,
+        }).catch(() => {});
+
         return { success: true, count: parsed.length };
       } catch (e: any) {
         return { success: false, count: 0, error: e.message };
@@ -881,27 +1072,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const exportCatalogueCsv = useCallback(() => {
+    logAppEvent({
+      category: 'IMPORT_EXPORT',
+      action: 'CSV_EXPORTED',
+      actorRole: roleRef.current,
+      target: 'Catalogue 12 colonnes',
+      details: `Export CSV généré (${productsRef.current.length} articles).`,
+    }).catch(() => {});
     return exportProductsToCsv(productsRef.current);
   }, []);
 
   const addTip = useCallback((tipData: Omit<TipPost, 'id' | 'createdAt' | 'likes'>) => {
+    const safeImg = tipData.imageUrl ? sanitizeImageUrl(tipData.imageUrl) : undefined;
     const newTip: TipPost = {
       ...tipData,
+      imageUrl: safeImg || undefined,
       id: `tip-${Date.now()}`,
       createdAt: "Aujourd'hui",
       likes: 0,
     };
     setTips((prev) => [newTip, ...prev]);
     upsertTipInSupabase(newTip).catch(console.warn);
+
+    logAppEvent({
+      category: 'TIPS',
+      action: 'TIP_CREATED',
+      actorRole: roleRef.current,
+      target: newTip.title,
+      details: `Nouveau tuto publié (${newTip.category} · cible: ${newTip.targetAudience || 'Tous'}).`,
+    }).catch(() => {});
   }, []);
 
-  const updateTip = useCallback((updated: TipPost) => {
+  const updateTip = useCallback((updatedRaw: TipPost) => {
+    const safeImg = updatedRaw.imageUrl ? sanitizeImageUrl(updatedRaw.imageUrl) : undefined;
+    const updated: TipPost = { ...updatedRaw, imageUrl: safeImg || undefined };
     setTips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     upsertTipInSupabase(updated).catch(console.warn);
+
+    logAppEvent({
+      category: 'TIPS',
+      action: 'TIP_UPDATED',
+      actorRole: roleRef.current,
+      target: updated.title,
+      details: `Tuto modifié (${updated.category} · cible: ${updated.targetAudience || 'Tous'}).`,
+    }).catch(() => {});
   }, []);
 
   const deleteTip = useCallback((id: string) => {
-    setTips((prev) => prev.filter((t) => t.id !== id));
+    setTips((prev) => {
+      const target = prev.find((t) => t.id === id);
+      logAppEvent({
+        category: 'TIPS',
+        action: 'TIP_DELETED',
+        actorRole: roleRef.current,
+        target: target?.title || id,
+        details: `Tuto supprimé (${target?.title || id}).`,
+      }).catch(() => {});
+      return prev.filter((t) => t.id !== id);
+    });
+    deleteTipInSupabase(id).catch(console.warn);
   }, []);
 
   const likeTip = useCallback((id: string) => {
@@ -916,6 +1145,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
   }, []);
+
+  const updateGuideConfig = useCallback(async (nextConfig: GuideConfig) => {
+    const res = await saveGuideConfigToCloud(nextConfig);
+    setGuideConfig(res.config);
+    await logAppEvent({
+      category: 'GUIDE',
+      action: 'GUIDE_UPDATED',
+      actorRole: roleRef.current,
+      target: `Guide Pickeur (v${res.config.version})`,
+      details: `Contenu du Guide modifié par Admin (${res.config.steps.map((s) => s.shortLabel).join(' / ')}).`,
+    });
+    return { success: res.success, error: res.error };
+  }, []);
+
+  const resetGuideConfig = useCallback(async () => {
+    const res = await saveGuideConfigToCloud({
+      ...DEFAULT_GUIDE_CONFIG,
+      version: (guideConfig.version || 1) + 1,
+      updatedAt: new Date().toISOString(),
+    });
+    setGuideConfig(res.config);
+    await logAppEvent({
+      category: 'GUIDE',
+      action: 'GUIDE_RESET',
+      actorRole: roleRef.current,
+      target: 'Guide Pickeur',
+      details: 'Contenu du Guide réinitialisé aux valeurs par défaut.',
+    });
+  }, [guideConfig.version]);
 
   // Free Community Barcode Voting: Anyone can vote like or dislike!
   const voteBarcode = useCallback((barcode: string, type: 'like' | 'dislike') => {
@@ -985,6 +1243,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     });
 
+    logAppEvent({
+      category: 'BARCODE_VOTE',
+      action: type === 'like' ? 'BARCODE_VOTE_LIKE' : 'BARCODE_VOTE_DISLIKE',
+      actorRole: roleRef.current,
+      target: barcode,
+      details: `Vote "${type}" sur le code-barres ${barcode} (Likes: ${newLikes}, Dislikes: ${newDislikes}).`,
+    }).catch(() => {});
+
     if (isPromoted) {
       showToast(`⭐ Code-barres validé (+15 votes) !`);
     } else if (isDeleted) {
@@ -1000,21 +1266,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isPromoted,
       isDeleted,
     };
-  }, [showToast]);
+  }, [showToast, userIp]);
 
   const resetBarcodeVotes = useCallback(() => {
     setBarcodeVotes(INITIAL_BARCODE_VOTES);
     try {
       localStorage.setItem(STORAGE_KEY_BARCODE_VOTES, JSON.stringify(INITIAL_BARCODE_VOTES));
     } catch {}
+    logAppEvent({
+      category: 'BARCODE_VOTE',
+      action: 'BARCODE_VOTES_RESET',
+      actorRole: roleRef.current,
+      target: 'Votes communautaires',
+      details: 'Tous les votes codes-barres locaux ont été réinitialisés.',
+    }).catch(() => {});
     showToast('Votes réinitialisés.');
   }, [showToast]);
 
   const setRole = useCallback((newRole: Role) => {
+    const prevRole = roleRef.current;
     setRoleState(newRole);
-    try {
-      localStorage.setItem(STORAGE_KEY_ROLE, newRole);
-    } catch {}
+    if (newRole === 'Pickeur') {
+      clearAdminSession();
+      if (prevRole === 'Admin') {
+        logAppEvent({
+          category: 'AUTH',
+          action: 'ADMIN_LOCKED',
+          actorRole: 'Admin',
+          target: 'Session Data',
+          details: 'Session Administrateur verrouillée manuellement (retour en Pickeur).',
+        }).catch(() => {});
+      }
+    } else {
+      try {
+        localStorage.setItem(STORAGE_KEY_ROLE, newRole);
+      } catch {}
+    }
   }, []);
 
   return (
@@ -1079,6 +1366,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateTip,
         deleteTip,
         likeTip,
+        guideConfig,
+        updateGuideConfig,
+        resetGuideConfig,
       }}
     >
       {children}

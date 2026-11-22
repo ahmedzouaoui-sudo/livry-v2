@@ -14,10 +14,13 @@ import {
   Check,
   Database,
   BookOpen,
+  Play,
+  ArrowRight,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { TipCategory, TipPost } from '../types';
 import { triggerHaptic } from '../utils/haptics';
+import { sanitizeImageUrl } from '../utils/securityUtils';
 import { AppTutorialModal } from './AppTutorialModal';
 
 interface AstucesScreenProps {
@@ -25,13 +28,14 @@ interface AstucesScreenProps {
 }
 
 export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
-  const { tips, addTip, updateTip, deleteTip, likeTip, role, seedTips, setActiveTab } = useApp();
+  const { tips, addTip, updateTip, deleteTip, likeTip, role, setActiveTab, guideConfig } = useApp();
 
   const [searchTip, setSearchTip] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('ALL');
   const [audienceFilter, setAudienceFilter] = useState<'ALL' | 'Pickeur' | 'Livreur' | 'Référent'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [tutorialInitialSlide, setTutorialInitialSlide] = useState(0);
   const [editingTip, setEditingTip] = useState<TipPost | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -197,6 +201,8 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
     e.preventDefault();
     if (!formTitle.trim() || !formContent.trim()) return;
 
+    const safeImage = sanitizeImageUrl(formImageUrl);
+
     if (editingTip) {
       updateTip({
         ...editingTip,
@@ -205,7 +211,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         targetAudience: formTargetAudience,
         content: formContent.trim(),
         authorName: formAuthorName.trim() || editingTip.authorName,
-        imageUrl: formImageUrl.trim() || undefined,
+        imageUrl: safeImage,
       });
     } else {
       addTip({
@@ -215,7 +221,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         content: formContent.trim(),
         authorRole: role,
         authorName: formAuthorName.trim() || `${role} Livry`,
-        imageUrl: formImageUrl.trim() || undefined,
+        imageUrl: safeImage,
       });
     }
 
@@ -233,15 +239,15 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             triggerHaptic('light');
             onBack();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] text-[#0759A4] bg-white border border-[#E0E0E6]/80 shadow-2xs hover:bg-[#EBF4FC] active:scale-95 transition font-bold text-xs shrink-0 cursor-pointer select-none"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-gray-800 dark:text-slate-100 glass-surface hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition font-bold text-xs shrink-0 cursor-pointer select-none"
         >
-          <ArrowLeft className="w-4 h-4 text-[#0759A4]" />
+          <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
           <span>Retour</span>
         </button>
 
         <div className="flex items-center gap-1.5">
           <Lightbulb className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <h1 className="text-sm sm:text-base font-bold text-[#171717]">
+          <h1 className="text-sm sm:text-base font-extrabold text-gray-900 dark:text-white tracking-tight">
             Astuces & Tutos
           </h1>
         </div>
@@ -255,7 +261,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 triggerHaptic('medium');
                 setActiveTab('admin');
               }}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-[12px] bg-[#FDF0F5] hover:bg-[#FCE4EC] text-[#B43167] border border-[#B43167]/30 text-xs font-black transition active:scale-95 cursor-pointer shadow-2xs select-none"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-[#0759A4] dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-black transition active:scale-95 cursor-pointer shadow-2xs select-none"
               title="Ouvrir le panneau Données & Base Supabase"
             >
               <Database className="w-3.5 h-3.5" />
@@ -267,7 +273,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 triggerHaptic('light');
                 handleOpenCreate();
               }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-[12px] bg-[#B43167] text-white font-bold text-xs shadow-xs hover:bg-[#992655] active:scale-95 transition cursor-pointer select-none"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0759A4] hover:bg-blue-700 text-white font-bold text-xs shadow-xs active:scale-95 transition cursor-pointer select-none"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nouveau</span>
@@ -278,41 +284,97 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Official Tutorial Callout Banner (B Darija) */}
-      <div className="mb-3 bg-gradient-to-r from-[#0759A4] via-[#094d8a] to-[#155B48] text-white rounded-[20px] p-3.5 sm:p-4 shadow-md flex items-center justify-between gap-3 relative overflow-hidden">
-        <div className="flex-1 min-w-0">
-          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider mb-1">
-            <BookOpen className="w-3 h-3" />
-            <span>Guide Officiel Pickeur (B Darija)</span>
-          </div>
-          <h2 className="text-xs sm:text-sm font-black leading-snug">
-            Kifach tkhadmo b'l'app &amp; qawa3id d mizan
-          </h2>
-          <p className="text-[10.5px] text-white/80 line-clamp-1 mt-0.5">
-            1. Mizan &amp; ticket • 2. Qlab &amp; Likes • 3. 3awnona f WhatsApp
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('medium');
-            setIsTutorialOpen(true);
-          }}
-          className="px-3 py-2 rounded-[12px] bg-white text-[#0759A4] hover:bg-[#EBF4FC] active:scale-95 text-xs font-black shadow-xs shrink-0 transition flex items-center gap-1.5 cursor-pointer select-none"
+      {/* Official Tutorial Callout Hero (Styled after Showcase Images + Glassmorphism) */}
+      <div
+        className="mb-3.5 relative rounded-[24px] p-4 sm:p-5 text-white overflow-hidden border border-white/20 shadow-[0_16px_44px_rgba(7,11,20,0.32)]"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 75% at 45% 45%, rgba(168, 22, 68, 0.52) 0%, rgba(7, 89, 164, 0.36) 52%, rgba(8, 11, 22, 0.97) 100%)',
+        }}
+      >
+        {/* Subtle Diagonal Rose/Magenta Split Accent */}
+        <svg
+          className="pointer-events-none absolute inset-0 w-full h-full opacity-55"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
         >
-          <span>Chouf l'Guide</span>
-        </button>
+          <line x1="48" y1="100" x2="72" y2="0" stroke="#EC4899" strokeWidth="0.6" />
+        </svg>
+
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+          {/* Left: Badge, Headline, White Primary CTA */}
+          <div className="sm:col-span-7 space-y-2.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/12 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white/95">
+              <BookOpen className="w-3 h-3 text-rose-400" />
+              <span>Guide Officiel Pickeur</span>
+              <ArrowRight className="w-3 h-3 text-rose-400" />
+            </div>
+
+            <h2 className="text-lg sm:text-xl font-black leading-[1.12] tracking-tight text-white">
+              Kifach tkhdam b&apos;Livry Finder b&apos;ser3a
+            </h2>
+
+            <p className="text-[11px] text-white/75 leading-relaxed">
+              Ticket Mizan vs Finder, qra2a dyal fiche produit, u kifach t’solvi chi article bloqué.
+            </p>
+
+            <div className="flex items-center gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('medium');
+                  setTutorialInitialSlide(0);
+                  setIsTutorialOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-white text-slate-950 hover:bg-white/90 active:scale-95 text-xs font-black shadow-lg transition flex items-center gap-1.5 cursor-pointer select-none"
+              >
+                <span>Chouf l&apos;Guide</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Interactive Vertical Step List */}
+          <div className="sm:col-span-5 flex flex-col space-y-1.5 sm:pl-3 sm:border-l sm:border-white/15">
+            {guideConfig.steps.map((step, i) => (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setTutorialInitialSlide(step.id);
+                  setIsTutorialOpen(true);
+                }}
+                className={`group flex items-center gap-2 text-left py-1.5 px-2.5 rounded-xl transition cursor-pointer ${
+                  i === 0
+                    ? 'bg-white/12 backdrop-blur-md border border-white/20 text-white font-black'
+                    : 'text-white/50 hover:text-white hover:bg-white/8 font-bold'
+                }`}
+              >
+                <Play
+                  className={`w-2.5 h-2.5 shrink-0 transition-opacity ${
+                    i === 0
+                      ? 'text-rose-500 fill-rose-500 opacity-100'
+                      : 'text-rose-400 fill-rose-400 opacity-0 group-hover:opacity-80'
+                  }`}
+                />
+                <span className="text-xs truncate">{step.shortLabel}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Target Audience Filter Chips: [Tous] [Pickeurs] [Livreurs] [Référents] */}
-      <div className="mb-2.5 bg-white p-1 rounded-[16px] border border-[#E0E0E6]/80 shadow-2xs grid grid-cols-4 gap-1">
+      {/* Target Audience Filter */}
+      <div className="mb-2.5 glass-surface p-1 rounded-2xl grid grid-cols-4 gap-1">
         <button
           type="button"
           onClick={() => setAudienceFilter('ALL')}
-          className={`py-1.5 px-1 sm:px-2 rounded-[12px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'ALL'
-              ? 'bg-[#171717] text-white shadow-xs'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800'
           }`}
         >
           👥 Tous
@@ -320,10 +382,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setAudienceFilter('Pickeur')}
-          className={`py-1.5 px-1 sm:px-2 rounded-[12px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'Pickeur'
               ? 'bg-[#0759A4] text-white shadow-xs'
-              : 'text-[#0759A4] hover:bg-[#EBF4FC]'
+              : 'text-[#0759A4] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40'
           }`}
         >
           🛒 Pickeurs
@@ -331,10 +393,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setAudienceFilter('Livreur')}
-          className={`py-1.5 px-1 sm:px-2 rounded-[12px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'Livreur'
-              ? 'bg-[#28B873] text-white shadow-xs'
-              : 'text-[#1E8E55] hover:bg-[#EAF8F1]'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
           }`}
         >
           🛵 Livreurs
@@ -342,10 +404,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setAudienceFilter('Référent')}
-          className={`py-1.5 px-1 sm:px-2 rounded-[12px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'Référent'
-              ? 'bg-[#E65100] text-white shadow-xs'
-              : 'text-[#E65100] hover:bg-[#FFF3E0]'
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
           }`}
         >
           ⭐ Référents
@@ -353,7 +415,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
       </div>
 
       {/* Search Bar for Tips */}
-      <div className="relative mb-2.5 bg-[#FFFFFF] rounded-[16px] border border-[#E0E0E6] shadow-2xs">
+      <div className="relative mb-2.5 glass-surface rounded-2xl focus-within:border-[#0759A4] transition-colors">
         <div className="flex items-center h-[44px] px-3.5">
           <Search className="w-4 h-4 text-gray-400 mr-2.5 shrink-0" />
           <input
@@ -361,13 +423,13 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             value={searchTip}
             onChange={(e) => setSearchTip(e.target.value)}
             placeholder="Rechercher une astuce (balance, scan, sachet, caisse...)"
-            className="w-full h-full bg-transparent border-none outline-none text-xs font-semibold text-[#171717] placeholder-gray-400"
+            className="w-full h-full bg-transparent border-none outline-none text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400"
           />
           {searchTip && (
             <button
               type="button"
               onClick={() => setSearchTip('')}
-              className="p-1 rounded-full text-gray-400 hover:text-gray-700 cursor-pointer"
+              className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -380,10 +442,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setSelectedCat('ALL')}
-          className={`px-3 py-1.5 rounded-[12px] text-xs font-bold transition shrink-0 cursor-pointer select-none ${
+          className={`px-3 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer select-none ${
             selectedCat === 'ALL'
-              ? 'bg-[#0759A4] text-white shadow-xs'
-              : 'bg-white border border-gray-200 text-[#333333] hover:bg-gray-50'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
+              : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
           }`}
         >
           Toutes catégories
@@ -393,10 +455,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             key={cat}
             type="button"
             onClick={() => setSelectedCat(cat)}
-            className={`px-3 py-1.5 rounded-[12px] text-xs font-bold transition shrink-0 cursor-pointer select-none ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer select-none ${
               selectedCat === cat
                 ? 'bg-[#0759A4] text-white shadow-xs'
-                : 'bg-white border border-gray-200 text-[#333333] hover:bg-gray-50'
+                : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
             }`}
           >
             {cat}
@@ -414,12 +476,11 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             return (
               <div
                 key={post.id}
-                className="bg-[#FFFFFF] p-3.5 sm:p-4 rounded-[18px] border border-[#E0E0E6]/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-xs transition-all space-y-2.5"
+                className="glass-surface p-3.5 sm:p-4 rounded-2xl hover:shadow-md transition-all space-y-2.5"
               >
                 {/* Header of the Post: Badges + Author + Date */}
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {/* Audience badge */}
                     <span
                       className="text-[10px] font-bold px-2 py-0.5 rounded-[8px] border"
                       style={{
@@ -431,7 +492,6 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                       {audStyle.label}
                     </span>
 
-                    {/* Category badge */}
                     <span
                       className="text-[10px] font-bold px-2 py-0.5 rounded-[8px] border"
                       style={{
@@ -443,18 +503,18 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                       {post.category}
                     </span>
 
-                    <span className="text-[11px] font-semibold text-gray-600">
+                    <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">
                       • {post.authorName || `${post.authorRole} Livry`}
                     </span>
                   </div>
 
-                  <span className="text-[10px] text-gray-400 font-medium">
+                  <span className="text-[10px] text-gray-400 dark:text-slate-500 font-medium tabular-nums">
                     {post.createdAt}
                   </span>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-sm font-bold text-[#171717] leading-snug">
+                <h3 className="text-sm font-extrabold text-gray-900 dark:text-white leading-snug tracking-tight">
                   {post.title}
                 </h3>
 
@@ -462,7 +522,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 {post.imageUrl && (
                   <div
                     onClick={() => setPreviewImage(post.imageUrl!)}
-                    className="relative rounded-[14px] overflow-hidden bg-gray-50 border border-gray-200 max-h-56 cursor-pointer group"
+                    className="relative rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 max-h-56 cursor-pointer group"
                     title="Cliquer pour agrandir la photo"
                   >
                     <img
@@ -470,7 +530,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                       alt={post.title}
                       className="w-full h-auto max-h-56 object-cover group-hover:scale-102 transition-transform duration-200"
                     />
-                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1">
+                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg flex items-center gap-1">
                       <ZoomIn className="w-3 h-3" />
                       <span>Agrandir</span>
                     </div>
@@ -478,16 +538,16 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 )}
 
                 {/* Content */}
-                <p className="text-xs text-[#333333] leading-relaxed whitespace-pre-line font-normal">
+                <p className="text-xs text-gray-700 dark:text-slate-300 leading-relaxed whitespace-pre-line font-normal">
                   {post.content}
                 </p>
 
                 {/* Footer Actions: Like (all) / Edit & Delete (Admin ONLY) */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => likeTip(post.id)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-[#0759A4] p-1 rounded-[8px] transition active:scale-95 cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-slate-300 hover:text-[#0759A4] dark:hover:text-blue-400 p-1 rounded-lg transition active:scale-95 cursor-pointer tabular-nums"
                   >
                     <ThumbsUp className="w-3.5 h-3.5 text-amber-500" />
                     <span>Utile ({post.likes || 0})</span>
@@ -498,7 +558,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(post)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-[8px] bg-gray-100 text-gray-700 hover:bg-[#0759A4] hover:text-white text-[11px] font-bold transition cursor-pointer"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-[11px] font-bold transition cursor-pointer"
                         title="Modifier ce tuto"
                       >
                         <Pencil className="w-3 h-3" />
@@ -508,7 +568,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                       <button
                         type="button"
                         onClick={() => deleteTip(post.id)}
-                        className="p-1.5 rounded-[8px] text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
                         title="Supprimer ce tuto"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -520,19 +580,19 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             );
           })
         ) : (
-          <div className="bg-white rounded-[16px] p-8 text-center border border-gray-100 shadow-2xs mt-3">
-            <Lightbulb className="w-8 h-8 text-amber-400 mx-auto mb-2 opacity-70" />
-            <p className="text-xs font-bold text-[#171717]">Aucune astuce trouvée</p>
-            <p className="text-[11px] text-gray-500 mt-1 max-w-sm mx-auto">
+          <div className="bg-white dark:bg-[#0E1526] rounded-2xl p-8 text-center border border-gray-200 dark:border-slate-800 shadow-2xs mt-3">
+            <Lightbulb className="w-8 h-8 text-amber-400 mx-auto mb-2 opacity-75" />
+            <p className="text-xs font-bold text-gray-800 dark:text-slate-200">Aucune astuce trouvée</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               {role === 'Admin'
-                ? "Cliquez sur 'Nouveau tuto' pour rédiger une consigne pour les Pickeurs ou Livreurs."
+                ? "Cliquez sur 'Nouveau' pour rédiger une consigne pour les Pickeurs ou Livreurs."
                 : "Les astuces publiées par l'administrateur s'afficheront ici."}
             </p>
             {role === 'Admin' && (
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                className="mt-3.5 px-3.5 py-1.5 rounded-[12px] bg-[#B43167] text-white text-xs font-bold hover:bg-[#992655] transition cursor-pointer"
+                className="mt-3.5 px-3.5 py-1.5 rounded-xl bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
               >
                 Créer un tuto
               </button>
@@ -543,18 +603,18 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
       {/* Admin Tutorial Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-lg bg-white rounded-[20px] p-5 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl border border-gray-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] flex flex-col text-gray-900 dark:text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#FDF0F5] text-[#B43167] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                   <Lightbulb className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#171717]">
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white">
                     {editingTip ? 'Modifier le Tuto' : 'Nouveau Tuto Admin'}
                   </h3>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-gray-500 dark:text-slate-400">
                     Définissez la cible (Pickeur / Livreur / Tous) et les instructions
                   </p>
                 </div>
@@ -565,7 +625,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   setIsModalOpen(false);
                   setEditingTip(null);
                 }}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -574,17 +634,17 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             <form onSubmit={handleSubmit} className="space-y-3 text-xs overflow-y-auto pr-0.5">
               {/* Target Audience Selector */}
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1.5">
+                <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1.5">
                   Destinataires du tuto (Public cible) *
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setFormTargetAudience('Tous')}
-                    className={`py-2 px-1.5 rounded-[12px] text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
                       formTargetAudience === 'Tous'
-                        ? 'bg-[#171717] text-white border-[#171717] shadow-xs'
-                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white shadow-xs'
+                        : 'bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700'
                     }`}
                   >
                     <span>👥 Tous</span>
@@ -594,10 +654,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   <button
                     type="button"
                     onClick={() => setFormTargetAudience('Pickeur')}
-                    className={`py-2 px-1.5 rounded-[12px] text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
                       formTargetAudience === 'Pickeur'
                         ? 'bg-[#0759A4] text-white border-[#0759A4] shadow-xs'
-                        : 'bg-white text-[#0759A4] border-[#0759A4]/30 hover:bg-[#EBF4FC]'
+                        : 'bg-blue-50/50 dark:bg-blue-950/20 text-[#0759A4] dark:text-blue-400 border-blue-200 dark:border-blue-800/50'
                     }`}
                   >
                     <span>🛒 Pickeurs</span>
@@ -607,10 +667,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   <button
                     type="button"
                     onClick={() => setFormTargetAudience('Livreur')}
-                    className={`py-2 px-1.5 rounded-[12px] text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
                       formTargetAudience === 'Livreur'
-                        ? 'bg-[#28B873] text-white border-[#28B873] shadow-xs'
-                        : 'bg-white text-[#1E8E55] border-[#28B873]/30 hover:bg-[#EAF8F1]'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50'
                     }`}
                   >
                     <span>🛵 Livreurs</span>
@@ -620,10 +680,10 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   <button
                     type="button"
                     onClick={() => setFormTargetAudience('Référent')}
-                    className={`py-2 px-1.5 rounded-[12px] text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-1.5 rounded-xl text-xs font-bold border transition text-center cursor-pointer flex items-center justify-center gap-1 ${
                       formTargetAudience === 'Référent'
-                        ? 'bg-[#E65100] text-white border-[#E65100] shadow-xs'
-                        : 'bg-white text-[#E65100] border-[#E65100]/30 hover:bg-[#FFF3E0]'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                        : 'bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50'
                     }`}
                   >
                     <span>⭐ Référents</span>
@@ -634,7 +694,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
               {/* Title */}
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
                   Titre du tuto *
                 </label>
                 <input
@@ -642,20 +702,20 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="ex: Comment peser un sachet ou scanner l'étiquette"
-                  className="w-full p-2.5 border border-gray-200 rounded-[12px] font-semibold text-xs outline-none focus:border-[#B43167]"
+                  className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4]"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                  <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
                     Rayon / Domaine
                   </label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value as TipCategory)}
-                    className="w-full p-2 border border-gray-200 rounded-[12px] text-xs bg-white font-medium outline-none focus:border-[#B43167]"
+                    className="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white font-medium outline-none focus:border-[#0759A4]"
                   >
                     {categories.map((c) => (
                       <option key={c} value={c}>
@@ -666,7 +726,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                  <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
                     Signature / Auteur
                   </label>
                   <input
@@ -674,30 +734,29 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                     value={formAuthorName}
                     onChange={(e) => setFormAuthorName(e.target.value)}
                     placeholder="ex: Admin Livry"
-                    className="w-full p-2 border border-gray-200 rounded-[12px] text-xs outline-none focus:border-[#B43167]"
+                    className="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4]"
                   />
                 </div>
               </div>
 
               {/* Photo Upload Section */}
-              <div className="bg-gray-50 p-3 rounded-[14px] border border-gray-200 space-y-2">
+              <div className="bg-gray-50 dark:bg-slate-800/70 p-3 rounded-xl border border-gray-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-gray-700 flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-[#B43167]" />
-                    <span>Photo d'illustration (optionnelle)</span>
+                  <span className="text-[11px] font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
+                    <span>Photo d&apos;illustration (optionnelle)</span>
                   </span>
                   {formImageUrl && (
                     <button
                       type="button"
                       onClick={() => setFormImageUrl('')}
-                      className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                      className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
                     >
                       Supprimer la photo
                     </button>
                   )}
                 </div>
 
-                {/* Hidden File Input */}
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -707,7 +766,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 />
 
                 {formImageUrl ? (
-                  <div className="relative rounded-[12px] overflow-hidden max-h-40 border border-gray-300 bg-white">
+                  <div className="relative rounded-xl overflow-hidden max-h-40 border border-gray-200 dark:border-slate-700 bg-white">
                     <img
                       src={formImageUrl}
                       alt="Aperçu"
@@ -719,7 +778,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isCompressingImage}
-                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-[12px] bg-white border border-[#B43167]/30 hover:bg-[#FDF0F5] text-[#B43167] font-bold text-xs shadow-2xs transition active:scale-95 cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-[#0759A4] dark:text-blue-400 font-bold text-xs shadow-2xs transition active:scale-95 cursor-pointer"
                   >
                     <Camera className="w-4 h-4" />
                     <span>
@@ -728,18 +787,17 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   </button>
                 )}
 
-                {/* Paste URL option */}
                 <input
                   type="url"
                   value={formImageUrl.startsWith('data:') ? '' : formImageUrl}
                   onChange={(e) => setFormImageUrl(e.target.value)}
                   placeholder="Ou coller un lien direct d'image (https://...)"
-                  className="w-full p-2 bg-white border border-gray-200 rounded-[10px] text-[11px] outline-none focus:border-[#B43167]"
+                  className="w-full p-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-[11px] text-gray-900 dark:text-white outline-none focus:border-[#0759A4]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
                   Explications & Astuces *
                 </label>
                 <textarea
@@ -747,26 +805,26 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   onChange={(e) => setFormContent(e.target.value)}
                   placeholder="Expliquez la marche à suivre, la procédure pour la balance, la douchette, les codes..."
                   rows={4}
-                  className="w-full p-2.5 border border-gray-200 rounded-[12px] text-xs outline-none focus:border-[#B43167] leading-relaxed"
+                  className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4] leading-relaxed"
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
                     setIsModalOpen(false);
                     setEditingTip(null);
                   }}
-                  className="px-3.5 py-1.5 rounded-[10px] border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={isCompressingImage}
-                  className="px-4 py-1.5 rounded-[10px] bg-[#B43167] text-white font-bold hover:bg-[#992655] shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-xl bg-[#0759A4] hover:bg-blue-700 text-white font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{editingTip ? 'Enregistrer les modifications' : 'Publier le tuto'}</span>
@@ -792,7 +850,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
             <button
               type="button"
               onClick={() => setPreviewImage(null)}
-              className="absolute top-3 right-3 p-2 bg-black/60 text-white rounded-full hover:bg-black/80 transition"
+              className="absolute top-3 right-3 p-2 bg-black/70 text-white rounded-full hover:bg-black/90 transition"
             >
               <X className="w-5 h-5" />
             </button>
@@ -803,6 +861,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
       {/* Interactive 3-Slide Tutorial Modal */}
       <AppTutorialModal
         isOpen={isTutorialOpen}
+        initialSlide={tutorialInitialSlide}
         onClose={() => setIsTutorialOpen(false)}
         onOpenSuggest={() => {
           setIsTutorialOpen(false);

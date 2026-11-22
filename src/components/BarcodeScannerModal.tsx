@@ -172,18 +172,18 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-[480px] bg-[#121216] border border-white/10 rounded-[24px] overflow-hidden shadow-2xl flex flex-col">
+      <div className="relative w-full max-w-[480px] bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[#1A1A22] border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#0759A4]/30 border border-[#0759A4]/40 flex items-center justify-center text-[#3B82F6]">
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <Camera className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white leading-tight">
                 Scanner le code-barres
               </h3>
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-slate-400">
                 Pointez la caméra vers le code-barres
               </p>
             </div>
@@ -209,7 +209,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {/* Target Reticle Overlay */}
           {!errorMessage && (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <div className="relative w-[280px] h-[150px] border-2 border-[#0759A4]/80 rounded-[16px] shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+              <div className="relative w-[280px] h-[150px] border-2 border-blue-400/80 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
                 {/* Corner Accents */}
                 <span className="absolute -top-1 -left-1 w-4 h-4 border-t-3 border-l-3 border-emerald-400 rounded-tl-sm" />
                 <span className="absolute -top-1 -right-1 w-4 h-4 border-t-3 border-r-3 border-emerald-400 rounded-tr-sm" />
@@ -227,7 +227,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
           {/* Loading Indicator */}
           {isInitializing && !errorMessage && (
-            <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-2 z-10">
+            <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center gap-2 z-10">
               <RefreshCw className="w-7 h-7 text-white animate-spin" />
               <span className="text-xs text-white/80 font-medium">
                 Démarrage de la caméra...
@@ -237,15 +237,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="absolute inset-0 bg-[#121216]/95 p-6 flex flex-col items-center justify-center text-center gap-3 z-10">
-              <AlertCircle className="w-10 h-10 text-rose-400" />
-              <p className="text-xs text-gray-200 font-medium max-w-[280px]">
+            <div className="absolute inset-0 bg-slate-900/95 p-6 flex flex-col items-center justify-center text-center gap-3 z-10">
+              <AlertCircle className="w-10 h-10 text-red-400" />
+              <p className="text-xs text-slate-200 font-medium max-w-[280px]">
                 {errorMessage}
               </p>
               <button
                 type="button"
                 onClick={() => onClose()}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition cursor-pointer"
               >
                 Passer à la saisie manuelle
               </button>
@@ -254,7 +254,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         </div>
 
         {/* Bottom Toolbar Controls */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[#1A1A22] border-t border-white/10">
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-t border-slate-800">
           <button
             type="button"
             onClick={flipCamera}

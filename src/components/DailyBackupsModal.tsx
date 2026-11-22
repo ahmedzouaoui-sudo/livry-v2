@@ -36,6 +36,7 @@ import {
 } from '../services/dailyBackupService';
 import { exportProductsToCsv } from '../utils/csvImporter';
 import { triggerHaptic } from '../utils/haptics';
+import { logAppEvent } from '../services/activityLogService';
 
 interface DailyBackupsModalProps {
   isOpen: boolean;
@@ -130,6 +131,17 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
     try {
       const res = await createManualBackup(products);
       await loadBackups();
+      logAppEvent({
+        category: 'BACKUP',
+        action: 'BACKUP_MANUAL_CREATED',
+        actorRole: 'Admin',
+        target: `${products.length} articles`,
+        details: res.storageUploaded
+          ? `Backup manuel CSV + JSON envoyé vers Supabase Storage (${products.length} articles)`
+          : res.success
+            ? `Backup manuel Cloud DB créé (${products.length} articles)`
+            : `Backup manuel local créé (${res.error || 'hors ligne'})`,
+      });
       if (res.storageUploaded) {
         triggerHaptic('success');
         showToast(`✅ Fichiers CSV + JSON sauvegardés dans Supabase Storage (${products.length} articles) !`);
@@ -247,6 +259,13 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
 
       if (restored.success) {
         await syncWithSupabase(true);
+        logAppEvent({
+          category: 'BACKUP',
+          action: 'BACKUP_RESTORED',
+          actorRole: 'Admin',
+          target: backup.dateKey,
+          details: `Catalogue restauré depuis backup "${backup.title}" (${restored.count} articles)`,
+        });
         triggerHaptic('success');
         showToast(`✅ Backup du ${backup.dateKey} restauré (${restored.count} articles) !`);
         setConfirmRestoreId(null);
@@ -267,6 +286,13 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
     try {
       await deleteBackupById(backup.id, backup);
       setBackups((prev) => prev.filter((b) => b.id !== backup.id));
+      logAppEvent({
+        category: 'BACKUP',
+        action: 'BACKUP_DELETED',
+        actorRole: 'Admin',
+        target: backup.dateKey,
+        details: `Sauvegarde "${backup.title}" supprimée`,
+      });
       showToast(`🗑️ Sauvegarde et fichiers supprimés`);
     } finally {
       setDeletingId(null);
@@ -314,15 +340,15 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
       );
     }
     return (
-      <span className="text-[10px] text-gray-400 font-semibold">📱 Mémoire Locale</span>
+      <span className="text-[10px] text-gray-400 dark:text-slate-500 font-semibold">📱 Mémoire Locale</span>
     );
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="relative w-full max-w-3xl max-h-[90vh] bg-white/88 dark:bg-slate-900/88 backdrop-blur-2xl rounded-[24px] shadow-2xl border border-white/75 dark:border-white/15 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-r from-emerald-50 to-teal-50/60 dark:from-slate-800 dark:to-emerald-950/30 shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/50 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-[14px] bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
               <HardDrive className="w-5 h-5" />
@@ -332,12 +358,12 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
                 <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
                   Backups Fichiers Automatiques (Chaque Nuit)
                 </h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 text-[10px] font-black border border-indigo-200 dark:border-indigo-800">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[10.5px] font-black tabular-nums">
                   <Moon className="w-3 h-3" />
-                  Auto 22h00 • 30j
+                  Auto 22h00 · 30j
                 </span>
               </div>
-              <p className="text-[11px] text-gray-600 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
                 Envoi automatique de fichiers <strong>.CSV</strong> et <strong>.JSON</strong> dans Supabase Storage chaque nuit + miroir Cloud DB
               </p>
             </div>
@@ -346,7 +372,7 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-700 transition cursor-pointer shrink-0"
+            className="p-1.5 rounded-[10px] text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -400,7 +426,7 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
                   <p className="text-[11px] text-amber-900/90 dark:text-amber-200/90 font-medium">
                     Copiez ce SQL et exécutez-le <strong>1 seule fois</strong> dans <strong>Supabase → SQL Editor → Run</strong>, puis cliquez sur <strong>Tester &amp; Envoyer</strong> :
                   </p>
-                  <pre className="p-2.5 rounded-[10px] bg-slate-900 text-emerald-300 text-[10.5px] font-mono overflow-x-auto max-h-40 leading-relaxed">
+                  <pre className="p-2.5 rounded-[10px] bg-slate-950 text-emerald-300 text-[10.5px] font-mono overflow-x-auto max-h-40 leading-relaxed">
                     {SUPABASE_STORAGE_BACKUP_SQL}
                   </pre>
                   <div className="flex items-center justify-end gap-2">
@@ -420,9 +446,9 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
         </div>
 
         {/* Action Toolbar */}
-        <div className="px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
-          <div className="text-xs font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2">
-            <Cloud className="w-4 h-4 text-emerald-600" />
+        <div className="px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-800/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="text-xs font-bold text-gray-600 dark:text-slate-300 flex items-center gap-2 tabular-nums">
+            <Cloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>
               Catalogue actuel : <strong className="text-gray-900 dark:text-white">{products.length} articles</strong>
             </span>
@@ -433,7 +459,7 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
               type="button"
               onClick={loadBackups}
               disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold hover:bg-gray-100 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold hover:bg-gray-50 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
               <span>Actualiser</span>
@@ -454,12 +480,12 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
         {/* Restoration Progress Bar */}
         {restoreProgress && (
           <div className="px-4 sm:px-6 py-2.5 bg-blue-50 dark:bg-blue-950/50 border-b border-blue-200 dark:border-blue-800 flex items-center justify-between gap-3">
-            <span className="text-xs font-black text-blue-800 dark:text-blue-200">
+            <span className="text-xs font-black text-[#0759A4] dark:text-blue-300 tabular-nums">
               Restauration en cours vers Supabase... ({restoreProgress.processed} / {restoreProgress.total})
             </span>
-            <div className="w-36 h-2 rounded-full bg-blue-200 dark:bg-blue-900 overflow-hidden">
+            <div className="w-36 h-2 rounded-full bg-blue-200 dark:bg-slate-700 overflow-hidden">
               <div
-                className="h-full bg-[#0759A4] transition-all duration-200"
+                className="h-full bg-[#0759A4] dark:bg-blue-500 transition-all duration-200"
                 style={{ width: `${Math.round((restoreProgress.processed / Math.max(1, restoreProgress.total)) * 100)}%` }}
               />
             </div>
@@ -474,8 +500,8 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
             </div>
           ) : backups.length === 0 ? (
             <div className="py-10 text-center space-y-2">
-              <HardDrive className="w-10 h-10 text-gray-300 mx-auto" />
-              <p className="text-xs font-bold text-gray-600 dark:text-slate-300">
+              <HardDrive className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto" />
+              <p className="text-xs font-bold text-gray-700 dark:text-slate-300">
                 Aucune sauvegarde trouvée pour le moment
               </p>
               <p className="text-[11px] text-gray-400">
@@ -491,29 +517,29 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
               return (
                 <div
                   key={backup.id}
-                  className="p-3.5 rounded-[16px] bg-gray-50/90 dark:bg-slate-800/70 border border-gray-200/80 dark:border-slate-700/80 flex flex-col gap-2.5 transition"
+                  className="p-3.5 rounded-[16px] bg-gray-50/70 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700/80 flex flex-col gap-2.5 transition"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div className="min-w-0 space-y-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className={`px-2 py-0.5 rounded-[6px] text-[10px] font-black ${
                             backup.type === 'Auto'
                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
                               : backup.type === 'Urgence'
                               ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
+                              : 'bg-blue-100 text-[#0759A4] dark:bg-blue-950/80 dark:text-blue-300'
                           }`}
                         >
                           {backup.type === 'Auto'
-                            ? '🌙 Backup Nuit Auto'
+                            ? 'Backup Nuit Auto'
                             : backup.type === 'Urgence'
                             ? 'Urgence Locale'
                             : 'Backup Manuel'}
                         </span>
 
                         {backup.productCount > 0 && (
-                          <span className="px-2 py-0.5 rounded-[6px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-[10.5px] font-mono font-black text-[#0759A4] dark:text-blue-400">
+                          <span className="text-[10.5px] font-mono font-black text-[#0759A4] dark:text-blue-400 tabular-nums">
                             {backup.productCount} articles
                           </span>
                         )}
@@ -521,7 +547,7 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
                         {renderSourceBadge(backup)}
 
                         {sizeStr && (
-                          <span className="text-[10px] font-mono text-gray-400 font-semibold">
+                          <span className="text-[10px] font-mono text-gray-400 font-semibold tabular-nums">
                             {sizeStr}
                           </span>
                         )}
@@ -531,7 +557,7 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
                         {backup.title}
                       </h4>
 
-                      <div className="flex items-center gap-3 flex-wrap text-[10.5px] text-gray-500 dark:text-slate-400 font-medium">
+                      <div className="flex items-center gap-3 flex-wrap text-[10.5px] text-gray-500 dark:text-slate-400 font-medium tabular-nums">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {backup.dateKey}
@@ -554,7 +580,7 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
                         type="button"
                         onClick={() => handleDownloadCsv(backup)}
                         disabled={downloadingId === `${backup.id}_csv` || Boolean(restoringId)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-white dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
                         title="Télécharger le fichier CSV (12 colonnes Excel)"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
@@ -565,10 +591,10 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
                         type="button"
                         onClick={() => handleDownloadJson(backup)}
                         disabled={downloadingId === `${backup.id}_json` || Boolean(restoringId)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-white dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
                         title="Télécharger le fichier JSON complet"
                       >
-                        <FileJson className="w-3.5 h-3.5 text-indigo-600" />
+                        <FileJson className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                         <span>{downloadingId === `${backup.id}_json` ? '...' : 'JSON'}</span>
                       </button>
 
@@ -631,17 +657,17 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
         </div>
 
         {/* Footer Info */}
-        <div className="px-4 sm:px-6 py-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 text-[11px] text-gray-500 dark:text-slate-400 flex items-center justify-between gap-2 shrink-0">
+        <div className="px-4 sm:px-6 py-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/40 text-[11px] text-gray-500 dark:text-slate-400 flex items-center justify-between gap-2 shrink-0">
           <span className="flex items-center gap-1.5">
-            <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>
-              Auto chaque nuit à partir de 22h00 • Fichiers CSV &amp; JSON protégés contre l&apos;écrasement vide.
+              Auto chaque nuit à partir de 22h00 · Fichiers CSV &amp; JSON protégés contre l&apos;écrasement vide.
             </span>
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-[10px] bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 text-xs font-bold cursor-pointer hover:bg-gray-300 transition shrink-0"
+            className="px-3.5 py-1.5 rounded-[10px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition shrink-0"
           >
             Fermer
           </button>

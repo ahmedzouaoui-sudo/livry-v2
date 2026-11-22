@@ -88,13 +88,13 @@ export const HomeScreen: React.FC = () => {
         {/* Centered Brand Banner Image Above Search Bar */}
         <div
           className={`w-full flex items-center justify-center px-2 transition-all duration-150 ${
-            isSearching ? 'mb-2' : 'mb-3 sm:mb-4'
+            isSearching ? 'mb-2' : 'mb-3.5 sm:mb-5'
           }`}
         >
           <img
             src="/assets/aistudio/barre_de_recherch_a0bb2929.png"
             alt="Aswak Assalam, Livry, Marjane"
-            className={`w-auto transition-all duration-150 object-contain select-none pointer-events-none drop-shadow-xs ${
+            className={`w-auto transition-all duration-150 object-contain select-none pointer-events-none drop-shadow-xs dark:brightness-110 ${
               isSearching
                 ? 'h-7 xs:h-8 sm:h-10 max-w-[65%]'
                 : 'h-11 xs:h-13 sm:h-15 md:h-18 max-w-[88%] sm:max-w-[400px]'
@@ -107,10 +107,10 @@ export const HomeScreen: React.FC = () => {
         {/* Big Search Bar - Single persistent input across all states */}
         <div
           onClick={() => inputRef.current?.focus()}
-          className={`w-full rounded-[14px] sm:rounded-[20px] bg-[#FFFFFF] dark:bg-slate-800 shadow-[0_4px_20px_rgba(7,89,164,0.10)] border-2 border-[#0759A4] dark:border-blue-500/60 flex items-center px-3.5 sm:px-4.5 transition-all focus-within:ring-4 focus-within:ring-[#0759A4]/15 cursor-text ${
+          className={`w-full rounded-[16px] sm:rounded-[20px] glass-surface flex items-center px-3.5 sm:px-4.5 transition-all focus-within:border-[#0759A4] dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15 cursor-text ${
             isSearching
               ? 'h-[46px] xs:h-[50px] sm:h-[56px]'
-              : 'h-[52px] xs:h-[58px] sm:h-[64px]'
+              : 'h-[54px] xs:h-[60px] sm:h-[66px]'
           }`}
         >
           <Search className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-[#0759A4] dark:text-blue-400 shrink-0 mr-2.5 sm:mr-3" />
@@ -126,7 +126,7 @@ export const HomeScreen: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Code ou nom du produit..."
             style={{ fontWeight: 700 }}
-            className="w-full h-full bg-transparent border-none outline-none text-[#171717] dark:text-white font-bold text-sm xs:text-base sm:text-[18px] placeholder:text-gray-400 dark:placeholder:text-slate-400 placeholder:font-medium placeholder:text-xs xs:placeholder:text-sm sm:placeholder:text-base"
+            className="w-full h-full bg-transparent border-none outline-none text-gray-900 dark:text-slate-100 font-bold text-sm xs:text-base sm:text-[18px] placeholder:text-gray-400 dark:placeholder:text-slate-500 placeholder:font-medium placeholder:text-xs xs:placeholder:text-sm sm:placeholder:text-base"
           />
           {searchQuery && (
             <button
@@ -137,7 +137,7 @@ export const HomeScreen: React.FC = () => {
                 setSearchQuery('');
                 inputRef.current?.focus();
               }}
-              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 active:scale-95 text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer ml-1 shrink-0"
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 active:scale-95 text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer ml-1 shrink-0 transition-colors"
               aria-label="Effacer la recherche"
             >
               <X className="w-4 h-4" />
@@ -145,31 +145,30 @@ export const HomeScreen: React.FC = () => {
           )}
         </div>
 
-        {/* ========================================================================= */}
-        {/* DIRECTEMENT SOUS LA BARRE DE RECHERCHE : LES 3 BOUTONS DU MEME GABARIT   */}
-        {/* (Bibliothèque, Aidez-nous, Astuces) - Masqués dès qu'on recherche        */}
-        {/* ========================================================================= */}
+        {/* Action Buttons under search bar */}
         {!isSearching && (
-          <div className="w-full mt-3 sm:mt-4 space-y-2.5 animate-in fade-in duration-150">
-            {/* Bouton 1 : Bibliothèque des Rayons (avec logo Marjane psd.png) */}
+          <div className="w-full mt-3.5 sm:mt-4.5 space-y-2.5 animate-in fade-in duration-150">
+            {/* Button 1: Bibliothèque des Rayons */}
             <button
               type="button"
               onClick={() => {
                 triggerHaptic('light');
                 setActiveTab('library');
               }}
-              className="w-full h-[48px] xs:h-[52px] sm:h-[56px] bg-[#0759A4] hover:bg-[#064a88] text-[#FFFFFF] rounded-[14px] sm:rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_4px_14px_rgba(7,89,164,0.20)] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer select-none"
+              className="w-full h-[52px] xs:h-[56px] sm:h-[60px] bg-[#0759A4]/90 hover:bg-[#0759A4] backdrop-blur-xl text-white border border-white/25 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_10px_28px_rgba(7,89,164,0.28)] active:scale-[0.985] transition-all flex items-center justify-center gap-3 cursor-pointer select-none relative overflow-hidden"
             >
-              <img
-                src="/assets/aistudio/psd_2219503b.png"
-                alt="Marjane"
-                className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
-                loading="eager"
-              />
-              <span>Bibliothèque des Rayons</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-white/15 flex items-center justify-center p-1 shrink-0">
+                <img
+                  src="/assets/aistudio/psd_2219503b.png"
+                  alt="Marjane"
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                />
+              </div>
+              <span className="tracking-tight">Bibliothèque des Rayons</span>
             </button>
 
-            {/* Bouton 2 : Aidez-nous (Hub : I Need & Compléter les produits) */}
+            {/* Button 2: Aidez-nous */}
             <button
               type="button"
               onClick={() => {
@@ -178,35 +177,39 @@ export const HomeScreen: React.FC = () => {
                 setSuggestActiveView('hub');
                 setActiveTab('suggest');
               }}
-              className="w-full h-[48px] xs:h-[52px] sm:h-[56px] bg-[#155B48] hover:bg-[#104838] text-[#FFFFFF] rounded-[14px] sm:rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_4px_14px_rgba(21,91,72,0.22)] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer select-none"
+              className="w-full h-[50px] xs:h-[54px] sm:h-[58px] bg-white/72 dark:bg-[#0E1526]/72 backdrop-blur-xl hover:bg-emerald-50/85 dark:hover:bg-slate-800/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-700/50 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_6px_22px_rgba(16,185,129,0.08)] active:scale-[0.985] transition-all flex items-center justify-center gap-3 cursor-pointer select-none"
             >
-              <HeartHandshake className="w-5 h-5 text-emerald-200" />
-              <span>Aidez-nous</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <HeartHandshake className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </div>
+              <span className="tracking-tight">Aidez-nous</span>
             </button>
 
-            {/* Bouton 3 : Astuces & Tuto */}
+            {/* Button 3: Astuces & Tutos */}
             <button
               type="button"
               onClick={() => {
                 triggerHaptic('light');
                 setActiveTab('tips');
               }}
-              className="w-full h-[48px] xs:h-[52px] sm:h-[56px] bg-[#FFFFFF] dark:bg-slate-800 border-2 border-[#0759A4]/25 dark:border-slate-700 text-[#0759A4] dark:text-blue-300 hover:bg-[#EBF4FC]/60 dark:hover:bg-slate-700/80 rounded-[14px] sm:rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-xs active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer select-none"
+              className="w-full h-[50px] xs:h-[54px] sm:h-[58px] bg-white/72 dark:bg-[#0E1526]/72 backdrop-blur-xl hover:bg-amber-50/85 dark:hover:bg-slate-800/80 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-700/50 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_6px_22px_rgba(245,158,11,0.08)] active:scale-[0.985] transition-all flex items-center justify-center gap-3 cursor-pointer select-none"
             >
-              <Lightbulb className="w-5 h-5 text-amber-500 fill-amber-500 shrink-0" />
-              <span>Astuces &amp; Tutos Pratiques</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-amber-50/90 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Lightbulb className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-amber-500/30" />
+              </div>
+              <span className="tracking-tight">Astuces &amp; Tutos Pratiques</span>
             </button>
 
-            {/* Bouton d'accès direct au Tutoriel (3 Slides b Darija) */}
+            {/* Button 4: Tutoriel (3 Slides b Darija) */}
             <button
               type="button"
               onClick={() => {
                 triggerHaptic('medium');
                 setIsTutorialOpen(true);
               }}
-              className="w-full py-2 px-3 rounded-[12px] bg-blue-50 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100/70 text-[11px] font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer select-none"
+              className="w-full py-2.5 px-3 rounded-[12px] bg-blue-50/70 dark:bg-blue-950/50 backdrop-blur-md border border-blue-200/80 dark:border-blue-800/60 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100/80 dark:hover:bg-blue-900/60 text-[11px] font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.99]"
             >
-              <BookOpen className="w-3.5 h-3.5 text-[#0759A4] dark:text-blue-300" />
+              <BookOpen className="w-3.5 h-3.5 text-[#0759A4] dark:text-blue-400" />
               <span>📖 Guide Tuto Pickeur (B Darija - 3 Khotowat)</span>
             </button>
           </div>
@@ -218,8 +221,8 @@ export const HomeScreen: React.FC = () => {
       {/* ========================================================================= */}
       {isSearching && (
         <div className="flex-1 w-full max-w-[560px] mx-auto flex flex-col mb-3 overflow-y-auto animate-in fade-in duration-150">
-          <div className="flex items-center justify-between px-1 mb-1.5">
-            <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400">
+          <div className="flex items-center justify-between px-1 mb-2">
+            <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400 tabular-nums">
               {filteredProducts.length} résultat{filteredProducts.length > 1 ? 's' : ''}
             </span>
             <button
@@ -246,7 +249,7 @@ export const HomeScreen: React.FC = () => {
                   <div
                     key={product.id}
                     onClick={() => handleProductClick(product)}
-                    className="w-full rounded-[14px] p-2 sm:p-2.5 shadow-2xs hover:shadow-sm active:scale-[0.99] transition-all flex items-center gap-2.5 cursor-pointer select-none border border-black/5"
+                    className="w-full rounded-[15px] p-2 sm:p-2.5 shadow-2xs hover:shadow-md active:scale-[0.99] transition-all flex items-center gap-2.5 cursor-pointer select-none border border-black/10 dark:border-white/15"
                     style={{ backgroundColor: deptConf.accentColor }}
                   >
                     {/* White Thumbnail Box */}
@@ -268,7 +271,7 @@ export const HomeScreen: React.FC = () => {
                       <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                         {/* Code badge: If Indisponible -> Limouni (Orange), else White */}
                         <span
-                          className="px-1.5 py-0.5 rounded-[5px] font-black text-[10px] sm:text-[11px] shadow-2xs shrink-0"
+                          className="px-1.5 py-0.5 rounded-[6px] font-mono font-black text-[10px] sm:text-[11px] shadow-2xs shrink-0 tabular-nums"
                           style={{
                             backgroundColor: codeBadge === 'Indisponible' ? '#EA580C' : '#FFFFFF',
                             color: codeBadge === 'Indisponible' ? '#FFFFFF' : deptConf.accentColor,
@@ -286,7 +289,7 @@ export const HomeScreen: React.FC = () => {
                               triggerHaptic('light');
                               openSuggestForProduct(product);
                             }}
-                            className="px-2 py-0.5 rounded-[5px] bg-[#EA580C] hover:bg-[#C2410C] text-white text-[9.5px] font-extrabold flex items-center gap-1 shadow-2xs active:scale-95 transition cursor-pointer select-none border border-white/20"
+                            className="px-2 py-0.5 rounded-[6px] bg-[#EA580C] hover:bg-[#C2410C] text-white text-[9.5px] font-extrabold flex items-center gap-1 shadow-2xs active:scale-95 transition cursor-pointer select-none border border-white/20"
                             title="Ajouter le code court manquant"
                           >
                             <span>Aidez-nous</span>
@@ -309,14 +312,14 @@ export const HomeScreen: React.FC = () => {
                       </div>
 
                       {primaryBarcode && (
-                        <p className="text-[9.5px] font-mono text-white/80 truncate mt-0.5">
+                        <p className="text-[9.5px] font-mono text-white/85 truncate mt-0.5 tabular-nums">
                           Code : {primaryBarcode}
                         </p>
                       )}
                     </div>
 
                     {/* Badge */}
-                    <div className="shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded-[6px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
+                    <div className="shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded-[7px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
                       <CheckCircle2 className="w-3 h-3 text-white" />
                       <span className="hidden xs:inline">Valide</span>
                     </div>
@@ -325,10 +328,10 @@ export const HomeScreen: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-[16px] p-5 text-center border border-gray-100 dark:border-slate-700 shadow-2xs my-auto">
-              <AlertCircle className="w-7 h-7 text-gray-300 dark:text-slate-500 mx-auto mb-1" />
-              <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">Aucun produit trouvé</h4>
-              <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+            <div className="glass-surface rounded-[18px] p-6 text-center my-auto">
+              <AlertCircle className="w-7 h-7 text-gray-400 dark:text-slate-500 mx-auto mb-1.5" />
+              <h4 className="text-xs font-bold text-gray-900 dark:text-white">Aucun produit trouvé</h4>
+              <p className="text-[10.5px] text-gray-500 dark:text-slate-400 mt-0.5">
                 Vérifiez le numéro de code ou le libellé saisi.
               </p>
             </div>

@@ -62,8 +62,8 @@ export default defineConfig(() => {
           short_name: 'FinderLivry',
           description:
             'Outil métier ultra-rapide de recherche de produits et générateur de codes-barres GS1 pour préparateurs et livreurs Livry.',
-          theme_color: '#0759A4',
-          background_color: '#F8F7FC',
+          theme_color: '#1E1918',
+          background_color: '#F6F3EC',
           display: 'standalone',
           start_url: '/',
           scope: '/',

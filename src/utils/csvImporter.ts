@@ -1,6 +1,7 @@
 import { Department, Product } from '../types';
 import { cleanImageUrl } from '../services/supabaseService';
 import { extractPureUnit } from './productWeight';
+import { sanitizeCsvCell } from './securityUtils';
 
 /**
  * Robust CSV parser that handles quotes, escaped quotes, and commas/semicolons.
@@ -172,18 +173,18 @@ export function exportProductsToCsv(products: Product[]): string {
   const rows = products.map((p) => {
     const pureUnit = p.quantite || extractPureUnit(p.name);
     return [
-      `"${p.code}"`,
-      `"${p.name.replace(/"/g, '""')}"`,
-      `"${p.barcodeMarjane || '0'}"`,
-      `"${p.barcodeP2 || '0'}"`,
-      `"${p.barcodeInterne || p.barcodeMjValide || '0'}"`,
-      `"${p.barcodeMiniSecours || '0'}"`,
-      `"${p.barcodeSecours || '0'}"`,
-      `"${p.barcodeP3 || '0'}"`,
-      `"${p.imageUrl || 'sans'}"`,
-      `"${p.department}"`,
-      `"${p.category || 'Général'}"`,
-      `"${pureUnit}"`,
+      sanitizeCsvCell(p.code),
+      sanitizeCsvCell(p.name),
+      sanitizeCsvCell(p.barcodeMarjane || '0'),
+      sanitizeCsvCell(p.barcodeP2 || '0'),
+      sanitizeCsvCell(p.barcodeInterne || p.barcodeMjValide || '0'),
+      sanitizeCsvCell(p.barcodeMiniSecours || '0'),
+      sanitizeCsvCell(p.barcodeSecours || '0'),
+      sanitizeCsvCell(p.barcodeP3 || '0'),
+      sanitizeCsvCell(p.imageUrl || 'sans'),
+      sanitizeCsvCell(p.department),
+      sanitizeCsvCell(p.category || 'Général'),
+      sanitizeCsvCell(pureUnit),
     ].join(',');
   });
 

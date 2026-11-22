@@ -21,10 +21,10 @@ export const OfflineIndicator: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-100 bg-slate-900/95 backdrop-blur-md flex flex-col items-center justify-center p-5 text-center text-white select-none animate-in fade-in duration-200">
-      <div className="w-full max-w-sm bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col items-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
-          <WifiOff className="w-8 h-8 animate-pulse" />
+    <div className="fixed inset-0 z-100 bg-slate-950/88 backdrop-blur-2xl flex flex-col items-center justify-center p-5 text-center text-white select-none animate-in fade-in duration-200">
+      <div className="w-full max-w-sm bg-slate-900/80 backdrop-blur-xl border border-white/15 rounded-[24px] p-6 sm:p-7 shadow-2xl flex flex-col items-center space-y-4">
+        <div className="w-16 h-16 rounded-[18px] bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400">
+          <WifiOff className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
@@ -34,7 +34,7 @@ export const OfflineIndicator: React.FC = () => {
           </p>
         </div>
 
-        <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center gap-2">
+        <div className="w-full p-3 rounded-[12px] bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center gap-2 text-left">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>Veuillez activer le Wi-Fi ou vos données mobiles 4G/5G.</span>
         </div>
@@ -43,7 +43,7 @@ export const OfflineIndicator: React.FC = () => {
           type="button"
           onClick={handleRetry}
           disabled={isRetrying}
-          className="w-full py-3 px-4 rounded-xl bg-[#0759A4] hover:bg-[#064a88] active:scale-98 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg transition cursor-pointer select-none"
+          className="w-full py-3 px-4 rounded-[14px] bg-[#0759A4] hover:bg-blue-700 active:scale-[0.98] text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg transition cursor-pointer select-none"
         >
           <RefreshCw className={`w-4 h-4 ${isRetrying ? 'animate-spin' : ''}`} />
           <span>{isRetrying ? 'Vérification en cours...' : 'Vérifier la connexion'}</span>

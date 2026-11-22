@@ -33,6 +33,7 @@ import {
 } from '../utils/productUtils';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { ProductEditModal } from './ProductEditModal';
+import { AdminAuthModal } from './AdminAuthModal';
 import { triggerHaptic } from '../utils/haptics';
 
 // WhatsApp Contact Configuration
@@ -147,42 +148,9 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
   // Admin Direct In-Place Edit state
   const [editingProductForAdmin, setEditingProductForAdmin] = useState<Product | null>(null);
 
-  // Admin PIN verification modal (for quick unlock in Aidez-nous)
+  // Admin auth modal (for quick unlock in Aidez-nous)
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
-  const [adminPin, setAdminPin] = useState('');
-  const [pinError, setPinError] = useState(false);
   const [pendingAdminProduct, setPendingAdminProduct] = useState<Product | null>(null);
-  const pinInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isPinModalOpen) {
-      setTimeout(() => pinInputRef.current?.focus(), 100);
-    } else {
-      setAdminPin('');
-      setPinError(false);
-    }
-  }, [isPinModalOpen]);
-
-  const handleVerifyPin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPin === '1997') {
-      triggerHaptic('success');
-      setRole('Admin');
-      setIsPinModalOpen(false);
-      setAdminPin('');
-      setPinError(false);
-      showToast('🔒 Mode Administrateur déverrouillé !');
-      if (pendingAdminProduct) {
-        setEditingProductForAdmin(pendingAdminProduct);
-        setPendingAdminProduct(null);
-      }
-    } else {
-      triggerHaptic('warning');
-      setPinError(true);
-      setAdminPin('');
-      pinInputRef.current?.focus();
-    }
-  };
 
   const handleAdminEditClick = (p: Product, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -400,7 +368,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               onBack();
             }
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] text-[#0759A4] dark:text-blue-400 bg-white dark:bg-slate-800 border border-[#E0E0E6]/80 dark:border-slate-700 shadow-2xs hover:bg-[#EBF4FC] dark:hover:bg-slate-700 active:scale-95 transition font-bold text-xs sm:text-sm cursor-pointer select-none"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] text-gray-800 dark:text-slate-100 glass-surface hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition font-bold text-xs sm:text-sm cursor-pointer select-none"
         >
           <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
           <span>
@@ -413,16 +381,16 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
         </button>
 
         <div className="text-center flex-1 min-w-0 px-1">
-          <h1 className="font-extrabold text-[#171717] dark:text-slate-100 text-sm sm:text-base truncate flex items-center justify-center gap-1.5">
+          <h1 className="font-extrabold text-gray-900 dark:text-white text-sm sm:text-base truncate flex items-center justify-center gap-1.5 tracking-tight">
             {suggestActiveView === 'hub' ? (
               <>
-                <HeartHandshake className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
+                <HeartHandshake className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Aidez-nous</span>
               </>
             ) : suggestActiveView === 'form' ? (
               editingExistingProduct ? (
                 <>
-                  <HeartHandshake className="w-4 h-4 text-[#B43167]" />
+                  <HeartHandshake className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Compléter le produit (WhatsApp)</span>
                 </>
               ) : (
@@ -433,7 +401,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               )
             ) : (
               <>
-                <HeartHandshake className="w-4 h-4 text-[#B43167]" />
+                <HeartHandshake className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Compléter les produits</span>
               </>
             )}
@@ -462,7 +430,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-[620px] justify-items-stretch items-stretch px-2">
-            {/* Carreau 1: I Need (Direct WhatsApp Screen or Text workflow) */}
+            {/* Carreau 1: I Need */}
             <button
               type="button"
               onClick={() => {
@@ -470,7 +438,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 handleResetForm();
                 setSuggestActiveView('form');
               }}
-              className="w-full bg-[#155B48] rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-[0_4px_14px_rgba(21,91,72,0.22)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-emerald-400/30 relative overflow-hidden group min-h-[160px]"
+              className="w-full bg-emerald-600 rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-lg shadow-emerald-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-emerald-400/30 relative overflow-hidden group min-h-[160px]"
             >
               <div className="w-[56px] h-[56px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-1.5 group-hover:scale-105 transition-transform">
                 <WhatsAppIcon className="w-8 h-8 sm:w-9 sm:h-9 text-white fill-current" />
@@ -483,7 +451,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                   Demande WhatsApp
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-200 mt-1 group-hover:translate-x-0.5 transition-transform">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-100 mt-1 group-hover:translate-x-0.5 transition-transform">
                 <span>WhatsApp</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
@@ -497,7 +465,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 setIncompleteFilter('ALL');
                 setSuggestActiveView('missing');
               }}
-              className="w-full bg-[#B43167] rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-[0_4px_14px_rgba(180,49,103,0.22)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-rose-300/30 relative overflow-hidden group min-h-[160px]"
+              className="w-full bg-[#0759A4] rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-lg shadow-blue-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-blue-400/30 relative overflow-hidden group min-h-[160px]"
             >
               <div className="w-[56px] h-[56px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-1.5 group-hover:scale-105 transition-transform relative">
                 <HeartHandshake className="w-8 h-8 sm:w-9 sm:h-9 text-white stroke-[2.2]" />
@@ -506,17 +474,17 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug line-clamp-1 block">
                   Tous à compléter
                 </span>
-                <span className="text-[10px] text-rose-100 font-medium block">
+                <span className="text-[10px] text-blue-100 font-medium block">
                   Sans code ou code-barres
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] font-bold text-rose-200 mt-1 group-hover:translate-x-0.5 transition-transform">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-blue-100 mt-1 group-hover:translate-x-0.5 transition-transform tabular-nums">
                 <span>{incompleteProducts.length} articles</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </button>
 
-            {/* Carreau 3: Avec Code mais Sans Code-barres (DEMANDE UTILISATEUR: "ZID BLASA F AIDEZ NOUS FIHA LES PRODUIT LI FIHOM LES CODES MAIS BLA CODE BARRES") */}
+            {/* Carreau 3: Avec Code mais Sans Code-barres */}
             <button
               type="button"
               onClick={() => {
@@ -524,7 +492,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 setIncompleteFilter('WITH_CODE_NO_BARCODE');
                 setSuggestActiveView('missing');
               }}
-              className="col-span-2 sm:col-span-1 w-full bg-gradient-to-br from-[#D97706] to-[#EA580C] rounded-[22px] p-3.5 sm:p-4 flex flex-row sm:flex-col items-center justify-between text-left sm:text-center shadow-[0_4px_14px_rgba(217,119,6,0.25)] hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-amber-300/30 relative overflow-hidden group min-h-[84px] sm:min-h-[160px]"
+              className="col-span-2 sm:col-span-1 w-full bg-gradient-to-br from-amber-500 to-orange-600 rounded-[22px] p-3.5 sm:p-4 flex flex-row sm:flex-col items-center justify-between text-left sm:text-center shadow-lg shadow-orange-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-amber-300/30 relative overflow-hidden group min-h-[84px] sm:min-h-[160px]"
             >
               <div className="flex sm:flex-col items-center gap-3 sm:gap-2">
                 <div className="w-[50px] h-[50px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform relative">
@@ -535,7 +503,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                     <span className="text-xs sm:text-sm font-black text-[#FFFFFF] leading-snug">
                       Avec code, sans code-barres
                     </span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-black/25 text-white text-[9px] font-black sm:hidden">
+                    <span className="px-1.5 py-0.2 rounded-full bg-black/25 text-white text-[9px] font-black sm:hidden tabular-nums">
                       {withCodeNoBarcodeProducts.length}
                     </span>
                   </div>
@@ -544,7 +512,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                   </span>
                 </div>
               </div>
-              <div className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-amber-100 mt-1 group-hover:translate-x-0.5 transition-transform">
+              <div className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-amber-100 mt-1 group-hover:translate-x-0.5 transition-transform tabular-nums">
                 <span>{withCodeNoBarcodeProducts.length} articles</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
@@ -556,10 +524,10 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
         <div className="w-full max-w-[560px] mx-auto space-y-3">
           {/* Active Edit Notice Banner */}
           {editingExistingProduct && !isSavedSuccess && (
-            <div className="bg-[#EFF6FF] dark:bg-blue-950/40 border border-[#BFDBFE] dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
+            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
               <div className="flex items-center gap-2 min-w-0">
                 <HeartHandshake className="w-4 h-4 text-[#0759A4] dark:text-blue-400 shrink-0" />
-                <p className="text-xs text-[#1E40AF] dark:text-blue-300 font-bold truncate">
+                <p className="text-xs text-[#0759A4] dark:text-blue-300 font-bold truncate">
                   Aidez-nous : <span className="underline">{editingExistingProduct.name}</span>
                 </p>
               </div>
@@ -575,7 +543,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
 
           {isSavedSuccess && savedSummary ? (
             /* Saved Success Screen */
-            <div className="bg-white dark:bg-slate-900 border-2 border-emerald-500/30 dark:border-emerald-500/40 rounded-[20px] p-5 text-center shadow-sm space-y-3 animate-in zoom-in-95 duration-200">
+            <div className="glass-surface border-2 border-emerald-500/40 rounded-[20px] p-5 text-center space-y-3 animate-in zoom-in-95 duration-200">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
               </div>
@@ -584,15 +552,15 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                   {savedSummary.title}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Numéro destinataire : <span className="font-bold text-[#155B48] dark:text-emerald-400">{WHATSAPP_DISPLAY_NUMBER}</span>
+                  Numéro destinataire : <span className="font-bold text-emerald-700 dark:text-emerald-400">{WHATSAPP_DISPLAY_NUMBER}</span>
                 </p>
               </div>
 
               {/* Summary Card */}
-              <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-[14px] p-3 text-left space-y-1.5 text-xs">
+              <div className="bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-[14px] p-3 text-left space-y-1.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-gray-400 font-medium">Info 1 :</span>
-                  <span className="font-bold text-gray-800 dark:text-slate-200">{savedSummary.detail1}</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{savedSummary.detail1}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400 font-medium">Info 2 :</span>
@@ -623,7 +591,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 <button
                   type="button"
                   onClick={handleResetForm}
-                  className="flex-1 py-2.5 px-3 rounded-[12px] bg-[#155B48] text-white font-bold text-xs shadow-xs hover:bg-[#104838] active:scale-95 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white font-bold text-xs shadow-xs active:scale-95 transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{editingExistingProduct ? 'Modifier un autre' : 'Nouvelle demande'}</span>
@@ -638,7 +606,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                       setSuggestActiveView('hub');
                     }
                   }}
-                  className="flex-1 py-2.5 px-3 rounded-[12px] bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 rounded-[12px] bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>{editingExistingProduct ? 'Retour à la liste' : 'Retour au menu'}</span>
@@ -646,18 +614,10 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               </div>
             </div>
           ) : editingExistingProduct ? (
-            /* ============================================================ */
-            /* CASE 1: AIDEZ-NOUS (COMPLÉTER UN PRODUIT VIA WHATSAPP)       */
-            /* Prompt: "O HTA FACH IBGHI Y3AWN F LES PRODUIT KHLIHA GHIR   */
-            /* B MSG WTSP, SWA SCREEN SWA TEXT :                            */
-            /* BONJOUR VOILA CE PRODUIT                                     */
-            /* SWA YSIFTO SCREEN SWA CODE / NOME DE PRODUIT DEPUIS L'APP /  */
-            /* CODEBARRE"                                                   */
-            /* ============================================================ */
-            <div className="bg-white dark:bg-slate-900 rounded-[20px] border border-gray-200/80 dark:border-slate-800 p-3.5 sm:p-5 shadow-2xs space-y-4">
+            <div className="glass-surface rounded-[20px] p-3.5 sm:p-5 space-y-4">
               {/* Admin Direct Edit Banner in Aidez-nous Form */}
               {role === 'Admin' ? (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
+                <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <Shield className="w-4 h-4 text-[#0759A4] dark:text-blue-400 shrink-0" />
                     <div>
@@ -673,7 +633,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer shrink-0"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    <span>Modifier l'article</span>
+                    <span>Modifier l&apos;article</span>
                   </button>
                 </div>
               ) : (
@@ -681,7 +641,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                   <button
                     type="button"
                     onClick={() => handleAdminEditClick(editingExistingProduct)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-bold transition cursor-pointer border border-gray-200 dark:border-slate-700"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs font-bold transition cursor-pointer border border-gray-200 dark:border-slate-700"
                     title="Déverrouiller le mode Admin pour modifier cet article"
                   >
                     <Lock className="w-3 h-3 text-gray-400" />
@@ -691,8 +651,8 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               )}
 
               {/* Product Identity Box */}
-              <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-800/80 rounded-[14px] p-3 border border-gray-200/80 dark:border-slate-700">
-                <div className="w-14 h-14 rounded-[10px] bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-800/80 rounded-[14px] p-3 border border-gray-200 dark:border-slate-700">
+                <div className="w-14 h-14 rounded-[10px] bg-white border border-gray-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                   {editingExistingProduct.imageUrl ? (
                     <img
                       src={editingExistingProduct.imageUrl}
@@ -707,13 +667,13 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                     <Lock className="w-3 h-3 text-gray-400 shrink-0" />
-                    <span>NOM DE PRODUIT DEPUIS L'APP</span>
+                    <span>NOM DE PRODUIT DEPUIS L&apos;APP</span>
                   </div>
                   <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate">
                     {editingExistingProduct.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] px-2 py-0.5 rounded-[5px] bg-[#0759A4] text-white font-mono font-bold">
+                    <span className="text-[10px] px-2 py-0.5 rounded-[5px] bg-[#0759A4] text-white font-mono font-bold tabular-nums">
                       {formatProductCodeBadge(editingExistingProduct.code)}
                     </span>
                     <span className="text-[10px] text-gray-500 dark:text-slate-400 truncate">
@@ -736,10 +696,10 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
 
               {/* Mode Selector: Screen vs Text */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-black text-gray-800 dark:text-slate-200">
+                <label className="block text-xs font-black text-gray-900 dark:text-white">
                   Comment voulez-vous nous aider ? (Choisissez le mode)
                 </label>
-                <div className="grid grid-cols-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-[14px] border border-gray-200/80 dark:border-slate-700 gap-1">
+                <div className="grid grid-cols-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-[14px] border border-gray-200 dark:border-slate-700 gap-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -748,8 +708,8 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                     }}
                     className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[11px] text-xs font-black transition cursor-pointer select-none ${
                       aidezMode === 'screen'
-                        ? 'bg-[#155B48] text-white shadow-xs'
-                        : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <Camera className="w-3.5 h-3.5" />
@@ -765,7 +725,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                     className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[11px] text-xs font-black transition cursor-pointer select-none ${
                       aidezMode === 'text'
                         ? 'bg-[#0759A4] text-white shadow-xs'
-                        : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+                        : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
@@ -779,15 +739,15 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 <div className="space-y-3">
                   <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-[16px] p-3.5 space-y-2.5">
                     <div className="flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-full bg-[#155B48] text-white flex items-center justify-center font-black text-xs shrink-0">
+                      <div className="w-6 h-6 rounded-[8px] bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0 tabular-nums">
                         1
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-black text-gray-900 dark:text-white">
                           Prenez une photo ou capture
                         </h4>
-                        <p className="text-[11px] text-gray-600 dark:text-slate-300 mt-0.5">
-                          Photographiez l'étiquette prix, le code court ou le code-barres en rayon pour cet article.
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
+                          Photographiez l&apos;étiquette prix, le code court ou le code-barres en rayon pour cet article.
                         </p>
                       </div>
                     </div>
@@ -795,26 +755,26 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                     <div className="border-t border-emerald-200/60 dark:border-emerald-800/40" />
 
                     <div className="flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-full bg-[#25D366] text-white flex items-center justify-center font-black text-xs shrink-0">
+                      <div className="w-6 h-6 rounded-[8px] bg-[#25D366] text-white flex items-center justify-center font-black text-xs shrink-0 tabular-nums">
                         2
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-black text-gray-900 dark:text-white">
                           Envoyez sur WhatsApp ({WHATSAPP_DISPLAY_NUMBER})
                         </h4>
-                        <p className="text-[11px] text-gray-600 dark:text-slate-300 mt-0.5">
-                          Le message sera pré-rempli avec le nom exact du produit depuis l'appli.
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
+                          Le message sera pré-rempli avec le nom exact du produit depuis l&apos;appli.
                         </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Message Preview */}
-                  <div className="bg-gray-50 dark:bg-slate-800/60 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
+                  <div className="bg-gray-50 dark:bg-slate-800/80 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
                       Aperçu du message WhatsApp généré :
                     </span>
-                    <pre className="text-[11px] font-mono text-gray-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                    <pre className="text-[11px] font-mono text-gray-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
 {`BONJOUR VOILA CE PRODUIT (Capture d'écran ci-jointe) :
 NOM DE PRODUIT DEPUIS L'APP : ${editingExistingProduct.name}`}
                     </pre>
@@ -835,7 +795,7 @@ NOM DE PRODUIT DEPUIS L'APP : ${editingExistingProduct.name}`}
                 <div className="space-y-3">
                   {/* Code input */}
                   <div>
-                    <label className="block text-xs font-black text-gray-800 dark:text-slate-200 mb-1">
+                    <label className="block text-xs font-black text-gray-900 dark:text-white mb-1">
                       CODE {hasValidProductCode(editingExistingProduct.code) ? '(Déjà présent)' : '(Manquant)'}
                     </label>
                     <input
@@ -843,13 +803,13 @@ NOM DE PRODUIT DEPUIS L'APP : ${editingExistingProduct.name}`}
                       value={productCode}
                       onChange={(e) => setProductCode(e.target.value)}
                       placeholder="ex: 6037"
-                      className="w-full h-[42px] px-3 rounded-[12px] border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#0759A4] outline-none text-xs font-mono font-bold placeholder:text-gray-400"
+                      className="w-full h-[42px] px-3 rounded-[12px] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white focus:border-[#0759A4] focus:bg-white dark:focus:bg-slate-900 outline-none text-xs font-mono font-bold tabular-nums placeholder:text-gray-400"
                     />
                   </div>
 
                   {/* Barcode input with Scanner & Manual options */}
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-black text-gray-800 dark:text-slate-200">
+                    <label className="block text-xs font-black text-gray-900 dark:text-white">
                       CODEBARRE
                     </label>
 
@@ -860,7 +820,7 @@ NOM DE PRODUIT DEPUIS L'APP : ${editingExistingProduct.name}`}
                         triggerHaptic('light');
                         setIsScannerOpen(true);
                       }}
-                      className="w-full h-[42px] rounded-[12px] bg-[#0759A4] hover:bg-[#064a88] active:scale-[0.98] text-white flex items-center justify-center gap-2 font-bold text-xs shadow-2xs transition cursor-pointer select-none"
+                      className="w-full h-[42px] rounded-[12px] bg-[#0759A4] hover:bg-blue-700 active:scale-[0.98] text-white flex items-center justify-center gap-2 font-bold text-xs shadow-2xs transition cursor-pointer select-none"
                     >
                       <Camera className="w-4 h-4 text-white" />
                       <span>Scanner avec la caméra</span>
@@ -875,17 +835,17 @@ NOM DE PRODUIT DEPUIS L'APP : ${editingExistingProduct.name}`}
                         value={barcode}
                         onChange={(e) => setBarcode(e.target.value.replace(/\D/g, ''))}
                         placeholder="Ou saisir les chiffres du code-barres..."
-                        className="w-full h-[42px] pl-9 pr-3 rounded-[12px] border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#0759A4] outline-none text-xs font-mono font-bold placeholder:text-gray-400"
+                        className="w-full h-[42px] pl-9 pr-3 rounded-[12px] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white focus:border-[#0759A4] focus:bg-white dark:focus:bg-slate-900 outline-none text-xs font-mono font-bold tabular-nums placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
                   {/* Message Preview */}
-                  <div className="bg-gray-50 dark:bg-slate-800/60 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
+                  <div className="bg-gray-50 dark:bg-slate-800/80 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
                       Aperçu du message WhatsApp généré :
                     </span>
-                    <pre className="text-[11px] font-mono text-gray-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                    <pre className="text-[11px] font-mono text-gray-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
 {`BONJOUR VOILA CE PRODUIT :
 CODE : ${productCode.trim() || '-'}
 NOM DE PRODUIT DEPUIS L'APP : ${editingExistingProduct.name}
@@ -906,30 +866,23 @@ CODEBARRE : ${barcode.trim() || '-'}`}
               )}
             </div>
           ) : (
-            /* ============================================================ */
-            /* CASE 2: I NEED (PICKER DEMANDE WHATSAPP DIRECTE)            */
-            /* Prompt: "KHLI L UTILISATEUR YKHTAR WACH BSCREEN OLA TEXT     */
-            /* TAYKHTAR TEXT KHAS YTSAYB TEXT HAKDA                         */
-            /* BONJOUR J'AI BESOIN DE CE CODE SVP                           */
-            /* SWA YSIFT M3AH SCREEN SWA CODE NOM DE PRODUIT"               */
-            /* ============================================================ */
-            <div className="bg-white dark:bg-slate-900 rounded-[22px] border border-gray-200/90 dark:border-slate-800 p-4 sm:p-6 shadow-sm space-y-4 transition-colors">
-              {/* Header Badge */}
+            <div className="glass-surface rounded-[22px] p-4 sm:p-6 space-y-4 transition-colors">
+              {/* Header */}
               <div className="text-center space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#155B48] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-black">
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                   <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                  <span>I Need • Support Pickeur Direct</span>
+                  <span>I Need · Support Pickeur Direct</span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white">
-                  Besoin d'un code pour un article ?
+                  Besoin d&apos;un code pour un article ?
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Choisissez comment vous souhaitez transmettre la demande au <span className="font-bold text-[#155B48] dark:text-emerald-400">{WHATSAPP_DISPLAY_NUMBER}</span> :
+                  Choisissez comment vous souhaitez transmettre la demande au <span className="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">{WHATSAPP_DISPLAY_NUMBER}</span> :
                 </p>
               </div>
 
               {/* Mode Toggle: Screen vs Text */}
-              <div className="grid grid-cols-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-[14px] border border-gray-200/80 dark:border-slate-700 gap-1">
+              <div className="grid grid-cols-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-[14px] border border-gray-200 dark:border-slate-700 gap-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -938,8 +891,8 @@ CODEBARRE : ${barcode.trim() || '-'}`}
                   }}
                   className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[11px] text-xs font-black transition cursor-pointer select-none ${
                     iNeedMode === 'screen'
-                      ? 'bg-[#155B48] text-white shadow-xs'
-                      : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <Camera className="w-3.5 h-3.5" />
@@ -955,7 +908,7 @@ CODEBARRE : ${barcode.trim() || '-'}`}
                   className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[11px] text-xs font-black transition cursor-pointer select-none ${
                     iNeedMode === 'text'
                       ? 'bg-[#0759A4] text-white shadow-xs'
-                      : 'text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white'
+                      : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
@@ -966,42 +919,42 @@ CODEBARRE : ${barcode.trim() || '-'}`}
               {/* I NEED: SCREEN WORKFLOW */}
               {iNeedMode === 'screen' ? (
                 <div className="space-y-3">
-                  <div className="bg-gradient-to-br from-emerald-50/70 to-blue-50/60 dark:from-emerald-950/30 dark:to-slate-800/60 border border-emerald-200/80 dark:border-emerald-800/60 rounded-[18px] p-3.5 sm:p-4 space-y-3">
+                  <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 rounded-[18px] p-3.5 sm:p-4 space-y-3">
                     {/* Step 1 */}
                     <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#155B48] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
+                      <div className="w-7 h-7 rounded-[9px] bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs tabular-nums">
                         1
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
                           Screen product page
                         </h4>
-                        <p className="text-[11px] text-gray-600 dark:text-slate-300 mt-0.5 leading-snug">
-                          Prenez une capture d'écran (screenshot) de la fiche du produit sur votre application de préparation ou du rayon.
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Prenez une capture d&apos;écran (screenshot) de la fiche du produit sur votre application de préparation ou du rayon.
                         </p>
                       </div>
                     </div>
 
-                    <div className="w-full border-t border-emerald-200/60 dark:border-slate-700/80" />
+                    <div className="w-full border-t border-emerald-200/60 dark:border-slate-700" />
 
                     {/* Step 2 */}
                     <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-full bg-[#25D366] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
+                      <div className="w-7 h-7 rounded-[9px] bg-[#25D366] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-2xs tabular-nums">
                         2
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
                           Envoyee sure whatsapp
                         </h4>
-                        <p className="text-[11px] text-gray-600 dark:text-slate-300 mt-0.5 leading-snug">
-                          Cliquez sur le bouton vert pour ouvrir WhatsApp au <span className="font-bold text-[#155B48] dark:text-emerald-400">{WHATSAPP_DISPLAY_NUMBER}</span> et envoyer votre capture.
+                        <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 leading-snug">
+                          Cliquez sur le bouton vert pour ouvrir WhatsApp au <span className="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">{WHATSAPP_DISPLAY_NUMBER}</span> et envoyer votre capture.
                         </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Optional info */}
-                  <div className="p-3 bg-gray-50 dark:bg-slate-800/70 rounded-[14px] border border-gray-200/70 dark:border-slate-700 space-y-2">
+                  <div className="p-3 bg-gray-50 dark:bg-slate-800/80 rounded-[14px] border border-gray-200 dark:border-slate-700 space-y-2">
                     <span className="block text-[11px] font-bold text-gray-500 dark:text-slate-400">
                       Optionnel : Préciser le nom ou code si vous le souhaitez
                     </span>
@@ -1011,24 +964,24 @@ CODEBARRE : ${barcode.trim() || '-'}`}
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
                         placeholder="NOM DE PRODUIT (optionnel)..."
-                        className="w-full h-[40px] px-3 rounded-[10px] border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs font-bold outline-none focus:border-[#0759A4]"
+                        className="w-full h-[40px] px-3 rounded-[10px] border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-xs font-bold outline-none focus:border-[#0759A4] placeholder:text-gray-400"
                       />
                       <input
                         type="text"
                         value={productCode}
                         onChange={(e) => setProductCode(e.target.value)}
                         placeholder="CODE (optionnel)..."
-                        className="w-full h-[40px] px-3 rounded-[10px] border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs font-mono font-bold outline-none focus:border-[#0759A4]"
+                        className="w-full h-[40px] px-3 rounded-[10px] border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-xs font-mono font-bold tabular-nums outline-none focus:border-[#0759A4] placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
                   {/* Message Preview */}
-                  <div className="bg-gray-50 dark:bg-slate-800/60 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
+                  <div className="bg-gray-50 dark:bg-slate-800/80 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
                       Aperçu du message WhatsApp généré :
                     </span>
-                    <pre className="text-[11px] font-mono text-gray-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                    <pre className="text-[11px] font-mono text-gray-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
 {productCode.trim() || productName.trim()
   ? `BONJOUR J'AI BESOIN DE CE CODE SVP (Capture d'écran ci-jointe) :
 CODE : ${productCode.trim() || '-'}
@@ -1052,7 +1005,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`
                 <div className="space-y-3">
                   <div className="space-y-2.5">
                     <div>
-                      <label className="block text-xs font-black text-gray-800 dark:text-slate-200 mb-1">
+                      <label className="block text-xs font-black text-gray-900 dark:text-white mb-1">
                         NOM DE PRODUIT
                       </label>
                       <input
@@ -1060,12 +1013,12 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
                         placeholder="ex: Pain complet, Tomate ronde..."
-                        className="w-full h-[42px] px-3 rounded-[12px] border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#0759A4] outline-none text-xs font-bold placeholder:text-gray-400"
+                        className="w-full h-[42px] px-3 rounded-[12px] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white focus:border-[#0759A4] focus:bg-white dark:focus:bg-slate-900 outline-none text-xs font-bold placeholder:text-gray-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-black text-gray-800 dark:text-slate-200 mb-1">
+                      <label className="block text-xs font-black text-gray-900 dark:text-white mb-1">
                         CODE
                       </label>
                       <input
@@ -1073,17 +1026,17 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`
                         value={productCode}
                         onChange={(e) => setProductCode(e.target.value)}
                         placeholder="ex: 6037 (ou ? si inconnu)"
-                        className="w-full h-[42px] px-3 rounded-[12px] border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#0759A4] outline-none text-xs font-mono font-bold placeholder:text-gray-400"
+                        className="w-full h-[42px] px-3 rounded-[12px] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white focus:border-[#0759A4] focus:bg-white dark:focus:bg-slate-900 outline-none text-xs font-mono font-bold tabular-nums placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
                   {/* Message Preview */}
-                  <div className="bg-gray-50 dark:bg-slate-800/60 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
+                  <div className="bg-gray-50 dark:bg-slate-800/80 rounded-[12px] p-2.5 border border-gray-200 dark:border-slate-700 text-left">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
                       Aperçu du message WhatsApp généré :
                     </span>
-                    <pre className="text-[11px] font-mono text-gray-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                    <pre className="text-[11px] font-mono text-gray-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
 {`BONJOUR J'AI BESOIN DE CE CODE SVP :
 CODE : ${productCode.trim() || '-'}
 NOM DE PRODUIT : ${productName.trim() || '-'}`}
@@ -1108,12 +1061,12 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
         /* VIEW 2: Produits sans code ou sans code-barres ("kibano fiha ghir les produit bla code ola bla codebarre") */
         <div className="w-full flex-1 flex flex-col space-y-2.5">
           {/* Header of Missing Products View */}
-          <div className="bg-white dark:bg-slate-900 rounded-[16px] border border-gray-200/80 dark:border-slate-800 p-3 shadow-2xs space-y-2">
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          <div className="glass-surface rounded-[16px] p-3 space-y-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 ${
                 incompleteFilter === 'WITH_CODE_NO_BARCODE'
                   ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
-                  : 'bg-rose-50 dark:bg-rose-950/60 text-[#B43167]'
+                  : 'bg-blue-50 dark:bg-blue-950/60 text-[#0759A4] dark:text-blue-400'
               }`}>
                 {incompleteFilter === 'WITH_CODE_NO_BARCODE' ? (
                   <Barcode className="w-4 h-4 stroke-[2.5]" />
@@ -1122,25 +1075,21 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white leading-tight">
                     {incompleteFilter === 'WITH_CODE_NO_BARCODE'
                       ? 'Avec code & sans code-barres'
                       : 'Compléter les produits'}
                   </h3>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    incompleteFilter === 'WITH_CODE_NO_BARCODE'
-                      ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
-                      : 'bg-rose-100 dark:bg-rose-900/60 text-[#B43167] dark:text-rose-300'
-                  }`}>
-                    {incompleteFilter === 'WITH_CODE_NO_BARCODE'
+                  <span className="text-[11px] font-black tabular-nums text-[#0759A4] dark:text-blue-400">
+                    · {incompleteFilter === 'WITH_CODE_NO_BARCODE'
                       ? withCodeNoBarcodeProducts.length
                       : incompleteProducts.length}
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-slate-400">
                   {incompleteFilter === 'WITH_CODE_NO_BARCODE'
-                    ? `فيهم الكود وبلا كودبار • ${withCodeNoBarcodeProducts.length} articles avec code à compléter via WhatsApp`
+                    ? `فيهم الكود وبلا كودبار · ${withCodeNoBarcodeProducts.length} articles avec code à compléter via WhatsApp`
                     : `Tous les articles nécessitant un code ou un code-barres via WhatsApp (${WHATSAPP_DISPLAY_NUMBER})`}
                 </p>
               </div>
@@ -1154,21 +1103,21 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                 value={incompleteSearchQuery}
                 onChange={(e) => setIncompleteSearchQuery(e.target.value)}
                 placeholder="Rechercher dans les produits à compléter..."
-                className="w-full h-[36px] pl-8 pr-3 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium outline-none focus:border-[#0759A4] dark:text-white focus:bg-white dark:focus:bg-slate-800"
+                className="w-full h-[36px] pl-8 pr-3 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium outline-none focus:border-[#0759A4] text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 placeholder:text-gray-400"
               />
             </div>
 
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
               <button
                 type="button"
                 onClick={() => {
                   triggerHaptic('light');
                   setIncompleteFilter('ALL');
                 }}
-                className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
                   incompleteFilter === 'ALL'
-                    ? 'bg-[#171717] dark:bg-blue-600 text-white shadow-xs'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
                     : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
                 }`}
               >
@@ -1182,10 +1131,10 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   triggerHaptic('light');
                   setIncompleteFilter('WITH_CODE_NO_BARCODE');
                 }}
-                className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 flex items-center gap-1 tabular-nums ${
                   incompleteFilter === 'WITH_CODE_NO_BARCODE'
                     ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800'
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300/70 dark:border-amber-800/60'
                 }`}
               >
                 <Barcode className="w-3 h-3 text-current" />
@@ -1198,10 +1147,10 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   triggerHaptic('light');
                   setIncompleteFilter('NO_CODE');
                 }}
-                className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
                   incompleteFilter === 'NO_CODE'
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'bg-gray-100 dark:bg-slate-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40'
                 }`}
               >
                 Sans code ({incompleteProducts.filter(isProductMissingCode).length})
@@ -1212,10 +1161,10 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   triggerHaptic('light');
                   setIncompleteFilter('NO_BARCODE');
                 }}
-                className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 ${
+                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
                   incompleteFilter === 'NO_BARCODE'
-                    ? 'bg-rose-500 text-white'
-                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60'
+                    ? 'bg-[#0759A4] text-white shadow-xs'
+                    : 'bg-blue-50 dark:bg-blue-950/40 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
                 }`}
               >
                 Sans code-barres ({incompleteProducts.filter(isProductMissingBarcode).length})
@@ -1237,7 +1186,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   <div
                     key={p.id}
                     onClick={() => handleSelectProductToComplete(p)}
-                    className="rounded-[14px] sm:rounded-[16px] p-2 sm:p-2.5 flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer select-none border border-black/5 relative group"
+                    className="rounded-[15px] sm:rounded-[17px] p-2 sm:p-2.5 flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer select-none border border-black/10 dark:border-white/15 relative group"
                     style={{ backgroundColor: conf.accentColor }}
                   >
                     {/* 1. White Image Thumbnail Box */}
@@ -1246,7 +1195,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                       <button
                         type="button"
                         onClick={(e) => handleAdminEditClick(p, e)}
-                        className="absolute top-1 left-1 px-1.5 py-0.5 rounded-[6px] bg-[#0759A4] hover:bg-blue-700 text-white font-black text-[9px] shadow-sm flex items-center gap-1 active:scale-95 transition cursor-pointer z-10"
+                        className="absolute top-1 left-1 px-1.5 py-0.5 rounded-[6px] bg-gray-900 hover:bg-black text-white font-black text-[9px] shadow-sm flex items-center gap-1 active:scale-95 transition cursor-pointer z-10"
                         title="Modifier directement cet article (Admin)"
                       >
                         <Edit3 className="w-2.5 h-2.5 text-white" />
@@ -1266,15 +1215,15 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                         <ShoppingBag className="w-8 h-8 opacity-40 text-gray-400" />
                       )}
 
-                      {/* Missing Pill Overlay */}
+                      {/* Missing Indicator Overlay */}
                       <div className="absolute top-1 right-1 flex flex-col gap-0.5 items-end">
                         {missingCode && (
-                          <span className="px-1.5 py-0.5 rounded-[5px] bg-[#EA580C] text-white font-black text-[8px] sm:text-[9px] shadow-xs">
+                          <span className="px-1.5 py-0.5 rounded-[5px] bg-orange-600 text-white font-black text-[8px] sm:text-[9px] shadow-xs">
                             Sans code
                           </span>
                         )}
                         {missingBarcode && (
-                          <span className="px-1.5 py-0.5 rounded-[5px] bg-rose-500 text-white font-black text-[8px] sm:text-[9px] shadow-xs">
+                          <span className="px-1.5 py-0.5 rounded-[5px] bg-[#0759A4] text-white font-black text-[8px] sm:text-[9px] shadow-xs">
                             Sans code-barres
                           </span>
                         )}
@@ -1284,7 +1233,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                     {/* 2. Code Badge: White Background, Category Color Text */}
                     <div className="mb-1 flex items-center gap-1">
                       <span
-                        className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[5px] bg-white shadow-2xs tracking-wider"
+                        className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[5px] bg-white shadow-2xs tracking-wider tabular-nums"
                         style={{ color: conf.accentColor }}
                       >
                         {codeBadge}
@@ -1302,9 +1251,9 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                       {p.name}
                     </h3>
 
-                    {/* 4. Barcode info & Quick Action Pill */}
+                    {/* 4. Barcode info & Quick Action */}
                     <div className="mt-2 pt-1 border-t border-white/20 flex items-center justify-between gap-1">
-                      <span className="text-[9px] text-white/80 font-mono truncate">
+                      <span className="text-[9px] text-white/80 font-mono truncate tabular-nums">
                         {primaryBarcode || 'Sans code-barres'}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
@@ -1312,7 +1261,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                           <button
                             type="button"
                             onClick={(e) => handleAdminEditClick(p, e)}
-                            className="px-1.5 py-0.5 rounded-[6px] bg-white hover:bg-gray-100 text-[#0759A4] text-[9.5px] font-black shadow-2xs active:scale-95 transition cursor-pointer flex items-center gap-0.5"
+                            className="px-1.5 py-0.5 rounded-[6px] bg-white hover:bg-gray-100 text-gray-900 text-[9.5px] font-black shadow-2xs active:scale-95 transition cursor-pointer flex items-center gap-0.5"
                             title="Modifier directement l'article (Admin)"
                           >
                             <Edit3 className="w-2.5 h-2.5 text-[#0759A4]" />
@@ -1329,12 +1278,12 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                 );
               })
             ) : (
-              <div className="col-span-2 sm:col-span-3 md:col-span-4 bg-white dark:bg-slate-900 rounded-[16px] p-6 text-center border border-gray-100 dark:border-slate-800 shadow-2xs mt-3">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-1.5" />
-                <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">
+              <div className="col-span-2 sm:col-span-3 md:col-span-4 glass-surface rounded-[16px] p-6 text-center mt-3">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-1.5" />
+                <h4 className="text-xs font-bold text-gray-900 dark:text-white">
                   Aucun article trouvé dans Aidez-nous
                 </h4>
-                <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+                <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">
                   Tous les produits filtrés possèdent déjà un code et un code-barres.
                 </p>
               </div>
@@ -1372,68 +1321,26 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
         />
       )}
 
-      {/* Admin PIN Verification Modal for Aidez-nous */}
-      {isPinModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-[22px] p-5 shadow-2xl border border-gray-200 dark:border-slate-800 animate-in zoom-in-95 duration-150 relative text-gray-900 dark:text-slate-100">
-            <button
-              type="button"
-              onClick={() => {
-                setIsPinModalOpen(false);
-                setPendingAdminProduct(null);
-              }}
-              className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex flex-col items-center text-center space-y-2 mb-4">
-              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-[#0759A4] dark:text-blue-400">
-                <Lock className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                Modifier cet Article (Admin)
-              </h3>
-              <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                Entrez le code PIN Admin pour modifier la fiche produit directement depuis Aidez-nous
-              </p>
-            </div>
-
-            <form onSubmit={handleVerifyPin} className="space-y-3">
-              <input
-                ref={pinInputRef}
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                value={adminPin}
-                onChange={(e) => {
-                  setAdminPin(e.target.value);
-                  setPinError(false);
-                }}
-                placeholder="Code PIN (1997)"
-                className={`w-full text-center text-lg font-mono font-black tracking-widest py-2 rounded-[12px] bg-gray-50 dark:bg-slate-800 border outline-none transition ${
-                  pinError
-                    ? 'border-red-500 ring-2 ring-red-200 dark:ring-red-950'
-                    : 'border-gray-300 dark:border-slate-700 focus:border-[#0759A4] focus:ring-2 focus:ring-blue-100'
-                }`}
-              />
-
-              {pinError && (
-                <p className="text-center text-[10.5px] font-bold text-red-600 dark:text-red-400 animate-shake">
-                  Code PIN incorrect. Réessayez.
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white font-black text-xs shadow-md active:scale-95 transition cursor-pointer"
-              >
-                Déverrouiller &amp; Modifier
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Admin Auth Modal for Aidez-nous */}
+      <AdminAuthModal
+        isOpen={isPinModalOpen}
+        title="Modifier cet Article (Admin)"
+        subtitle="Entrez le mot de passe Admin / Data pour modifier cette fiche produit directement"
+        submitLabel="Déverrouiller & Modifier"
+        onClose={() => {
+          setIsPinModalOpen(false);
+          setPendingAdminProduct(null);
+        }}
+        onSuccess={() => {
+          setRole('Admin');
+          setIsPinModalOpen(false);
+          showToast('🔒 Mode Administrateur déverrouillé !');
+          if (pendingAdminProduct) {
+            setEditingProductForAdmin(pendingAdminProduct);
+            setPendingAdminProduct(null);
+          }
+        }}
+      />
     </div>
   );
 };

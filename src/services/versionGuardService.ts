@@ -102,10 +102,32 @@ export async function checkServerVersion(): Promise<VersionCheckResult> {
   return { outdated: false };
 }
 
+const AUTO_REFRESH_TS_KEY = 'livry_auto_refresh_ts';
+const AUTO_REFRESH_BUILD_KEY = 'livry_auto_refresh_build';
+
 /**
  * Unregisters old Service Workers, clears CacheStorage caches, and performs a forced cache-busting reload.
+ * Includes a loop guard so transient CDN lag never causes infinite reloads.
  */
-export async function forceHardRefreshApp(): Promise<void> {
+export async function forceHardRefreshApp(remoteBuildId?: string): Promise<void> {
+  try {
+    const now = Date.now();
+    const lastTs = Number(sessionStorage.getItem(AUTO_REFRESH_TS_KEY) || '0');
+    const lastBuild = sessionStorage.getItem(AUTO_REFRESH_BUILD_KEY) || '';
+
+    // Prevent rapid infinite reload loops if the CDN/proxy serves a stale asset briefly
+    if (now - lastTs < 45_000 && (!remoteBuildId || remoteBuildId === lastBuild)) {
+      return;
+    }
+
+    sessionStorage.setItem(AUTO_REFRESH_TS_KEY, String(now));
+    if (remoteBuildId) {
+      sessionStorage.setItem(AUTO_REFRESH_BUILD_KEY, remoteBuildId);
+    }
+  } catch {
+    // sessionStorage unavailable; proceed safely
+  }
+
   try {
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();

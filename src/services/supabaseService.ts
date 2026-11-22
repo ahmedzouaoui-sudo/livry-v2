@@ -8,6 +8,7 @@ import {
 } from './supabaseClient';
 import { Product, TipPost, Department } from '../types';
 import { extractPureUnit } from '../utils/productWeight';
+import { sanitizeImageUrl } from '../utils/securityUtils';
 
 export interface SupabaseHealthCheckResult {
   connected: boolean;
@@ -331,7 +332,28 @@ CREATE POLICY "api_user_devices_all_access" ON api.user_devices FOR ALL USING (t
 GRANT ALL ON TABLE api.user_devices TO anon, authenticated, service_role;
 
 -- -------------------------------------------------------------------------
--- 7. REALTIME (Synchronisation instantanée)
+-- 7. JOURNAL COMPLET D'ACTIVITÉ (AUDIT LOGS)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.app_activity_logs (
+  id TEXT PRIMARY KEY,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  local_date_time TEXT,
+  category TEXT NOT NULL,
+  action TEXT NOT NULL,
+  actor_role TEXT DEFAULT 'Pickeur',
+  device_id TEXT,
+  ip_address TEXT,
+  target TEXT,
+  details TEXT
+);
+
+ALTER TABLE public.app_activity_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "app_activity_logs_all_access" ON public.app_activity_logs;
+CREATE POLICY "app_activity_logs_all_access" ON public.app_activity_logs FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON TABLE public.app_activity_logs TO anon, authenticated, service_role;
+
+-- -------------------------------------------------------------------------
+-- 8. REALTIME (Synchronisation instantanée)
 -- -------------------------------------------------------------------------
 DO $$
 BEGIN
@@ -361,6 +383,10 @@ BEGIN
   END;
   BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE api.user_devices;
+  EXCEPTION WHEN OTHERS THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.app_activity_logs;
   EXCEPTION WHEN OTHERS THEN NULL;
   END;
 END $$;
@@ -452,33 +478,7 @@ export function normalizeDepartment(deptRaw?: any, catRaw?: any): Department {
 
 // Helper: clean and extract a valid URL link from any input (HTML, quotes, plain URL)
 export function cleanImageUrl(urlRaw: any): string | undefined {
-  if (!urlRaw) return undefined;
-  let s = String(urlRaw).trim();
-  if (
-    !s ||
-    s === '0' ||
-    s === '0.0' ||
-    s === '-' ||
-    s.toLowerCase() === 'sans' ||
-    s.toLowerCase() === 'null' ||
-    s.toLowerCase() === 'undefined'
-  ) {
-    return undefined;
-  }
-  // If wrapped in HTML <img src="...">
-  const match = s.match(/src=["']([^"']+)["']/i);
-  if (match && match[1]) {
-    s = match[1].trim();
-  }
-  // Strip surrounding quotes
-  s = s.replace(/^["'`]+|["'`]+$/g, '').trim();
-  if (s.startsWith('//')) {
-    s = 'https:' + s;
-  }
-  if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/assets/')) {
-    return s;
-  }
-  return undefined;
+  return sanitizeImageUrl(urlRaw);
 }
 
 // Helper: map Supabase row to Product (accepts all variations of column names from sites and apps)
@@ -562,7 +562,18 @@ export function mapRowToProduct(row: any): Product {
     row.isVerified50 === true ||
     workerTag.includes('VERIFIED_50')
   );
-  const verificationStatus: 'none' | '50' | '100' = has100 ? '100' : has50 ? '50' : 'none';
+  const hasBroken = !has100 && !has50 && Boolean(
+    row.is_verified_broken === true ||
+    row.isVerifiedBroken === true ||
+    workerTag.includes('VERIFIED_BROKEN')
+  );
+  const verificationStatus: 'none' | 'broken' | '50' | '100' = has100
+    ? '100'
+    : has50
+      ? '50'
+      : hasBroken
+        ? 'broken'
+        : 'none';
   const isVerified100 = verificationStatus === '100';
 
   return {
@@ -591,8 +602,11 @@ export function mapProductToRow(p: Product) {
   const dbDept = departmentToDbValue(p.department);
   const pureUnit = p.quantite || extractPureUnit(p.name);
   const primaryMarjane = p.barcodeMarjane || p.barcodeMjValide || '0';
-  const vStatus: 'none' | '50' | '100' =
-    p.verificationStatus === '100' || p.verificationStatus === '50' || p.verificationStatus === 'none'
+  const vStatus: 'none' | 'broken' | '50' | '100' =
+    p.verificationStatus === '100' ||
+    p.verificationStatus === '50' ||
+    p.verificationStatus === 'broken' ||
+    p.verificationStatus === 'none'
       ? p.verificationStatus
       : p.isVerified100
         ? '100'
@@ -608,7 +622,7 @@ export function mapProductToRow(p: Product) {
     'marjane mini': p.barcodeMiniSecours || '0',
     'marjane sec': p.barcodeSecours || '0',
     'marjane sec 2': p.barcodeP3 || '0',
-    image_html: p.imageUrl || '',
+    image_html: sanitizeImageUrl(p.imageUrl) || '',
     'département': dbDept,
     'catégorie': p.category || '',
     quantite: pureUnit,
@@ -618,7 +632,9 @@ export function mapProductToRow(p: Product) {
         ? 'SHARED|VERIFIED_100'
         : vStatus === '50'
           ? 'SHARED|VERIFIED_50'
-          : 'SHARED',
+          : vStatus === 'broken'
+            ? 'SHARED|VERIFIED_BROKEN'
+            : 'SHARED',
     updated_at: new Date().toISOString(),
   };
 }
@@ -903,6 +919,14 @@ export async function seedProductsToSupabase(
   }
 }
 
+const INTERNAL_TIPS_CATEGORIES = new Set([
+  'device_tracker_record',
+  'daily_catalog_backup',
+  'app_security_config',
+  'app_guide_config',
+  'app_activity_log_batch',
+]);
+
 // Fetch Tips from Supabase
 export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips: TipPost[]; error?: string }> {
   try {
@@ -910,8 +934,6 @@ export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips:
     let { data, error } = await client
       .from('tips')
       .select('*')
-      .neq('category', 'device_tracker_record')
-      .neq('category', 'daily_catalog_backup')
       .order('likes', { ascending: false });
 
     if (error) {
@@ -919,8 +941,6 @@ export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips:
       const resAlt = await fallbackClient
         .from('tips')
         .select('*')
-        .neq('category', 'device_tracker_record')
-        .neq('category', 'daily_catalog_backup')
         .order('likes', { ascending: false });
       if (!resAlt.error) {
         data = resAlt.data;
@@ -931,19 +951,19 @@ export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips:
     if (error) return { success: false, tips: [], error: error.message };
 
     const mapped: TipPost[] = (data || [])
-      .filter((t: any) => t.category !== 'device_tracker_record' && t.category !== 'daily_catalog_backup')
+      .filter((t: any) => !INTERNAL_TIPS_CATEGORIES.has(String(t.category || '')))
       .map((t: any) => ({
-      id: String(t.id),
-      title: String(t.title || ''),
-      content: String(t.content || ''),
-      category: t.category || 'Général',
-      authorRole: t.author_role || t.authorRole || 'Pickeur',
-      authorName: t.author_name || t.authorName || undefined,
-      createdAt: t.created_at || t.createdAt || 'Récemment',
-      likes: Number(t.likes || 0),
-      imageUrl: t.image_url || t.imageUrl || undefined,
-      targetAudience: t.target_audience || t.targetAudience || 'Tous',
-    }));
+        id: String(t.id),
+        title: String(t.title || ''),
+        content: String(t.content || ''),
+        category: t.category || 'Général',
+        authorRole: t.author_role || t.authorRole || 'Pickeur',
+        authorName: t.author_name || t.authorName || undefined,
+        createdAt: t.created_at || t.createdAt || 'Récemment',
+        likes: Number(t.likes || 0),
+        imageUrl: sanitizeImageUrl(t.image_url || t.imageUrl),
+        targetAudience: t.target_audience || t.targetAudience || 'Tous',
+      }));
 
     return { success: true, tips: mapped };
   } catch (err: any) {
@@ -963,11 +983,23 @@ export async function upsertTipInSupabase(tip: TipPost): Promise<{ success: bool
       author_name: tip.authorName || '',
       created_at: tip.createdAt,
       likes: tip.likes,
-      image_url: tip.imageUrl || '',
+      image_url: sanitizeImageUrl(tip.imageUrl) || '',
       target_audience: tip.targetAudience || 'Tous',
     };
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
     const { error } = await client.from('tips').upsert(row, { onConflict: 'id' });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+// Delete tip from Supabase
+export async function deleteTipInSupabase(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const { error } = await client.from('tips').delete().eq('id', id);
     if (error) return { success: false, error: error.message };
     return { success: true };
   } catch (err: any) {

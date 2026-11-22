@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { sanitizeSupabaseEndpointUrl } from '../utils/securityUtils';
 
 // Safe env retrieval across Vite browser and Node environments
 const getEnvVar = (name: string): string => {
@@ -28,10 +29,8 @@ const rawUrl =
   getEnvVar('SUPABASE_URL') ||
   'https://pssizsvkbgabnarlyawj.supabase.co';
 
-const cleanUrl = rawUrl
-  .trim()
-  .replace(/\/rest\/v1\/?$/, '')
-  .replace(/\/+$/, '');
+const cleanUrl =
+  sanitizeSupabaseEndpointUrl(rawUrl) || 'https://pssizsvkbgabnarlyawj.supabase.co';
 
 const anonKey =
   getEnvVar('VITE_SUPABASE_ANON_KEY') ||
@@ -44,8 +43,11 @@ export let SUPABASE_ANON_KEY = anonKey.trim();
 
 export const setCustomSupabaseCredentials = (url: string, key: string) => {
   if (typeof localStorage !== 'undefined') {
-    if (url) localStorage.setItem('VITE_SUPABASE_URL', url.trim());
-    if (key) localStorage.setItem('VITE_SUPABASE_ANON_KEY', key.trim());
+    const validUrl = url ? sanitizeSupabaseEndpointUrl(url) : null;
+    if (validUrl) localStorage.setItem('VITE_SUPABASE_URL', validUrl);
+    if (key && key.trim().length >= 20) {
+      localStorage.setItem('VITE_SUPABASE_ANON_KEY', key.trim());
+    }
   }
 };
 
