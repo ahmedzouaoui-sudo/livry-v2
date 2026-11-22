@@ -456,6 +456,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       p.category,
       p.quantite || '',
       p.isEnabled ? '1' : '0',
+      p.verificationStatus || (p.isVerified100 ? '100' : 'none'),
       p.imageUrl || '',
       p.barcodeMarjane || '',
       p.barcodeP2 || '',

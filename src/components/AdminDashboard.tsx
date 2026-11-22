@@ -68,6 +68,25 @@ import { extractPureUnit } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
 import { UserDevicesModal } from './UserDevicesModal';
 import { DailyBackupsModal } from './DailyBackupsModal';
+import {
+  Verified100Badge,
+  VerifiedIconImg,
+  Verified50IconImg,
+  getProductVerificationStatus,
+  VerificationStatus,
+} from './Verified100Badge';
+
+type InlineEditableField =
+  | 'code'
+  | 'name'
+  | 'barcodeMarjane'
+  | 'barcodeP2'
+  | 'barcodeInterne'
+  | 'barcodeMiniSecours'
+  | 'barcodeSecours'
+  | 'barcodeP3'
+  | 'category'
+  | 'imageUrl';
 
 interface DuplicateConflict {
   type: 'name' | 'barcode' | 'code';
@@ -112,7 +131,16 @@ export const AdminDashboard: React.FC = () => {
   const [adminSearch, setAdminSearch] = useState('');
   const [selectedUnit, setSelectedUnit] = useState<'ALL' | 'kg' | 'g' | 'pièce'>('ALL');
   const [filterSpecial, setFilterSpecial] = useState<
-    'ALL' | 'NO_CODE' | 'NO_BARCODE' | 'NO_IMAGE' | 'DUP_NAMES' | 'DUP_BARCODES' | 'VISIBLE' | 'HIDDEN'
+    | 'ALL'
+    | 'NO_CODE'
+    | 'NO_BARCODE'
+    | 'NO_IMAGE'
+    | 'DUP_NAMES'
+    | 'DUP_BARCODES'
+    | 'VISIBLE'
+    | 'HIDDEN'
+    | 'VERIFIED_100'
+    | 'VERIFIED_50'
   >('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedDept, setSelectedDept] = useState<Department | 'ALL'>('ALL');
@@ -134,11 +162,12 @@ export const AdminDashboard: React.FC = () => {
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
-  // Quick inline edit state
-  const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
-  const [inlineCode, setInlineCode] = useState('');
-  const [inlineName, setInlineName] = useState('');
-  const [inlineUnit, setInlineUnit] = useState<'kg' | 'g' | 'pièce'>('pièce');
+  // Universal Inline Table Cell Editing
+  const [editingCell, setEditingCell] = useState<{
+    id: number;
+    field: InlineEditableField;
+    value: string;
+  } | null>(null);
 
   // Extraction tool state
   const [extractorText, setExtractorText] = useState('');
@@ -149,9 +178,17 @@ export const AdminDashboard: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Active & Hidden counts for visibility management
+  // Active, Hidden, Verified 100% & 50% counts
   const activeProductsCount = useMemo(() => products.filter((p) => p.isEnabled).length, [products]);
   const hiddenProductsCount = useMemo(() => products.filter((p) => !p.isEnabled).length, [products]);
+  const verified100Count = useMemo(
+    () => products.filter((p) => getProductVerificationStatus(p) === '100').length,
+    [products]
+  );
+  const verified50Count = useMemo(
+    () => products.filter((p) => getProductVerificationStatus(p) === '50').length,
+    [products]
+  );
 
   // -------------------------------------------------------------------------
   // 2. DUPLICATES & ANOMALIES DETECTION LOGIC
@@ -309,6 +346,12 @@ export const AdminDashboard: React.FC = () => {
       if (filterSpecial === 'HIDDEN' && p.isEnabled) {
         return false;
       }
+      if (filterSpecial === 'VERIFIED_100' && getProductVerificationStatus(p) !== '100') {
+        return false;
+      }
+      if (filterSpecial === 'VERIFIED_50' && getProductVerificationStatus(p) !== '50') {
+        return false;
+      }
 
       // Text search
       if (!adminSearch.trim()) return true;
@@ -397,6 +440,79 @@ export const AdminDashboard: React.FC = () => {
         products: conflicts,
       });
     }
+  };
+
+  // Universal Inline Table Cell Edit Helpers
+  const startInlineEdit = (product: Product, field: InlineEditableField) => {
+    triggerHaptic('light');
+    const raw = (product as any)[field];
+    setEditingCell({
+      id: product.id,
+      field,
+      value: raw && raw !== '-' ? String(raw) : '',
+    });
+  };
+
+  const commitInlineEdit = async (product: Product) => {
+    if (!editingCell || editingCell.id !== product.id) return;
+    const { field, value } = editingCell;
+    setEditingCell(null);
+
+    const trimmed = value.trim();
+    const isBarcodeField =
+      field === 'barcodeMarjane' ||
+      field === 'barcodeP2' ||
+      field === 'barcodeInterne' ||
+      field === 'barcodeMiniSecours' ||
+      field === 'barcodeSecours' ||
+      field === 'barcodeP3';
+
+    let nextValue: string | undefined;
+    if (field === 'name') {
+      if (!trimmed) {
+        showToast('⚠️ Le nom du produit ne peut pas être vide');
+        return;
+      }
+      nextValue = trimmed;
+    } else if (field === 'code') {
+      nextValue = trimmed || '-';
+    } else if (field === 'category') {
+      nextValue = trimmed || 'Général';
+    } else if (field === 'imageUrl') {
+      nextValue = trimmed || undefined;
+    } else if (isBarcodeField) {
+      nextValue = trimmed && trimmed !== '0' && trimmed !== '-' ? trimmed : undefined;
+    } else {
+      nextValue = trimmed;
+    }
+
+    const currentVal = (product as any)[field];
+    if ((currentVal || undefined) === (nextValue || undefined)) {
+      return;
+    }
+
+    const updated: Product = { ...product, [field]: nextValue };
+    await updateProduct(updated);
+    triggerHaptic('success');
+    showToast(`✅ Mis à jour : ${updated.name}`);
+  };
+
+  const handleSetVerificationStatus = async (product: Product, target: '100' | '50') => {
+    triggerHaptic('medium');
+    const current = getProductVerificationStatus(product);
+    const next: VerificationStatus = current === target ? 'none' : target;
+    await updateProduct({
+      ...product,
+      verificationStatus: next,
+      isVerified100: next === '100',
+    });
+    showToast(
+      next === '100'
+        ? `✅ Icône 100% Khdam (Bleue) activée : ${product.name}`
+        : next === '50'
+          ? `🟠 Icône 50% Khdam (Orange) activée : ${product.name}`
+          : `Icône retirée : ${product.name}`
+    );
   };
 
   // -------------------------------------------------------------------------
@@ -920,6 +1036,34 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               <EyeOff className="w-3 h-3 text-gray-500" />
               <span>Masqués ({hiddenProductsCount})</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial(filterSpecial === 'VERIFIED_100' ? 'ALL' : 'VERIFIED_100')}
+              className={`px-2.5 py-1 rounded-full text-xs font-black transition cursor-pointer select-none flex items-center gap-1.5 ${
+                filterSpecial === 'VERIFIED_100'
+                  ? 'bg-[#0759A4] text-white shadow-xs ring-1 ring-blue-400'
+                  : 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-700'
+              }`}
+              title="Filtrer les articles certifiés 100% khdam"
+            >
+              <VerifiedIconImg className="w-4 h-4" />
+              <span>100% Khdam ({verified100Count})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterSpecial(filterSpecial === 'VERIFIED_50' ? 'ALL' : 'VERIFIED_50')}
+              className={`px-2.5 py-1 rounded-full text-xs font-black transition cursor-pointer select-none flex items-center gap-1.5 ${
+                filterSpecial === 'VERIFIED_50'
+                  ? 'bg-orange-600 text-white shadow-xs ring-1 ring-orange-400'
+                  : 'bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border border-orange-300 dark:border-orange-700'
+              }`}
+              title="Filtrer les articles 50% khdam"
+            >
+              <Verified50IconImg className="w-4 h-4" />
+              <span>50% Khdam ({verified50Count})</span>
+            </button>
           </div>
 
           {/* Sorted Categories A-Z Horizontal Scroll */}
@@ -981,16 +1125,30 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
         </div>
 
         {/* ------------------------------------------------------------------- */}
-        {/* TABLEAU DES 12 COLONNES STRICTES & CELLULES INTERACTIVES            */}
+        {/* TABLEAU DES 12 COLONNES + ÉDITION DIRECTE EN 1 CLIC & BADGE 100%    */}
         {/* ------------------------------------------------------------------- */}
         <div className="flex-1 bg-white dark:bg-slate-900 rounded-[18px] border border-gray-200 dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
+          {/* Quick Inline Edit Banner */}
+          <div className="px-3.5 py-2 border-b border-gray-100 dark:border-slate-800 bg-blue-50/50 dark:bg-slate-800/60 flex items-center justify-between gap-2 flex-wrap text-[11px]">
+            <div className="flex items-center gap-1.5 font-bold text-[#0759A4] dark:text-blue-300">
+              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>
+                Édition ultra-rapide : cliquez directement sur n&apos;importe quelle cellule (Code, Nom, Codes-barres, Catégorie, Photo, 100%) pour modifier sur place (Entrée = enregistrer).
+              </span>
+            </div>
+            <span className="font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+              {verified100Count} certifié(s) 100%
+            </span>
+          </div>
+
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 font-black uppercase tracking-wider text-[10.5px]">
                   <th className="py-2.5 px-3 whitespace-nowrap">Image</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Code</th>
-                  <th className="py-2.5 px-3 min-w-[200px]">Produit</th>
+                  <th className="py-2.5 px-3 min-w-[230px]">Produit</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap text-center">100% / 50%</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane 2</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane Interne</th>
@@ -1001,7 +1159,9 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   <th className="py-2.5 px-3 whitespace-nowrap">Catégorie</th>
                   <th className="py-2.5 px-3 whitespace-nowrap text-center">Quantité</th>
                   <th className="py-2.5 px-3 whitespace-nowrap text-center">Visibilité</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap text-right">Actions</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap text-right sticky right-0 bg-gray-50 dark:bg-slate-800 shadow-[-4px_0_8px_rgba(0,0,0,0.04)] z-10">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800 font-medium">
@@ -1013,7 +1173,6 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                     const isMissingCode = !cleanCode || cleanCode === '-';
                     const isDuplicateCode = cleanCode && (codeMap.get(cleanCode)?.length || 0) > 1;
 
-                    // Barcode duplicates check helper
                     const checkBcDuplicate = (bc: string | undefined) => {
                       if (!bc) return false;
                       const clean = bc.replace(/\D/g, '');
@@ -1030,6 +1189,77 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                     const pureUnit = product.quantite || extractPureUnit(product.name);
                     const catTheme = getCategoryColorTheme(product.category);
 
+                    const isEditingField = (field: InlineEditableField) =>
+                      editingCell?.id === product.id && editingCell.field === field;
+
+                    const renderBarcodeCell = (
+                      field: 'barcodeMarjane' | 'barcodeP2' | 'barcodeInterne' | 'barcodeMiniSecours' | 'barcodeSecours' | 'barcodeP3',
+                      val: string | undefined,
+                      label: string,
+                      isDup: boolean,
+                      normalPillClass: string
+                    ) => {
+                      if (isEditingField(field)) {
+                        return (
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editingCell!.value}
+                            onChange={(e) => setEditingCell({ ...editingCell!, value: e.target.value })}
+                            onBlur={() => commitInlineEdit(product)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                commitInlineEdit(product);
+                              } else if (e.key === 'Escape') {
+                                setEditingCell(null);
+                              }
+                            }}
+                            placeholder="Code-barres..."
+                            className="w-32 px-2 py-1 rounded-[6px] bg-white dark:bg-slate-900 border-2 border-[#0759A4] text-xs font-mono font-bold text-gray-900 dark:text-white outline-none shadow-sm"
+                          />
+                        );
+                      }
+
+                      return (
+                        <div className="flex items-center gap-1 group/cell">
+                          {val ? (
+                            <button
+                              type="button"
+                              onClick={() => startInlineEdit(product, field)}
+                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition cursor-text hover:ring-2 hover:ring-[#0759A4]/40 ${
+                                isDup
+                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 font-black'
+                                  : normalPillClass
+                              }`}
+                              title={`Cliquer pour modifier (${label})`}
+                            >
+                              {val}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startInlineEdit(product, field)}
+                              className="px-2 py-0.5 rounded-[6px] border border-dashed border-gray-300/80 dark:border-slate-700 text-gray-400 hover:text-[#0759A4] hover:border-[#0759A4] text-[10.5px] font-mono transition cursor-pointer"
+                              title={`Ajouter ${label}`}
+                            >
+                              + code
+                            </button>
+                          )}
+                          {isDup && val && (
+                            <button
+                              type="button"
+                              onClick={() => openBarcodeConflict(val, label)}
+                              className="px-1 py-0.5 rounded bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200 text-[9px] font-black cursor-pointer hover:scale-105"
+                              title="Inspecter ce doublon"
+                            >
+                              !
+                            </button>
+                          )}
+                        </div>
+                      );
+                    };
+
                     return (
                       <tr
                         key={product.id}
@@ -1037,230 +1267,364 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           backgroundColor: isDarkMode ? catTheme.rowBgDark : catTheme.rowBgLight,
                           borderLeft: `4px solid ${catTheme.solid}`,
                         }}
-                        className={`hover:brightness-[0.97] dark:hover:brightness-110 transition-all ${
+                        className={`hover:brightness-[0.98] dark:hover:brightness-110 transition-all ${
                           !product.isEnabled ? 'opacity-60' : ''
                         }`}
                       >
-                        {/* 1. image_html */}
+                        {/* 1. image_html (Click image to zoom, click edit badge to change URL) */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {product.imageUrl ? (
-                            <button
-                              type="button"
-                              onClick={() => setPreviewImageUrl(product.imageUrl || null)}
-                              className="w-10 h-10 rounded-[10px] bg-white border border-gray-200 overflow-hidden p-0.5 flex items-center justify-center cursor-pointer hover:scale-105 transition shadow-2xs"
-                              title="Agrandir l'image"
-                            >
-                              <img
-                                src={product.imageUrl}
-                                alt={product.name}
-                                className="w-full h-full object-contain pointer-events-none"
-                                onError={(e) => {
-                                  (e.target as HTMLElement).style.display = 'none';
-                                }}
-                              />
-                            </button>
+                          {isEditingField('imageUrl') ? (
+                            <input
+                              type="text"
+                              autoFocus
+                              value={editingCell!.value}
+                              onChange={(e) => setEditingCell({ ...editingCell!, value: e.target.value })}
+                              onBlur={() => commitInlineEdit(product)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  commitInlineEdit(product);
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null);
+                                }
+                              }}
+                              placeholder="https://..."
+                              className="w-40 px-2 py-1 rounded-[6px] bg-white dark:bg-slate-900 border-2 border-[#0759A4] text-[11px] font-mono text-gray-900 dark:text-white outline-none shadow-sm"
+                            />
                           ) : (
-                            <div className="w-10 h-10 rounded-[10px] bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-400">
-                              <ShoppingBag className="w-4 h-4 opacity-40" />
+                            <div className="relative inline-flex items-center group/img">
+                              {product.imageUrl ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewImageUrl(product.imageUrl || null)}
+                                  className="w-10 h-10 rounded-[10px] bg-white border border-gray-200 overflow-hidden p-0.5 flex items-center justify-center cursor-pointer hover:scale-105 transition shadow-2xs"
+                                  title="Agrandir l'image"
+                                >
+                                  <img
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    className="w-full h-full object-contain pointer-events-none"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => startInlineEdit(product, 'imageUrl')}
+                                  className="w-10 h-10 rounded-[10px] bg-gray-100 dark:bg-slate-800 border border-dashed border-gray-300 dark:border-slate-700 flex items-center justify-center text-gray-400 hover:border-[#0759A4] hover:text-[#0759A4] cursor-pointer"
+                                  title="Ajouter un lien image"
+                                >
+                                  <ShoppingBag className="w-4 h-4 opacity-50" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => startInlineEdit(product, 'imageUrl')}
+                                className="opacity-0 group-hover/img:opacity-100 absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0759A4] text-white flex items-center justify-center shadow-xs transition cursor-pointer"
+                                title="Modifier le lien de l'image"
+                              >
+                                <Edit2 className="w-2.5 h-2.5" />
+                              </button>
                             </div>
                           )}
                         </td>
 
-                        {/* 2. code (Orange si manquant, clic inspecte si dupliqué) */}
+                        {/* 2. code (Clic direct pour modifier inline) */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {isMissingCode ? (
-                            <span className="inline-block px-2 py-0.5 rounded-[6px] bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 font-mono font-bold text-[11px]">
-                              Indisponible (-)
-                            </span>
+                          {isEditingField('code') ? (
+                            <input
+                              type="text"
+                              autoFocus
+                              value={editingCell!.value}
+                              onChange={(e) => setEditingCell({ ...editingCell!, value: e.target.value })}
+                              onBlur={() => commitInlineEdit(product)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  commitInlineEdit(product);
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null);
+                                }
+                              }}
+                              placeholder="ex: 6037"
+                              className="w-20 px-2 py-1 rounded-[6px] bg-white dark:bg-slate-900 border-2 border-[#0759A4] text-xs font-mono font-black text-gray-900 dark:text-white outline-none shadow-sm"
+                            />
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => isDuplicateCode && openCodeConflict(product.code)}
-                              className={`font-mono text-xs font-black px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isDuplicateCode
-                                  ? 'bg-amber-100 text-amber-900 border-amber-400 cursor-pointer hover:scale-105'
-                                  : 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700'
-                              }`}
-                              title={isDuplicateCode ? 'Code dupliqué ! Cliquer pour inspecter' : 'Code article'}
-                            >
-                              {product.code}
-                            </button>
+                            <div className="flex items-center gap-1">
+                              {isMissingCode ? (
+                                <button
+                                  type="button"
+                                  onClick={() => startInlineEdit(product, 'code')}
+                                  className="inline-block px-2 py-0.5 rounded-[6px] bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 font-mono font-bold text-[11px] cursor-text hover:ring-2 hover:ring-amber-400"
+                                  title="Cliquer pour ajouter le code court"
+                                >
+                                  Indisponible (-)
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => startInlineEdit(product, 'code')}
+                                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-[6px] border select-none transition cursor-text hover:ring-2 hover:ring-[#0759A4]/40 ${
+                                    isDuplicateCode
+                                      ? 'bg-amber-100 text-amber-900 border-amber-400'
+                                      : 'bg-white/90 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700'
+                                  }`}
+                                  title="Cliquer pour modifier le code"
+                                >
+                                  {product.code}
+                                </button>
+                              )}
+                              {isDuplicateCode && (
+                                <button
+                                  type="button"
+                                  onClick={() => openCodeConflict(product.code)}
+                                  className="px-1 py-0.5 rounded bg-amber-200 text-amber-900 text-[9px] font-black cursor-pointer"
+                                  title="Inspecter le doublon de code"
+                                >
+                                  !
+                                </button>
+                              )}
+                            </div>
                           )}
                         </td>
 
-                        {/* 3. produit (Fond coloré selon la catégorie + Violet si répété) */}
+                        {/* 3. produit (Fond coloré selon la catégorie + Icône 100% + Clic direct pour modifier inline) */}
                         <td
                           className="py-2 px-3"
                           style={{
                             backgroundColor: isDarkMode ? catTheme.productBgDark : catTheme.productBgLight,
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => isDuplicateName && openNameConflict(product)}
-                            className={`text-left font-bold text-xs leading-snug rounded-[6px] px-1.5 py-0.5 transition ${
-                              isDuplicateName
-                                ? 'bg-purple-100 dark:bg-purple-950/90 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700 hover:ring-2 hover:ring-purple-400 cursor-pointer'
-                                : 'text-gray-900 dark:text-white'
-                            }`}
-                            title={isDuplicateName ? 'Nom en doublon ! Cliquer pour voir les conflits' : product.name}
-                          >
-                            <span>{product.name}</span>
-                            {isDuplicateName && (
-                              <span className="ml-1.5 text-[10px] font-black uppercase text-purple-700 dark:text-purple-300 underline">
-                                (Doublon)
-                              </span>
-                            )}
-                          </button>
-                        </td>
-
-                        {/* 4. marjane (Rose clair si dupliqué) */}
-                        <td className="py-2 px-3 whitespace-nowrap">
-                          {product.barcodeMarjane ? (
-                            <button
-                              type="button"
-                              onClick={() => openBarcodeConflict(product.barcodeMarjane, 'Marjane')}
-                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isMjDup
-                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
-                                  : 'bg-blue-50/60 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200'
-                              }`}
-                              title={isMjDup ? 'Code-barres dupliqué ! Cliquer pour inspecter' : 'Code principal'}
-                            >
-                              {product.barcodeMarjane}
-                            </button>
+                          {isEditingField('name') ? (
+                            <input
+                              type="text"
+                              autoFocus
+                              value={editingCell!.value}
+                              onChange={(e) => setEditingCell({ ...editingCell!, value: e.target.value })}
+                              onBlur={() => commitInlineEdit(product)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  commitInlineEdit(product);
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null);
+                                }
+                              }}
+                              className="w-full min-w-[200px] px-2 py-1 rounded-[6px] bg-white dark:bg-slate-900 border-2 border-[#0759A4] text-xs font-bold text-gray-900 dark:text-white outline-none shadow-sm"
+                            />
                           ) : (
-                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => startInlineEdit(product, 'name')}
+                                className={`text-left font-bold text-xs leading-snug rounded-[6px] px-1.5 py-0.5 transition cursor-text hover:bg-white/60 dark:hover:bg-slate-900/50 ${
+                                  isDuplicateName
+                                    ? 'bg-purple-100 dark:bg-purple-950/90 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700'
+                                    : 'text-gray-900 dark:text-white'
+                                }`}
+                                title="Cliquer pour modifier le nom du produit"
+                              >
+                                <span>{product.name}</span>
+                              </button>
+                              <Verified100Badge
+                                variant="compact"
+                                status={getProductVerificationStatus(product)}
+                              />
+                              {isDuplicateName && (
+                                <button
+                                  type="button"
+                                  onClick={() => openNameConflict(product)}
+                                  className="text-[10px] font-black uppercase text-purple-700 dark:text-purple-300 underline cursor-pointer"
+                                  title="Inspecter les doublons de nom"
+                                >
+                                  (Doublon)
+                                </button>
+                              )}
+                            </div>
                           )}
                         </td>
 
-                        {/* 5. marjane 2 */}
+                        {/* 4. Contrôle 100% (Bleu) / 50% (Orange) en 1 clic */}
+                        <td className="py-2 px-3 whitespace-nowrap text-center">
+                          {(() => {
+                            const vStatus = getProductVerificationStatus(product);
+                            return (
+                              <div className="inline-flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetVerificationStatus(product, '100')}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10.5px] font-black transition cursor-pointer select-none active:scale-95 border shadow-2xs ${
+                                    vStatus === '100'
+                                      ? 'bg-sky-100 hover:bg-sky-200 text-sky-900 border-sky-400 dark:bg-sky-950/80 dark:text-sky-200 dark:border-sky-600 ring-1 ring-sky-400/60'
+                                      : 'bg-white/80 dark:bg-slate-800 hover:bg-sky-50 text-gray-500 dark:text-slate-300 border-dashed border-gray-300 dark:border-slate-600'
+                                  }`}
+                                  title={
+                                    vStatus === '100'
+                                      ? 'Icône bleue 100% Khdam activée - Cliquer pour retirer'
+                                      : 'Activer icône bleue 100% Khdam'
+                                  }
+                                >
+                                  <VerifiedIconImg
+                                    className={`w-3.5 h-3.5 ${vStatus === '100' ? '' : 'opacity-40 grayscale'}`}
+                                  />
+                                  <span>100%</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetVerificationStatus(product, '50')}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10.5px] font-black transition cursor-pointer select-none active:scale-95 border shadow-2xs ${
+                                    vStatus === '50'
+                                      ? 'bg-orange-100 hover:bg-orange-200 text-orange-900 border-orange-400 dark:bg-orange-950/80 dark:text-orange-200 dark:border-orange-600 ring-1 ring-orange-400/60'
+                                      : 'bg-white/80 dark:bg-slate-800 hover:bg-orange-50 text-gray-500 dark:text-slate-300 border-dashed border-gray-300 dark:border-slate-600'
+                                  }`}
+                                  title={
+                                    vStatus === '50'
+                                      ? 'Icône orange 50% Khdam activée - Cliquer pour retirer'
+                                      : 'Activer icône orange 50% Khdam'
+                                  }
+                                >
+                                  <Verified50IconImg
+                                    className={`w-3.5 h-3.5 ${vStatus === '50' ? '' : 'opacity-40 grayscale'}`}
+                                  />
+                                  <span>50%</span>
+                                </button>
+                              </div>
+                            );
+                          })()}
+                        </td>
+
+                        {/* 5. marjane */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {product.barcodeP2 ? (
-                            <button
-                              type="button"
-                              onClick={() => openBarcodeConflict(product.barcodeP2, 'Marjane 2')}
-                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isP2Dup
-                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
-                                  : 'bg-orange-50/60 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200'
-                              }`}
-                            >
-                              {product.barcodeP2}
-                            </button>
-                          ) : (
-                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          {renderBarcodeCell(
+                            'barcodeMarjane',
+                            product.barcodeMarjane,
+                            'Marjane',
+                            isMjDup,
+                            'bg-blue-50/80 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200'
                           )}
                         </td>
 
-                        {/* 6. marjane Interne */}
+                        {/* 6. marjane 2 */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {product.barcodeInterne ? (
-                            <button
-                              type="button"
-                              onClick={() => openBarcodeConflict(product.barcodeInterne, 'Marjane Interne')}
-                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isInterneDup
-                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
-                                  : 'bg-purple-50/60 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border-purple-200'
-                              }`}
-                            >
-                              {product.barcodeInterne}
-                            </button>
-                          ) : (
-                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          {renderBarcodeCell(
+                            'barcodeP2',
+                            product.barcodeP2,
+                            'Marjane 2',
+                            isP2Dup,
+                            'bg-orange-50/80 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200'
                           )}
                         </td>
 
-                        {/* 7. marjane mini */}
+                        {/* 7. marjane Interne */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {product.barcodeMiniSecours ? (
-                            <button
-                              type="button"
-                              onClick={() => openBarcodeConflict(product.barcodeMiniSecours, 'Marjane Mini')}
-                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isMiniDup
-                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
-                                  : 'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200'
-                              }`}
-                            >
-                              {product.barcodeMiniSecours}
-                            </button>
-                          ) : (
-                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          {renderBarcodeCell(
+                            'barcodeInterne',
+                            product.barcodeInterne,
+                            'Marjane Interne',
+                            isInterneDup,
+                            'bg-purple-50/80 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border-purple-200'
                           )}
                         </td>
 
-                        {/* 8. marjane sec */}
+                        {/* 8. marjane mini */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {product.barcodeSecours ? (
-                            <button
-                              type="button"
-                              onClick={() => openBarcodeConflict(product.barcodeSecours, 'Marjane Sec')}
-                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isSecDup
-                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200'
-                              }`}
-                            >
-                              {product.barcodeSecours}
-                            </button>
-                          ) : (
-                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          {renderBarcodeCell(
+                            'barcodeMiniSecours',
+                            product.barcodeMiniSecours,
+                            'Marjane Mini',
+                            isMiniDup,
+                            'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200'
                           )}
                         </td>
 
-                        {/* 9. marjane sec 2 */}
+                        {/* 9. marjane sec */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          {product.barcodeP3 ? (
-                            <button
-                              type="button"
-                              onClick={() => openBarcodeConflict(product.barcodeP3, 'Marjane Sec 2')}
-                              className={`font-mono text-xs px-2 py-0.5 rounded-[6px] border select-none transition ${
-                                isSec2Dup
-                                  ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 cursor-pointer font-black hover:scale-105'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200'
-                              }`}
-                            >
-                              {product.barcodeP3}
-                            </button>
-                          ) : (
-                            <span className="text-gray-300 dark:text-slate-600 font-mono">-</span>
+                          {renderBarcodeCell(
+                            'barcodeSecours',
+                            product.barcodeSecours,
+                            'Marjane Sec',
+                            isSecDup,
+                            'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200'
                           )}
                         </td>
 
-                        {/* 10. département */}
+                        {/* 10. marjane sec 2 */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          <span
-                            className="px-2 py-0.5 rounded-[6px] text-[10px] font-bold"
+                          {renderBarcodeCell(
+                            'barcodeP3',
+                            product.barcodeP3,
+                            'Marjane Sec 2',
+                            isSec2Dup,
+                            'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200'
+                          )}
+                        </td>
+
+                        {/* 11. département (Select rapide en 1 clic) */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          <select
+                            value={product.department}
+                            onChange={(e) => {
+                              const nextDept = e.target.value as Department;
+                              updateProduct({ ...product, department: nextDept });
+                              showToast(`Rayon modifié : ${nextDept}`);
+                            }}
                             style={{
                               backgroundColor: DEPARTMENT_CONFIGS[product.department]?.tagBg || '#EFF6FF',
                               color: DEPARTMENT_CONFIGS[product.department]?.tagText || '#1E40AF',
                             }}
+                            className="px-2 py-0.5 rounded-[6px] text-[10.5px] font-bold border border-black/10 cursor-pointer outline-none focus:ring-2 focus:ring-[#0759A4]"
                           >
-                            {DEPARTMENT_CONFIGS[product.department]?.shortName || product.department}
-                          </span>
+                            <option value="Fruits et légumes">Fruits &amp; Légumes</option>
+                            <option value="Boucherie et volaille">Boucherie &amp; Volaille</option>
+                            <option value="Fromage et charcuterie">Fromage &amp; Charcuterie</option>
+                            <option value="Boulangerie et pâtisserie">Boulangerie</option>
+                          </select>
                         </td>
 
-                        {/* 11. catégorie */}
+                        {/* 12. catégorie (Clic direct pour modifier inline) */}
                         <td className="py-2 px-3 whitespace-nowrap">
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] text-[10.5px] font-black border"
-                            style={{
-                              backgroundColor: isDarkMode ? catTheme.pillBgDark : catTheme.pillBgLight,
-                              color: isDarkMode ? catTheme.pillTextDark : catTheme.pillTextLight,
-                              borderColor: isDarkMode ? catTheme.pillBorderDark : catTheme.pillBorderLight,
-                            }}
-                          >
-                            <span
-                              className="w-1.5 h-1.5 rounded-full shrink-0"
-                              style={{ backgroundColor: catTheme.solid }}
+                          {isEditingField('category') ? (
+                            <input
+                              type="text"
+                              autoFocus
+                              value={editingCell!.value}
+                              onChange={(e) => setEditingCell({ ...editingCell!, value: e.target.value })}
+                              onBlur={() => commitInlineEdit(product)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  commitInlineEdit(product);
+                                } else if (e.key === 'Escape') {
+                                  setEditingCell(null);
+                                }
+                              }}
+                              className="w-32 px-2 py-1 rounded-[6px] bg-white dark:bg-slate-900 border-2 border-[#0759A4] text-xs font-bold text-gray-900 dark:text-white outline-none shadow-sm"
                             />
-                            {product.category || 'Général'}
-                          </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startInlineEdit(product, 'category')}
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] text-[10.5px] font-black border cursor-text hover:ring-2 hover:ring-[#0759A4]/40 transition"
+                              style={{
+                                backgroundColor: isDarkMode ? catTheme.pillBgDark : catTheme.pillBgLight,
+                                color: isDarkMode ? catTheme.pillTextDark : catTheme.pillTextLight,
+                                borderColor: isDarkMode ? catTheme.pillBorderDark : catTheme.pillBorderLight,
+                              }}
+                              title="Cliquer pour modifier la catégorie"
+                            >
+                              <span
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: catTheme.solid }}
+                              />
+                              {product.category || 'Général'}
+                            </button>
+                          )}
                         </td>
 
-                        {/* 12. quantite (Pure Unité : 'kg' | 'g' | 'pièce') */}
+                        {/* 13. quantite (Pure Unité : 'kg' | 'g' | 'pièce') */}
                         <td className="py-2 px-3 whitespace-nowrap text-center">
                           <select
                             value={pureUnit}
@@ -1283,7 +1647,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           </select>
                         </td>
 
-                        {/* Visibilité (O KHLI LIA L POSSIBILITE F DASH ANANI NKHLI PRODUCT IBANO OLA MAYBANOCH FDASHBOARD) */}
+                        {/* Visibilité */}
                         <td className="py-2 px-3 whitespace-nowrap text-center">
                           <button
                             type="button"
@@ -1321,23 +1685,23 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           </button>
                         </td>
 
-                        {/* Actions */}
-                        <td className="py-2 px-3 whitespace-nowrap text-right">
+                        {/* Actions (Colonne fixée à droite pour éditer facilement sans scroll) */}
+                        <td className="py-2 px-3 whitespace-nowrap text-right sticky right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shadow-[-4px_0_8px_rgba(0,0,0,0.04)]">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
                               onClick={() => {
                                 setEditingProduct(product);
                               }}
-                              className="p-1 rounded-[6px] text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition"
-                              title="Modifier la fiche complète"
+                              className="p-1.5 rounded-[7px] bg-blue-50 dark:bg-blue-950/60 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 transition cursor-pointer"
+                              title="Ouvrir la fiche complète"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               type="button"
                               onClick={() => setProductToDelete(product)}
-                              className="p-1 rounded-[6px] text-gray-500 hover:text-rose-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition"
+                              className="p-1.5 rounded-[7px] text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                               title="Supprimer l'article"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1349,7 +1713,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   })
                 ) : (
                   <tr>
-                    <td colSpan={14} className="py-12 text-center text-gray-500 dark:text-slate-400">
+                    <td colSpan={15} className="py-12 text-center text-gray-500 dark:text-slate-400">
                       <Layers className="w-10 h-10 mx-auto text-gray-300 dark:text-slate-600 mb-2" />
                       <p className="text-sm font-bold">Aucun produit ne correspond aux filtres sélectionnés</p>
                       <button
@@ -2041,6 +2405,79 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 />
               </div>
 
+              <div className="p-2.5 rounded-[12px] bg-gray-50 dark:bg-slate-800/70 border border-gray-200 dark:border-slate-700 space-y-2">
+                <div>
+                  <div className="text-xs font-black text-gray-900 dark:text-white">
+                    Icône de fiabilité à côté du nom
+                  </div>
+                  <div className="text-[10px] text-gray-500 dark:text-slate-400">
+                    Choisir l&apos;icône bleue (100% khdam) ou l&apos;icône orange (50% khdam)
+                  </div>
+                </div>
+                {(() => {
+                  const vStatus = getProductVerificationStatus(editingProduct);
+                  return (
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            verificationStatus: 'none',
+                            isVerified100: false,
+                          })
+                        }
+                        className={`py-1.5 px-2 rounded-[10px] border text-[11px] font-black transition cursor-pointer ${
+                          vStatus === 'none'
+                            ? 'bg-gray-800 text-white border-gray-800 dark:bg-slate-200 dark:text-slate-900'
+                            : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
+                        Aucune
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            verificationStatus: '50',
+                            isVerified100: false,
+                          })
+                        }
+                        className={`py-1.5 px-2 rounded-[10px] border text-[11px] font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                          vStatus === '50'
+                            ? 'bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-200 border-orange-400 ring-1 ring-orange-400'
+                            : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
+                        <Verified50IconImg className="w-4 h-4" />
+                        <span>50% Khdam</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            verificationStatus: '100',
+                            isVerified100: true,
+                          })
+                        }
+                        className={`py-1.5 px-2 rounded-[10px] border text-[11px] font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                          vStatus === '100'
+                            ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border-sky-400 ring-1 ring-sky-400'
+                            : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
+                        <VerifiedIconImg className="w-4 h-4" />
+                        <span>100% Khdam</span>
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
@@ -2222,6 +2659,8 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 const name = fd.get('name') as string;
                 if (!name) return;
 
+                const vStatus = ((fd.get('verificationStatus') as VerificationStatus) || 'none');
+
                 await addProduct({
                   code: (fd.get('code') as string) || '-',
                   name: name,
@@ -2231,6 +2670,8 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   barcodeMarjane: (fd.get('barcodeMarjane') as string) || undefined,
                   imageUrl: (fd.get('imageUrl') as string) || undefined,
                   isEnabled: true,
+                  verificationStatus: vStatus,
+                  isVerified100: vStatus === '100',
                 });
 
                 setIsAddModalOpen(false);
@@ -2304,6 +2745,28 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   placeholder="https://..."
                   className="w-full px-3 py-1.5 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-mono"
                 />
+              </div>
+
+              <div className="p-2.5 rounded-[10px] bg-gray-50 dark:bg-slate-800/70 border border-gray-200 dark:border-slate-700 space-y-1.5">
+                <div className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                  Icône de fiabilité à côté du nom
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <label className="flex items-center justify-center gap-1.5 p-2 rounded-[8px] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 cursor-pointer text-[11px] font-bold">
+                    <input type="radio" name="verificationStatus" value="none" defaultChecked className="accent-gray-700" />
+                    <span>Aucune</span>
+                  </label>
+                  <label className="flex items-center justify-center gap-1.5 p-2 rounded-[8px] bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 cursor-pointer text-[11px] font-bold text-orange-800 dark:text-orange-200">
+                    <input type="radio" name="verificationStatus" value="50" className="accent-orange-600" />
+                    <Verified50IconImg className="w-4 h-4 shrink-0" />
+                    <span>50%</span>
+                  </label>
+                  <label className="flex items-center justify-center gap-1.5 p-2 rounded-[8px] bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 cursor-pointer text-[11px] font-bold text-sky-800 dark:text-sky-200">
+                    <input type="radio" name="verificationStatus" value="100" className="accent-[#0759A4]" />
+                    <VerifiedIconImg className="w-4 h-4 shrink-0" />
+                    <span>100%</span>
+                  </label>
+                </div>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">

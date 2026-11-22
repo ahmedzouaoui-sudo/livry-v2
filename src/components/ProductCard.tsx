@@ -11,6 +11,7 @@ import {
 } from '../utils/productUtils';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
+import { Verified100Badge, getProductVerificationStatus } from './Verified100Badge';
 
 interface ProductCardProps {
   product: Product;
@@ -96,10 +97,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
           </span>
         </div>
 
-        {/* Product Name: White Text */}
-        <h4 className="text-[13px] sm:text-[14px] font-extrabold text-white leading-snug truncate">
-          {product.name}
-        </h4>
+        {/* Product Name: White Text + Optional 100% Verified Icon */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h4 className="text-[13px] sm:text-[14px] font-extrabold text-white leading-snug truncate">
+            {product.name}
+          </h4>
+          <Verified100Badge
+            variant="card"
+            status={getProductVerificationStatus(product)}
+          />
+        </div>
 
         {/* Primary Barcode Preview */}
         {primaryBarcode && (

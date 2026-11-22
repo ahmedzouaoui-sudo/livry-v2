@@ -67,6 +67,8 @@ export interface Product {
   département?: string; // alias raw department
   quantite?: 'kg' | 'g' | 'pièce'; // quantite pure sans chiffres
   isEnabled: boolean;
+  isVerified100?: boolean; // Code-barres vérifié 100% khdam par Admin
+  verificationStatus?: 'none' | '50' | '100'; // '100' = icône bleue, '50' = icône orange
   barcodeMjValide?: string; // alias
 }
 

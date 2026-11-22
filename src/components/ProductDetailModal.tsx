@@ -22,6 +22,12 @@ import { extractProductUnitInfo, recalculateBarcodeWithMultiplier } from '../uti
 import { triggerHaptic } from '../utils/haptics';
 import { useApp } from '../context/AppContext';
 import { ProductEditModal } from './ProductEditModal';
+import {
+  Verified100Badge,
+  VerifiedIconImg,
+  Verified50IconImg,
+  getProductVerificationStatus,
+} from './Verified100Badge';
 
 interface ProductDetailModalProps {
   product: Product;
@@ -36,7 +42,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   onCopySuccess,
 }) => {
-  const { role, setRole, barcodeVotes, openSuggestForProduct, showToast } = useApp();
+  const { role, setRole, barcodeVotes, openSuggestForProduct, showToast, updateProduct, setSelectedProduct } = useApp();
   const [imgError, setImgError] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
@@ -277,9 +283,15 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </span>
           </div>
 
-          <h2 className="text-base sm:text-lg md:text-xl font-black text-[#171717] dark:text-white leading-snug tracking-tight">
-            {product.name}
-          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[#171717] dark:text-white leading-snug tracking-tight">
+              {product.name}
+            </h2>
+            <Verified100Badge
+              variant="detail"
+              status={getProductVerificationStatus(product)}
+            />
+          </div>
         </div>
 
         {/* 3. Weight / Multiplier Stepper: Strictly (-) digit (+) with wider container */}
@@ -380,17 +392,73 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setIsEditModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none shrink-0"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Modifier</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+              {(() => {
+                const vStatus = getProductVerificationStatus(product);
+                const applyStatus = async (target: '100' | '50') => {
+                  triggerHaptic('medium');
+                  const next = vStatus === target ? 'none' : target;
+                  const updated: Product = {
+                    ...product,
+                    verificationStatus: next,
+                    isVerified100: next === '100',
+                  };
+                  await updateProduct(updated);
+                  setSelectedProduct(updated);
+                  showToast(
+                    next === '100'
+                      ? `✅ Icône 100% Khdam (Bleue) activée pour "${product.name}"`
+                      : next === '50'
+                        ? `🟠 Icône 50% Khdam (Orange) activée pour "${product.name}"`
+                        : `Icône retirée pour "${product.name}"`
+                  );
+                };
+
+                return (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => applyStatus('100')}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-[10px] text-[11px] font-black shadow-xs active:scale-95 transition cursor-pointer select-none border ${
+                        vStatus === '100'
+                          ? 'bg-sky-100 hover:bg-sky-200 text-sky-900 border-sky-400 dark:bg-sky-950/70 dark:text-sky-200 dark:border-sky-600'
+                          : 'bg-white dark:bg-slate-800 hover:bg-sky-50 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800'
+                      }`}
+                      title="Activer / Désactiver l'icône bleue 100% Khdam"
+                    >
+                      <VerifiedIconImg className={`w-4 h-4 ${vStatus === '100' ? '' : 'opacity-45 grayscale'}`} />
+                      <span>100%</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => applyStatus('50')}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-[10px] text-[11px] font-black shadow-xs active:scale-95 transition cursor-pointer select-none border ${
+                        vStatus === '50'
+                          ? 'bg-orange-100 hover:bg-orange-200 text-orange-900 border-orange-400 dark:bg-orange-950/70 dark:text-orange-200 dark:border-orange-600'
+                          : 'bg-white dark:bg-slate-800 hover:bg-orange-50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800'
+                      }`}
+                      title="Activer / Désactiver l'icône orange 50% Khdam"
+                    >
+                      <Verified50IconImg className={`w-4 h-4 ${vStatus === '50' ? '' : 'opacity-45 grayscale'}`} />
+                      <span>50%</span>
+                    </button>
+                  </>
+                );
+              })()}
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsEditModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none shrink-0"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Modifier</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

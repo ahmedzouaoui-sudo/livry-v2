@@ -10,6 +10,11 @@ import { Department, Product } from '../types';
 import { useApp } from '../context/AppContext';
 import { extractPureUnit } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
+import {
+  VerifiedIconImg,
+  Verified50IconImg,
+  getProductVerificationStatus,
+} from './Verified100Badge';
 
 interface ProductEditModalProps {
   isOpen: boolean;
@@ -195,6 +200,71 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
               placeholder="ex: POMME GOLDEN EXTRA KG"
               className="w-full px-3 py-2 rounded-[12px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0759A4] outline-none"
             />
+          </div>
+
+          {/* Sélecteur Icône Statut Code-Barres (Aucun / 50% Orange / 100% Bleu) */}
+          <div className="p-3 rounded-[14px] bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 space-y-2">
+            <div>
+              <div className="text-xs font-black text-gray-900 dark:text-white">
+                Icône de fiabilité à côté du texte
+              </div>
+              <div className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                Choisir l&apos;icône bleue (100% khdam) ou l&apos;icône orange (50% khdam)
+              </div>
+            </div>
+            {(() => {
+              const currentStatus = getProductVerificationStatus(formData);
+              return (
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setFormData({ ...formData, verificationStatus: 'none', isVerified100: false });
+                    }}
+                    className={`py-2 px-2 rounded-[10px] border text-[11px] font-black transition cursor-pointer select-none ${
+                      currentStatus === 'none'
+                        ? 'bg-gray-800 text-white border-gray-800 dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200'
+                        : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    Aucune
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setFormData({ ...formData, verificationStatus: '50', isVerified100: false });
+                    }}
+                    className={`py-2 px-2 rounded-[10px] border text-[11px] font-black flex items-center justify-center gap-1.5 transition cursor-pointer select-none ${
+                      currentStatus === '50'
+                        ? 'bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-200 border-orange-400 ring-1 ring-orange-400'
+                        : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-orange-50'
+                    }`}
+                  >
+                    <Verified50IconImg className="w-4 h-4" />
+                    <span>50% Khdam</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setFormData({ ...formData, verificationStatus: '100', isVerified100: true });
+                    }}
+                    className={`py-2 px-2 rounded-[10px] border text-[11px] font-black flex items-center justify-center gap-1.5 transition cursor-pointer select-none ${
+                      currentStatus === '100'
+                        ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-200 border-sky-400 ring-1 ring-sky-400'
+                        : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-sky-50'
+                    }`}
+                  >
+                    <VerifiedIconImg className="w-4 h-4" />
+                    <span>100% Khdam</span>
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {/* 3. Rayon & Catégorie */}

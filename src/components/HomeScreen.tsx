@@ -20,6 +20,7 @@ import {
 } from '../utils/productUtils';
 import { triggerHaptic } from '../utils/haptics';
 import { AppTutorialModal, TUTORIAL_STORAGE_KEY } from './AppTutorialModal';
+import { Verified100Badge, getProductVerificationStatus } from './Verified100Badge';
 
 export const HomeScreen: React.FC = () => {
   const {
@@ -297,9 +298,15 @@ export const HomeScreen: React.FC = () => {
                         </span>
                       </div>
 
-                      <h3 className="text-[13px] sm:text-[14px] font-extrabold text-white truncate leading-snug">
-                        {product.name}
-                      </h3>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h3 className="text-[13px] sm:text-[14px] font-extrabold text-white truncate leading-snug">
+                          {product.name}
+                        </h3>
+                        <Verified100Badge
+                          variant="card"
+                          status={getProductVerificationStatus(product)}
+                        />
+                      </div>
 
                       {primaryBarcode && (
                         <p className="text-[9.5px] font-mono text-white/80 truncate mt-0.5">

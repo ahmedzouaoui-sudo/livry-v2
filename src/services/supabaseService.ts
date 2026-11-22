@@ -551,6 +551,20 @@ export function mapRowToProduct(row: any): Product {
   const finalImageUrl = cleanImageUrl(row.image_html ?? row.image_url ?? row.image ?? row.imageUrl);
   const pureUnit = extractPureUnit(row.quantite ?? row.quantité ?? row.unit ?? row.unite ?? nameVal);
 
+  const workerTag = String(row.worker_number ?? '').trim();
+  const has100 = Boolean(
+    row.is_verified_100 === true ||
+    row.isVerified100 === true ||
+    workerTag.includes('VERIFIED_100')
+  );
+  const has50 = !has100 && Boolean(
+    row.is_verified_50 === true ||
+    row.isVerified50 === true ||
+    workerTag.includes('VERIFIED_50')
+  );
+  const verificationStatus: 'none' | '50' | '100' = has100 ? '100' : has50 ? '50' : 'none';
+  const isVerified100 = verificationStatus === '100';
+
   return {
     id: idNum,
     code: codeVal,
@@ -566,6 +580,8 @@ export function mapRowToProduct(row: any): Product {
     barcodeP3: marjaneSec2 && marjaneSec2 !== '-' && marjaneSec2 !== '0' ? marjaneSec2 : undefined,
     imageUrl: finalImageUrl,
     isEnabled: row.is_enabled ?? row.isEnabled ?? true,
+    isVerified100,
+    verificationStatus,
     barcodeMjValide: marjane && marjane !== '-' && marjane !== '0' ? marjane : undefined,
   };
 }
@@ -575,6 +591,12 @@ export function mapProductToRow(p: Product) {
   const dbDept = departmentToDbValue(p.department);
   const pureUnit = p.quantite || extractPureUnit(p.name);
   const primaryMarjane = p.barcodeMarjane || p.barcodeMjValide || '0';
+  const vStatus: 'none' | '50' | '100' =
+    p.verificationStatus === '100' || p.verificationStatus === '50' || p.verificationStatus === 'none'
+      ? p.verificationStatus
+      : p.isVerified100
+        ? '100'
+        : 'none';
 
   return {
     id: p.id,
@@ -591,6 +613,12 @@ export function mapProductToRow(p: Product) {
     'catégorie': p.category || '',
     quantite: pureUnit,
     is_enabled: p.isEnabled ?? true,
+    worker_number:
+      vStatus === '100'
+        ? 'SHARED|VERIFIED_100'
+        : vStatus === '50'
+          ? 'SHARED|VERIFIED_50'
+          : 'SHARED',
     updated_at: new Date().toISOString(),
   };
 }

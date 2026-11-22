@@ -12,6 +12,7 @@ import {
 } from '../utils/productUtils';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
+import { Verified100Badge, getProductVerificationStatus } from './Verified100Badge';
 
 interface ProductListScreenProps {
   products: Product[];
@@ -219,13 +220,19 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                   )}
                 </div>
 
-                {/* 3. Product Name: White Text */}
-                <h3
-                  className="text-[13px] sm:text-[14px] md:text-[15px] font-extrabold text-white leading-snug line-clamp-2 mt-auto tracking-tight"
-                  title={product.name}
-                >
-                  {product.name}
-                </h3>
+                {/* 3. Product Name: White Text + 100% Verified Icon */}
+                <div className="flex items-start gap-1 mt-auto">
+                  <h3
+                    className="text-[13px] sm:text-[14px] md:text-[15px] font-extrabold text-white leading-snug line-clamp-2 tracking-tight flex-1 min-w-0"
+                    title={product.name}
+                  >
+                    {product.name}
+                  </h3>
+                  <Verified100Badge
+                    variant="compact"
+                    status={getProductVerificationStatus(product)}
+                  />
+                </div>
 
                 {/* 4. Barcode preview if available */}
                 {primaryBarcode && (
