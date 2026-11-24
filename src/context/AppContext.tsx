@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   Department,
   Product,
@@ -13,10 +13,17 @@ import {
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { parseProductsFromCsv, exportProductsToCsv } from '../utils/csvImporter';
 import {
+  hasValidProductCode,
+  hasProductBarcodes,
+  isProductCodeXXXX,
+  NoCodeVisibilitySettings,
+} from '../utils/productUtils';
+import {
   checkSupabaseHealth,
   fetchProductsFromSupabase,
   upsertProductInSupabase,
   deleteProductInSupabase,
+  deleteProductsBatchInSupabase,
   seedProductsToSupabase,
   deleteAllProductsFromSupabase,
   fetchTipsFromSupabase,
@@ -122,6 +129,8 @@ interface AppContextType {
   updateProduct: (updated: Product) => Promise<void>;
   addProduct: (newProduct: Omit<Product, 'id'>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
+  deleteProductsBulk: (ids: number[]) => Promise<number>;
+  restoreDeletedProducts: (items: Product[]) => Promise<number>;
   resetCatalogue: () => void;
   clearAllProducts: () => Promise<void>;
   restoreLatestBackupNow: () => Promise<void>;
@@ -160,6 +169,12 @@ interface AppContextType {
   guideConfig: GuideConfig;
   updateGuideConfig: (nextConfig: GuideConfig) => Promise<{ success: boolean; config: GuideConfig; error?: string }>;
   resetGuideConfig: () => Promise<{ success: boolean; config: GuideConfig; error?: string }>;
+
+  // Option "Sans Code" (articles sans code / code-barres restent visibles)
+  noCodeSettings: NoCodeVisibilitySettings;
+  toggleProductCodeDisabled: (id: number) => Promise<void>;
+  bulkSetCodeDisabled: (mode: 'disable-missing' | 'enable-all-codes') => Promise<number>;
+  setAllowAllWithoutCode: (enabled: boolean) => Promise<void>;
 }
 
 const STORAGE_KEY_PRODUCTS = 'finder_livry_products_v3';
@@ -419,6 +434,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const [guideConfig, setGuideConfig] = useState<GuideConfig>(() => getLocalGuideConfig());
+  const guideConfigRef = useRef<GuideConfig>(guideConfig);
+  useEffect(() => {
+    guideConfigRef.current = guideConfig;
+  }, [guideConfig]);
+
+  const noCodeSettings = useMemo<NoCodeVisibilitySettings>(() => {
+    const ids = guideConfig.noCodeSettings?.disabledCodeProductIds || [];
+    return {
+      allowAllWithoutCode: Boolean(guideConfig.noCodeSettings?.allowAllWithoutCode),
+      disabledCodeProductIds: new Set<number>(ids),
+    };
+  }, [guideConfig.noCodeSettings]);
 
   const [products, setProducts] = useState<Product[]>(() => {
     try {
@@ -626,6 +653,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       p.category,
       p.quantite || '',
       p.isEnabled ? '1' : '0',
+      p.codeDisabled ? '1' : '0',
       p.verificationStatus || (p.isVerified100 ? '100' : 'none'),
       p.imageUrl || '',
       p.barcodeMarjane || '',
@@ -1074,6 +1102,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast(`⚠️ Modifié localement · Erreur sync Supabase : ${res.error}`);
       }
 
+      // Synchroniser le statut codeDisabled dans guideConfig (pour garantie cloud multi-appareils)
+      const currentCfg = guideConfigRef.current;
+      const currentIds = new Set<number>(currentCfg.noCodeSettings?.disabledCodeProductIds || []);
+      const wasInCloudList = currentIds.has(updated.id);
+      const nextDisabledFlag = Boolean(updated.codeDisabled);
+      if (Boolean(prev?.codeDisabled) !== nextDisabledFlag || wasInCloudList !== nextDisabledFlag) {
+        if (nextDisabledFlag) {
+          currentIds.add(updated.id);
+        } else {
+          currentIds.delete(updated.id);
+        }
+        const nextCfg: GuideConfig = {
+          ...currentCfg,
+          noCodeSettings: {
+            allowAllWithoutCode: Boolean(currentCfg.noCodeSettings?.allowAllWithoutCode),
+            disabledCodeProductIds: Array.from(currentIds),
+          },
+        };
+        saveGuideConfigToCloud(nextCfg)
+          .then((saved) => setGuideConfig(saved.config))
+          .catch(() => {});
+      }
+
       const formatVStatus = (v?: string) => {
         if (v === '100') return '100% Khdam (Bleu)';
         if (v === '50') return '50% Khdam (Orange)';
@@ -1139,6 +1190,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast(`⚠️ Ajouté localement · Erreur sync Supabase : ${res.error}`);
       }
 
+      if (productWithId.codeDisabled) {
+        const currentCfg = guideConfigRef.current;
+        const nextIds = Array.from(
+          new Set([...(currentCfg.noCodeSettings?.disabledCodeProductIds || []), productWithId.id])
+        );
+        saveGuideConfigToCloud({
+          ...currentCfg,
+          noCodeSettings: {
+            allowAllWithoutCode: Boolean(currentCfg.noCodeSettings?.allowAllWithoutCode),
+            disabledCodeProductIds: nextIds,
+          },
+        })
+          .then((saved) => setGuideConfig(saved.config))
+          .catch(() => {});
+      }
+
       logAppEvent({
         category: 'PRODUCT',
         action: 'PRODUCT_CREATED',
@@ -1159,6 +1226,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         intentionalClearUntilRef.current = Date.now() + 60000;
       }
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      setSelectedProduct((prev) => (prev && prev.id === id ? null : prev));
       const res = await deleteProductInSupabase(id);
       if (!res.success && res.error) {
         showToast(`⚠️ Supprimé localement · Erreur Supabase : ${res.error}`);
@@ -1173,6 +1241,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ? `Article "${target.name}" (Code: ${target.code}) supprimé du catalogue.`
           : `Article #${id} supprimé du catalogue.`,
       }).catch(() => {});
+    },
+    [requireAdmin, showToast]
+  );
+
+  const deleteProductsBulk = useCallback(
+    async (ids: number[]): Promise<number> => {
+      if (!requireAdmin('deleteProductsBulk')) return 0;
+      if (!ids || ids.length === 0) return 0;
+      const idSet = new Set(ids);
+      const targets = productsRef.current.filter((p) => idSet.has(p.id));
+      if (targets.length === 0) return 0;
+
+      if (targets.length >= 10 && productsRef.current.length >= 10) {
+        saveEmergencyCatalogSnapshot(productsRef.current);
+      }
+
+      const remainingCount = productsRef.current.length - targets.length;
+      if (remainingCount <= 0) {
+        intentionalClearUntilRef.current = Date.now() + 120000;
+      }
+
+      setProducts((prev) => prev.filter((p) => !idSet.has(p.id)));
+      setSelectedProduct((prev) => (prev && idSet.has(prev.id) ? null : prev));
+
+      const res = await deleteProductsBatchInSupabase(Array.from(idSet));
+      if (!res.success && res.error) {
+        showToast(`⚠️ ${targets.length} supprimé(s) localement · Erreur Supabase : ${res.error}`);
+      }
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action: 'PRODUCT_BULK_DELETED',
+        actorRole: roleRef.current,
+        target: `${targets.length} articles`,
+        details: `Suppression groupée de ${targets.length} produit(s) : ${targets
+          .slice(0, 5)
+          .map((t) => t.name)
+          .join(', ')}${targets.length > 5 ? '...' : ''}.`,
+      }).catch(() => {});
+
+      return targets.length;
+    },
+    [requireAdmin, showToast]
+  );
+
+  const restoreDeletedProducts = useCallback(
+    async (items: Product[]): Promise<number> => {
+      if (!requireAdmin('restoreDeletedProducts')) return 0;
+      if (!items || items.length === 0) return 0;
+
+      setProducts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const toAdd = items.filter((item) => !existingIds.has(item.id));
+        return [...toAdd, ...prev];
+      });
+
+      const res = await seedProductsToSupabase(items);
+      if (!res.success && res.error) {
+        showToast(`⚠️ Restauré localement · Erreur Supabase : ${res.error}`);
+      } else {
+        showToast(`↩️ ${items.length} produit${items.length > 1 ? 's' : ''} restauré${items.length > 1 ? 's' : ''} !`);
+      }
+      return items.length;
     },
     [requireAdmin, showToast]
   );
@@ -1576,6 +1707,177 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: res.success, config: res.config, error: res.error };
   }, [guideConfig, requireAdmin]);
 
+  const toggleProductCodeDisabled = useCallback(
+    async (id: number) => {
+      if (!requireAdmin('toggleProductCodeDisabled')) return;
+      const target = productsRef.current.find((p) => p.id === id);
+      if (!target) return;
+
+      const currentCfg = guideConfigRef.current;
+      const currentIds = new Set<number>(currentCfg.noCodeSettings?.disabledCodeProductIds || []);
+      const currentlyDisabled = Boolean(target.codeDisabled || currentIds.has(id));
+      const nextDisabled = !currentlyDisabled;
+
+      const updated: Product = { ...target, codeDisabled: nextDisabled };
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      setSelectedProduct((prevSel) => (prevSel && prevSel.id === id ? updated : prevSel));
+
+      if (nextDisabled) {
+        currentIds.add(id);
+      } else {
+        currentIds.delete(id);
+      }
+
+      const nextCfg: GuideConfig = {
+        ...currentCfg,
+        noCodeSettings: {
+          allowAllWithoutCode: Boolean(currentCfg.noCodeSettings?.allowAllWithoutCode),
+          disabledCodeProductIds: Array.from(currentIds),
+        },
+      };
+
+      const [prodRes, cfgRes] = await Promise.all([
+        upsertProductInSupabase(updated).catch(() => ({ success: false })),
+        saveGuideConfigToCloud(nextCfg),
+      ]);
+      setGuideConfig(cfgRes.config);
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action: nextDisabled ? 'PRODUCT_CODE_DISABLED' : 'PRODUCT_CODE_ENABLED',
+        actorRole: roleRef.current,
+        target: `#${target.id} ${target.name}`,
+        details: nextDisabled
+          ? `Code désactivé pour "${target.name}" (visible même sans code/code-barres).`
+          : `Obligation de code réactivée pour "${target.name}".`,
+      }).catch(() => {});
+
+      showToast(
+        nextDisabled
+          ? `🔓 Code désactivé : "${target.name}" reste visible même sans code`
+          : `🔒 Obligation de code réactivée : "${target.name}"${!prodRes.success ? ' (local)' : ''}`
+      );
+    },
+    [requireAdmin, showToast]
+  );
+
+  const bulkSetCodeDisabled = useCallback(
+    async (mode: 'disable-missing' | 'enable-all-codes'): Promise<number> => {
+      if (!requireAdmin('bulkSetCodeDisabled')) return 0;
+      const currentCfg = guideConfigRef.current;
+      const currentIds = new Set<number>(currentCfg.noCodeSettings?.disabledCodeProductIds || []);
+      let changedCount = 0;
+
+      let changedProducts: Product[] = [];
+
+      if (mode === 'disable-missing') {
+        const updatedList = productsRef.current.map((p) => {
+          if (isProductCodeXXXX(p.code)) return p;
+          const missingCode = !hasValidProductCode(p.code);
+          if (missingCode) {
+            if (!p.codeDisabled || !currentIds.has(p.id)) {
+              changedCount++;
+              const nextP = { ...p, codeDisabled: true };
+              changedProducts.push(nextP);
+              currentIds.add(p.id);
+              return nextP;
+            }
+            currentIds.add(p.id);
+          }
+          return p;
+        });
+        setProducts(updatedList);
+      } else {
+        const updatedList = productsRef.current.map((p) => {
+          if (p.codeDisabled || currentIds.has(p.id)) {
+            changedCount++;
+            currentIds.delete(p.id);
+            const nextP = { ...p, codeDisabled: false };
+            changedProducts.push(nextP);
+            return nextP;
+          }
+          return p;
+        });
+        currentIds.clear();
+        setProducts(updatedList);
+      }
+
+      const nextCfg: GuideConfig = {
+        ...currentCfg,
+        noCodeSettings: {
+          allowAllWithoutCode:
+            mode === 'enable-all-codes'
+              ? false
+              : Boolean(currentCfg.noCodeSettings?.allowAllWithoutCode),
+          disabledCodeProductIds: Array.from(currentIds),
+        },
+      };
+
+      const [saved] = await Promise.all([
+        saveGuideConfigToCloud(nextCfg),
+        changedProducts.length > 0
+          ? seedProductsToSupabase(changedProducts).catch(() => ({ success: false }))
+          : Promise.resolve({ success: true }),
+      ]);
+      setGuideConfig(saved.config);
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action:
+          mode === 'disable-missing'
+            ? 'BULK_DISABLE_MISSING_CODES'
+            : 'BULK_REENABLE_ALL_CODES',
+        actorRole: roleRef.current,
+        target: `${currentIds.size} articles`,
+        details:
+          mode === 'disable-missing'
+            ? `Code désactivé en masse pour ${currentIds.size} articles sans code / sans code-barres (${changedCount} modifiés).`
+            : `Réactivation de l'obligation de code sur tous les articles (${changedCount} modifiés).`,
+      }).catch(() => {});
+
+      showToast(
+        mode === 'disable-missing'
+          ? `🔓 ${currentIds.size} article(s) sans code/code-barres désormais visibles dans l'app !`
+          : `🔒 Obligation de code réactivée (${changedCount} articles mis à jour)`
+      );
+      return currentIds.size;
+    },
+    [requireAdmin, showToast]
+  );
+
+  const setAllowAllWithoutCode = useCallback(
+    async (enabled: boolean) => {
+      if (!requireAdmin('setAllowAllWithoutCode')) return;
+      const currentCfg = guideConfigRef.current;
+      const nextCfg: GuideConfig = {
+        ...currentCfg,
+        noCodeSettings: {
+          allowAllWithoutCode: enabled,
+          disabledCodeProductIds: currentCfg.noCodeSettings?.disabledCodeProductIds || [],
+        },
+      };
+      const saved = await saveGuideConfigToCloud(nextCfg);
+      setGuideConfig(saved.config);
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action: enabled ? 'GLOBAL_NO_CODE_ENABLED' : 'GLOBAL_NO_CODE_DISABLED',
+        actorRole: roleRef.current,
+        target: 'Catalogue Global',
+        details: enabled
+          ? 'Option globale activée : tous les articles sans code restent visibles.'
+          : 'Option globale désactivée : retour au filtrage normal des articles sans code.',
+      }).catch(() => {});
+
+      showToast(
+        enabled
+          ? '🔓 Tous les articles sans code sont maintenant visibles dans l’app !'
+          : '🔒 Mode standard : seuls les articles avec code ou code désactivé restent visibles.'
+      );
+    },
+    [requireAdmin, showToast]
+  );
+
   // Free Community Barcode Voting: Anyone can vote like or dislike!
   const voteBarcode = useCallback((barcode: string, type: 'like' | 'dislike') => {
     const voterId = getDeviceVoterId();
@@ -1740,6 +2042,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProduct,
         addProduct,
         deleteProduct,
+        deleteProductsBulk,
+        restoreDeletedProducts,
         resetCatalogue,
         clearAllProducts,
         restoreLatestBackupNow,
@@ -1765,6 +2069,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         guideConfig,
         updateGuideConfig,
         resetGuideConfig,
+        noCodeSettings,
+        toggleProductCodeDisabled,
+        bulkSetCodeDisabled,
+        setAllowAllWithoutCode,
       }}
     >
       {children}

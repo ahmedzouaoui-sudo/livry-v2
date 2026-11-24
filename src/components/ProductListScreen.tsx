@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, ShoppingBag, Database, Edit3 } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Database, Edit3, Trash2 } from 'lucide-react';
 import { Department, Product } from '../types';
 import {
   DEPARTMENT_CONFIGS,
@@ -7,8 +7,7 @@ import {
   formatProductCodeBadge,
   getProductDisplayStatus,
   getPrimaryBarcode,
-  hasProductBarcodes,
-  isProductCodeXXXX,
+  isProductVisibleInCatalog,
 } from '../utils/productUtils';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
@@ -28,27 +27,25 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
   onBack,
   onSelectProduct,
 }) => {
-  const { role, setActiveTab, barcodeVotes, openSuggestForProduct } = useApp();
+  const { role, setActiveTab, barcodeVotes, noCodeSettings, openSuggestForProduct, deleteProduct, showToast } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const deptConfig = selectedDepartment
     ? DEPARTMENT_CONFIGS[selectedDepartment]
     : DEPARTMENT_CONFIGS['Fruits et légumes'];
 
-  // Categories in this department (strictly ONLY products with valid barcodes)
+  // Categories in this department (sorted A-Z)
   const categories = useMemo(() => {
     const list = products.filter((p) => {
-      if (!p.isEnabled) return false;
       if (selectedDepartment && p.department !== selectedDepartment) return false;
-      if (isProductCodeXXXX(p.code)) return false;
-      return hasProductBarcodes(p, barcodeVotes);
+      return isProductVisibleInCatalog(p, barcodeVotes, noCodeSettings);
     });
 
     const unique = Array.from(new Set(list.map((p) => p.category).filter(Boolean)));
-    return unique.sort();
-  }, [products, selectedDepartment, barcodeVotes]);
+    return unique.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  }, [products, selectedDepartment, barcodeVotes, noCodeSettings]);
 
-  // Filter products by department and category (strictly ONLY products with valid barcodes)
   const filtered = useMemo(() => {
     return filterProducts(
       products,
@@ -57,14 +54,16 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       selectedCategory,
       true,
       false,
-      barcodeVotes
+      barcodeVotes,
+      undefined,
+      noCodeSettings
     );
-  }, [products, selectedDepartment, selectedCategory, barcodeVotes]);
+  }, [products, selectedDepartment, selectedCategory, barcodeVotes, noCodeSettings]);
 
   const title = selectedDepartment || 'Catalogue des produits';
 
   const handleProductClick = (product: Product) => {
-    const status = getProductDisplayStatus(product, barcodeVotes);
+    const status = getProductDisplayStatus(product, barcodeVotes, noCodeSettings);
     if (status === 'UNAVAILABLE_NO_BARCODE') {
       triggerHaptic('warning');
       return;
@@ -119,7 +118,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
               triggerHaptic('light');
               setSelectedCategory('ALL');
             }}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none tabular-nums ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none tabular-nums whitespace-nowrap ${
               selectedCategory === 'ALL'
                 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
                 : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
@@ -135,7 +134,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                 triggerHaptic('light');
                 setSelectedCategory(cat);
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer select-none whitespace-nowrap ${
                 selectedCategory === cat
                   ? 'bg-[#0759A4] text-white shadow-xs'
                   : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
@@ -152,7 +151,13 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
         {filtered.length > 0 ? (
           filtered.map((product) => {
             const productDeptConfig = DEPARTMENT_CONFIGS[product.department] || deptConfig;
-            const codeBadge = formatProductCodeBadge(product.code);
+            const displayCodeLabel = formatProductCodeBadge(
+              product.code,
+              product,
+              barcodeVotes,
+              noCodeSettings
+            );
+            const showMissingPrompt = displayCodeLabel === 'Indisponible';
             const primaryBarcode = getPrimaryBarcode(product, barcodeVotes);
 
             return (
@@ -165,18 +170,51 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                 {/* 1. White Image Thumbnail Box */}
                 <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-1.5 p-1.5 shadow-2xs">
                   {role === 'Admin' && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerHaptic('light');
-                        onSelectProduct(product);
-                      }}
-                      className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-[#0759A4] text-white hover:bg-blue-700 transition shadow-xs z-10 cursor-pointer"
-                      title="Modifier cet article (Admin)"
-                    >
-                      <Edit3 className="w-3 h-3 text-white" />
-                    </button>
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic('light');
+                          onSelectProduct(product);
+                        }}
+                        className="p-1.5 rounded-lg bg-[#0759A4] text-white hover:bg-blue-700 transition shadow-xs cursor-pointer"
+                        title="Modifier cet article (Admin)"
+                      >
+                        <Edit3 className="w-3 h-3 text-white" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirmDeleteId !== product.id) {
+                            triggerHaptic('warning');
+                            setConfirmDeleteId(product.id);
+                            setTimeout(() => {
+                              setConfirmDeleteId((prev) => (prev === product.id ? null : prev));
+                            }, 3500);
+                            return;
+                          }
+                          setConfirmDeleteId(null);
+                          triggerHaptic('warning');
+                          await deleteProduct(product.id);
+                          showToast(`🗑️ "${product.name}" supprimé`);
+                        }}
+                        className={`px-1.5 py-1.5 rounded-lg text-white transition shadow-xs cursor-pointer inline-flex items-center gap-0.5 text-[9.5px] font-black ${
+                          confirmDeleteId === product.id
+                            ? 'bg-red-700 ring-2 ring-red-200'
+                            : 'bg-red-600/90 hover:bg-red-600'
+                        }`}
+                        title={
+                          confirmDeleteId === product.id
+                            ? 'Cliquer encore pour supprimer'
+                            : 'Supprimer cet article (Admin)'
+                        }
+                      >
+                        <Trash2 className="w-3 h-3 text-white" />
+                        {confirmDeleteId === product.id && <span>OK ?</span>}
+                      </button>
+                    </div>
                   )}
                   {product.imageUrl ? (
                     <img
@@ -192,19 +230,19 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                   )}
                 </div>
 
-                {/* 2. Code Badge: Limouni (Orange) if Indisponible, White otherwise */}
+                {/* 2. Code Badge */}
                 <div className="mb-1 flex items-center gap-1.5 flex-wrap">
                   <span
-                    className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[6px] shadow-2xs tracking-wider tabular-nums"
+                    className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[6px] shadow-2xs tracking-wider tabular-nums whitespace-nowrap"
                     style={{
-                      backgroundColor: codeBadge === 'Indisponible' ? '#EA580C' : '#FFFFFF',
-                      color: codeBadge === 'Indisponible' ? '#FFFFFF' : productDeptConfig.accentColor,
+                      backgroundColor: showMissingPrompt ? '#EA580C' : '#FFFFFF',
+                      color: showMissingPrompt ? '#FFFFFF' : productDeptConfig.accentColor,
                     }}
                   >
-                    {codeBadge}
+                    {displayCodeLabel}
                   </span>
 
-                  {codeBadge === 'Indisponible' && (
+                  {showMissingPrompt && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -234,7 +272,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                   />
                 </div>
 
-                {/* 4. Barcode preview if available */}
+                {/* 4. Barcode preview */}
                 {primaryBarcode && (
                   <p className="text-[9px] font-mono text-white/85 truncate mt-1 tabular-nums">
                     {primaryBarcode}

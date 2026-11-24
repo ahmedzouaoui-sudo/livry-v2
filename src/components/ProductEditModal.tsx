@@ -5,6 +5,7 @@ import {
   Trash2,
   Image as ImageIcon,
   Barcode as BarcodeIcon,
+  Unlock,
 } from 'lucide-react';
 import { Department, Product } from '../types';
 import { useApp } from '../context/AppContext';
@@ -33,9 +34,20 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   onSaved,
   onDeleted,
 }) => {
-  const { updateProduct, deleteProduct, selectedProduct, setSelectedProduct, showToast } = useApp();
+  const { updateProduct, deleteProduct, selectedProduct, setSelectedProduct, noCodeSettings, showToast } = useApp();
 
-  const [formData, setFormData] = useState<Product>({ ...product });
+  const isGloballyOrListedDisabled = Boolean(
+    product.codeDisabled ||
+      (noCodeSettings.disabledCodeProductIds instanceof Set &&
+        noCodeSettings.disabledCodeProductIds.has(product.id)) ||
+      (Array.isArray(noCodeSettings.disabledCodeProductIds) &&
+        noCodeSettings.disabledCodeProductIds.includes(product.id))
+  );
+
+  const [formData, setFormData] = useState<Product>({
+    ...product,
+    codeDisabled: isGloballyOrListedDisabled,
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -43,14 +55,22 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
   useEffect(() => {
     if (product) {
+      const disabledFlag = Boolean(
+        product.codeDisabled ||
+          (noCodeSettings.disabledCodeProductIds instanceof Set &&
+            noCodeSettings.disabledCodeProductIds.has(product.id)) ||
+          (Array.isArray(noCodeSettings.disabledCodeProductIds) &&
+            noCodeSettings.disabledCodeProductIds.includes(product.id))
+      );
       setFormData({
         ...product,
+        codeDisabled: disabledFlag,
         quantite: product.quantite || extractPureUnit(product.name),
       });
       setPreviewImgError(false);
       setShowDeleteConfirm(false);
     }
-  }, [product, isOpen]);
+  }, [product, isOpen, noCodeSettings]);
 
   if (!isOpen) return null;
 
@@ -188,6 +208,43 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 <option value="pièce">pièce (À l'unité)</option>
               </select>
             </div>
+          </div>
+
+          {/* Option : Désactiver le code (article reste visible même sans code) */}
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  formData.codeDisabled
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                <Unlock className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black text-gray-900 dark:text-white">
+                  Désactiver le code (Statut : Non adressé)
+                </div>
+                <div className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                  Affiche le statut « Non adressé » pour le code. L&apos;article apparaît dans la recherche s&apos;il possède un code-barres.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setFormData({ ...formData, codeDisabled: !formData.codeDisabled });
+              }}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition cursor-pointer select-none shrink-0 border ${
+                formData.codeDisabled
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                  : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 border-gray-300 dark:border-slate-600 hover:bg-gray-100'
+              }`}
+            >
+              {formData.codeDisabled ? 'Non adressé (Désactivé)' : 'Code requis'}
+            </button>
           </div>
 
           {/* 2. Nom du produit */}

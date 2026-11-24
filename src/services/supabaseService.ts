@@ -607,6 +607,11 @@ export function mapRowToProduct(row: any): Product {
             ? 'broken'
             : 'none';
   const isVerified100 = verificationStatus === '100';
+  const codeDisabled = Boolean(
+    row.code_disabled === true ||
+      row.codeDisabled === true ||
+      workerTag.includes('CODE_DISABLED')
+  );
 
   return {
     id: idNum,
@@ -626,6 +631,7 @@ export function mapRowToProduct(row: any): Product {
     isVerified100,
     verificationStatus,
     barcodeMjValide: marjane && marjane !== '-' && marjane !== '0' ? marjane : undefined,
+    codeDisabled,
   };
 }
 
@@ -644,6 +650,15 @@ export function mapProductToRow(p: Product) {
         ? '100'
         : 'none';
 
+  const baseWorkerTag =
+    vStatus === '100'
+      ? 'SHARED|VERIFIED_100'
+      : vStatus === '50'
+        ? 'SHARED|VERIFIED_50'
+        : vStatus === 'broken'
+          ? 'SHARED|VERIFIED_BROKEN'
+          : 'SHARED';
+
   return {
     id: p.id,
     code: p.code || '',
@@ -661,14 +676,7 @@ export function mapProductToRow(p: Product) {
     is_enabled: p.isEnabled ?? true,
     is_verified_100: vStatus === '100',
     verification_status: vStatus,
-    worker_number:
-      vStatus === '100'
-        ? 'SHARED|VERIFIED_100'
-        : vStatus === '50'
-          ? 'SHARED|VERIFIED_50'
-          : vStatus === 'broken'
-            ? 'SHARED|VERIFIED_BROKEN'
-            : 'SHARED',
+    worker_number: p.codeDisabled ? `${baseWorkerTag}|CODE_DISABLED` : baseWorkerTag,
     updated_at: new Date().toISOString(),
   };
 }
@@ -948,6 +956,39 @@ export async function deleteProductInSupabase(
   }
 }
 
+// Fast batch delete multiple products in Supabase
+export async function deleteProductsBatchInSupabase(
+  ids: number[]
+): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+  if (!ids || ids.length === 0) {
+    return { success: true, deletedCount: 0 };
+  }
+  try {
+    const uniqueIds = Array.from(new Set(ids));
+    const batchSize = 100;
+    let deletedCount = 0;
+
+    for (let i = 0; i < uniqueIds.length; i += batchSize) {
+      const chunk = uniqueIds.slice(i, i + batchSize);
+      const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+      const { error } = await client.from('products').delete().in('id', chunk);
+
+      if (error) {
+        const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+        const { error: errAlt } = await fallbackClient.from('products').delete().in('id', chunk);
+        if (errAlt) {
+          return { success: false, deletedCount, error: error.message };
+        }
+      }
+      deletedCount += chunk.length;
+    }
+
+    return { success: true, deletedCount };
+  } catch (err: any) {
+    return { success: false, deletedCount: 0, error: err.message };
+  }
+}
+
 // Delete all products from Supabase
 export async function deleteAllProductsFromSupabase(): Promise<{ success: boolean; error?: string }> {
   try {
@@ -1123,7 +1164,7 @@ function mapRowToTip(t: any): TipPost {
     title: String(t.title || ''),
     content: parsed.content,
     blocks,
-    category: t.category || 'Général',
+    category: typeof t.category === 'string' ? t.category : '',
     authorRole: t.author_role || t.authorRole || 'Pickeur',
     authorName: t.author_name || t.authorName || undefined,
     createdAt: t.created_at || t.createdAt || 'Récemment',

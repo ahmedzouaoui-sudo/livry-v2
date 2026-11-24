@@ -34,6 +34,13 @@ import {
   BookOpen,
   CloudUpload,
   CloudDownload,
+  Unlock,
+  Lock,
+  ArrowDownAZ,
+  ArrowUpZA,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department, Product } from '../types';
@@ -43,6 +50,11 @@ import {
   getCleanProductCode,
   normalizeSearchText,
   getCategoryColorTheme,
+  isProductCodeDisabled,
+  isProductBarcodeVerified,
+  isProductCode0000,
+  ProductSortMode,
+  sortProducts,
 } from '../utils/productUtils';
 import {
   SUPABASE_SETUP_SQL,
@@ -104,6 +116,8 @@ export const AdminDashboard: React.FC = () => {
     updateProduct,
     addProduct,
     deleteProduct,
+    deleteProductsBulk,
+    restoreDeletedProducts,
     restoreLatestBackupNow,
     seedInitialCatalogueToSupabase,
     seedSupabase,
@@ -116,6 +130,11 @@ export const AdminDashboard: React.FC = () => {
     userDevices,
     deviceStats,
     refreshUserDevices,
+    noCodeSettings,
+    toggleProductCodeDisabled,
+    bulkSetCodeDisabled,
+    setAllowAllWithoutCode,
+    barcodeVotes,
   } = useApp();
 
   // Redirect if not Admin
@@ -134,6 +153,7 @@ export const AdminDashboard: React.FC = () => {
     | 'ALL'
     | 'NO_CODE'
     | 'NO_BARCODE'
+    | 'CODE_DISABLED'
     | 'NO_IMAGE'
     | 'DUP_NAMES'
     | 'DUP_BARCODES'
@@ -145,6 +165,7 @@ export const AdminDashboard: React.FC = () => {
   >('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedDept, setSelectedDept] = useState<Department | 'ALL'>('ALL');
+  const [sortMode, setSortMode] = useState<ProductSortMode>('default');
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(50);
@@ -164,8 +185,15 @@ export const AdminDashboard: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExtractorModalOpen, setIsExtractorModalOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
+  // Fast Deletion & Bulk Multi-Select State
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
+  const [fastDeleteMode, setFastDeleteMode] = useState(false);
+  const [inlineConfirmDeleteId, setInlineConfirmDeleteId] = useState<number | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [lastDeletedBatch, setLastDeletedBatch] = useState<Product[] | null>(null);
 
   // Universal Inline Table Cell Editing
   const [editingCell, setEditingCell] = useState<{
@@ -198,6 +226,15 @@ export const AdminDashboard: React.FC = () => {
   const verifiedBrokenCount = useMemo(
     () => products.filter((p) => getProductVerificationStatus(p) === 'broken').length,
     [products]
+  );
+  const codeDisabledCount = useMemo(
+    () =>
+      products.filter((p) =>
+        isProductCodeDisabled(p, {
+          disabledCodeProductIds: noCodeSettings.disabledCodeProductIds,
+        })
+      ).length,
+    [products, noCodeSettings.disabledCodeProductIds]
   );
 
   // -------------------------------------------------------------------------
@@ -314,10 +351,10 @@ export const AdminDashboard: React.FC = () => {
   }, [products]);
 
   // -------------------------------------------------------------------------
-  // 5. FILTERING & SEARCH PIPELINE
+  // 5. FILTERING, SORTING & SEARCH PIPELINE
   // -------------------------------------------------------------------------
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       // Unit filter ('kg' | 'g' | 'pièce')
       const pureUnit = p.quantite || extractPureUnit(p.name);
       if (selectedUnit !== 'ALL' && pureUnit !== selectedUnit) {
@@ -339,6 +376,14 @@ export const AdminDashboard: React.FC = () => {
         return false;
       }
       if (filterSpecial === 'NO_BARCODE' && getProductBarcodeVariants(p).length > 0) {
+        return false;
+      }
+      if (
+        filterSpecial === 'CODE_DISABLED' &&
+        !isProductCodeDisabled(p, {
+          disabledCodeProductIds: noCodeSettings.disabledCodeProductIds,
+        })
+      ) {
         return false;
       }
       if (filterSpecial === 'NO_IMAGE' && p.imageUrl && p.imageUrl.trim() !== '') {
@@ -384,6 +429,7 @@ export const AdminDashboard: React.FC = () => {
 
       return codeMatch || nameMatch || catMatch || deptMatch || barcodeMatch;
     });
+    return sortProducts(filtered, sortMode);
   }, [
     products,
     selectedUnit,
@@ -393,12 +439,14 @@ export const AdminDashboard: React.FC = () => {
     adminSearch,
     duplicateNameIds,
     duplicateBarcodeIds,
+    noCodeSettings.disabledCodeProductIds,
+    sortMode,
   ]);
 
-  // Reset page when any filter changes
+  // Reset page when any filter or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [adminSearch, selectedUnit, filterSpecial, selectedCategory, selectedDept, pageSize]);
+  }, [adminSearch, selectedUnit, filterSpecial, selectedCategory, selectedDept, pageSize, sortMode]);
 
   // Pagination calculation
   const totalPages = pageSize === 0 ? 1 : Math.ceil(filteredProducts.length / pageSize);
@@ -407,6 +455,104 @@ export const AdminDashboard: React.FC = () => {
     const start = (currentPage - 1) * pageSize;
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, currentPage, pageSize]);
+
+  // Fast / Bulk Product Deletion Helpers
+  const toggleSelectProduct = (id: number) => {
+    triggerHaptic('light');
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setConfirmBulkDelete(false);
+  };
+
+  const allPageSelected =
+    paginatedList.length > 0 && paginatedList.every((p) => selectedProductIds.has(p.id));
+
+  const toggleSelectPage = () => {
+    triggerHaptic('light');
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        paginatedList.forEach((p) => next.delete(p.id));
+      } else {
+        paginatedList.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
+    setConfirmBulkDelete(false);
+  };
+
+  const selectAllFiltered = () => {
+    triggerHaptic('medium');
+    setSelectedProductIds(new Set(filteredProducts.map((p) => p.id)));
+    setConfirmBulkDelete(false);
+  };
+
+  const clearSelection = () => {
+    setSelectedProductIds(new Set());
+    setConfirmBulkDelete(false);
+  };
+
+  const handleQuickDeleteSingle = async (product: Product) => {
+    if (!fastDeleteMode && inlineConfirmDeleteId !== product.id) {
+      triggerHaptic('light');
+      setInlineConfirmDeleteId(product.id);
+      setTimeout(() => {
+        setInlineConfirmDeleteId((prev) => (prev === product.id ? null : prev));
+      }, 4000);
+      return;
+    }
+
+    setInlineConfirmDeleteId(null);
+    triggerHaptic('warning');
+    setLastDeletedBatch([product]);
+    setSelectedProductIds((prev) => {
+      if (!prev.has(product.id)) return prev;
+      const next = new Set(prev);
+      next.delete(product.id);
+      return next;
+    });
+    await deleteProduct(product.id);
+    showToast(`🗑️ "${product.name}" supprimé (Annuler possible)`);
+  };
+
+  const handleBulkDeleteSelected = async () => {
+    if (selectedProductIds.size === 0) return;
+    if (!fastDeleteMode && !confirmBulkDelete) {
+      triggerHaptic('warning');
+      setConfirmBulkDelete(true);
+      setTimeout(() => setConfirmBulkDelete(false), 5000);
+      return;
+    }
+
+    const targets = products.filter((p) => selectedProductIds.has(p.id));
+    if (targets.length === 0) return;
+
+    setIsBulkDeleting(true);
+    setConfirmBulkDelete(false);
+    try {
+      const count = await deleteProductsBulk(targets.map((p) => p.id));
+      if (count > 0) {
+        setLastDeletedBatch(targets);
+        setSelectedProductIds(new Set());
+        triggerHaptic('success');
+        showToast(`🗑️ ${count} article${count > 1 ? 's' : ''} supprimé${count > 1 ? 's' : ''} !`);
+      }
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const handleUndoLastDelete = async () => {
+    if (!lastDeletedBatch || lastDeletedBatch.length === 0) return;
+    const toRestore = lastDeletedBatch;
+    setLastDeletedBatch(null);
+    triggerHaptic('medium');
+    await restoreDeletedProducts(toRestore);
+  };
 
   // -------------------------------------------------------------------------
   // 6. DUPLICATE INSPECTION HANDLERS
@@ -1071,7 +1217,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   triggerHaptic('light');
                   setSelectedUnit(unit);
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer select-none ${
+                className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer select-none whitespace-nowrap shrink-0 ${
                   selectedUnit === unit
                     ? 'bg-[#0759A4] text-white shadow-xs'
                     : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 hover:bg-white/60 dark:hover:bg-slate-700'
@@ -1080,6 +1226,83 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 {unit === 'ALL' ? 'Toutes' : unit}
               </button>
             ))}
+          </div>
+
+          {/* Listing Sort Selector (Défaut | A → Z | Z → A | Code) */}
+          <div
+            className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700 shrink-0"
+            role="group"
+            aria-label="Tri du listing"
+          >
+            <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400 px-2 hidden lg:inline whitespace-nowrap">
+              Tri :
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setSortMode('default');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer select-none whitespace-nowrap shrink-0 ${
+                sortMode === 'default'
+                  ? 'bg-gray-900 text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              }`}
+            >
+              Défaut
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setSortMode('alpha-asc');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer select-none whitespace-nowrap shrink-0 inline-flex items-center gap-1 ${
+                sortMode === 'alpha-asc'
+                  ? 'bg-[#0759A4] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              }`}
+              title="Listing alphabétique A → Z"
+            >
+              <ArrowDownAZ className="w-3.5 h-3.5" />
+              <span>A → Z</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setSortMode('alpha-desc');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer select-none whitespace-nowrap shrink-0 inline-flex items-center gap-1 ${
+                sortMode === 'alpha-desc'
+                  ? 'bg-[#0759A4] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              }`}
+              title="Listing alphabétique Z → A"
+            >
+              <ArrowUpZA className="w-3.5 h-3.5" />
+              <span>Z → A</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setSortMode((prev) => (prev === 'code-asc' ? 'code-desc' : 'code-asc'));
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer select-none whitespace-nowrap shrink-0 inline-flex items-center gap-1 ${
+                sortMode === 'code-asc' || sortMode === 'code-desc'
+                  ? 'bg-[#0759A4] text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              }`}
+              title="Trier par code court"
+            >
+              <span>Code</span>
+              {sortMode === 'code-desc' ? (
+                <ArrowDown className="w-3 h-3" />
+              ) : (
+                <ArrowUp className="w-3 h-3" />
+              )}
+            </button>
           </div>
         </div>
 
@@ -1125,6 +1348,22 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               }`}
             >
               Sans Code-barre ({withoutBarcodeCount})
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setFilterSpecial(filterSpecial === 'CODE_DISABLED' ? 'ALL' : 'CODE_DISABLED')
+              }
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer select-none flex items-center gap-1 ${
+                filterSpecial === 'CODE_DISABLED'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-200'
+              }`}
+              title="Articles dont le code est désactivé (visibles même sans code)"
+            >
+              <Unlock className="w-3 h-3" />
+              <span>Code désactivé ({codeDisabledCount})</span>
             </button>
 
             <button
@@ -1278,6 +1517,79 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               );
             })}
           </div>
+
+          {/* Contrôle dédié : Articles sans code (Désactiver le code pour qu'ils restent visibles) */}
+          <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs">
+              <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
+                <Unlock className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <span className="font-black text-gray-900 dark:text-white">
+                  Option Codes désactivés (Non adressé) :
+                </span>{' '}
+                <span className="text-[11px] text-gray-500 dark:text-slate-400">
+                  Désactiver le code affiche le statut « Non adressé ». Seuls les articles ayant un code-barres restent visibles dans la recherche et les rayons ; les autres vont dans Aidez-nous.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('medium');
+                  setAllowAllWithoutCode(!noCodeSettings.allowAllWithoutCode);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border transition cursor-pointer select-none active:scale-95 ${
+                  noCodeSettings.allowAllWithoutCode
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white dark:bg-slate-800 hover:bg-gray-50 text-gray-800 dark:text-slate-200 border-gray-300 dark:border-slate-700'
+                }`}
+                title="Afficher le statut Non adressé pour tous les codes courts"
+              >
+                {noCodeSettings.allowAllWithoutCode ? (
+                  <>
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span>Tous en Non adressé (ON)</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Statut Non adressé global (OFF)</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('medium');
+                  bulkSetCodeDisabled('disable-missing');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xs transition cursor-pointer select-none active:scale-95"
+                title="Désactiver le code pour tous les articles actuellement sans code court ou sans code-barres"
+              >
+                <Unlock className="w-3.5 h-3.5 text-amber-300" />
+                <span>Désactiver code (tous les sans-code)</span>
+              </button>
+
+              {codeDisabledCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    bulkSetCodeDisabled('enable-all-codes');
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold transition cursor-pointer select-none"
+                  title="Réactiver l'obligation de code sur tous les articles"
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Réactiver ({codeDisabledCount})</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ------------------------------------------------------------------- */}
@@ -1323,26 +1635,183 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
         {/* TABLEAU DES 12 COLONNES + ÉDITION DIRECTE EN 1 CLIC & BADGE 100%    */}
         {/* ------------------------------------------------------------------- */}
         <div className="flex-1 glass-surface rounded-2xl overflow-hidden flex flex-col">
-          {/* Quick Inline Edit Banner */}
+          {/* Quick Inline Edit + Fast Delete Mode Banner */}
           <div className="px-3.5 py-2 border-b border-gray-100 dark:border-slate-800 bg-blue-50/50 dark:bg-blue-950/30 flex items-center justify-between gap-2 flex-wrap text-[11px]">
             <div className="flex items-center gap-1.5 font-bold text-[#0759A4] dark:text-blue-300">
               <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>
-                Édition ultra-rapide : cliquez directement sur n&apos;importe quelle cellule (Code, Nom, Codes-barres, Catégorie, Photo, 100%) pour modifier sur place (Entrée = enregistrer).
+                Édition &amp; suppression rapide : cliquez sur une cellule pour modifier, ou cochez plusieurs produits pour supprimer en lot.
               </span>
             </div>
-            <span className="font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300">
-              {verified100Count} certifié(s) 100%
-            </span>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('medium');
+                  setFastDeleteMode((v) => !v);
+                  setInlineConfirmDeleteId(null);
+                  setConfirmBulkDelete(false);
+                }}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black border transition cursor-pointer select-none whitespace-nowrap ${
+                  fastDeleteMode
+                    ? 'bg-red-600 text-white border-red-600 shadow-xs'
+                    : 'bg-white text-red-700 border-red-200 hover:bg-red-50'
+                }`}
+                title="Activez pour supprimer en 1 seul clic sans confirmation (avec bouton Annuler)"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{fastDeleteMode ? 'Suppression 1-clic : ON' : 'Suppression 1-clic : OFF'}</span>
+              </button>
+              <span className="font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300 whitespace-nowrap">
+                {verified100Count} certifié(s) 100%
+              </span>
+            </div>
           </div>
+
+          {/* Undo Last Delete Banner */}
+          {lastDeletedBatch && lastDeletedBatch.length > 0 && (
+            <div className="px-3.5 py-2 border-b border-amber-200 bg-amber-50 flex items-center justify-between gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-2 font-bold text-amber-950">
+                <Trash2 className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                <span>
+                  {lastDeletedBatch.length === 1
+                    ? `"${lastDeletedBatch[0].name}" supprimé.`
+                    : `${lastDeletedBatch.length} produits supprimés.`}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleUndoLastDelete}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black cursor-pointer transition whitespace-nowrap"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Annuler la suppression</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLastDeletedBatch(null)}
+                  className="p-1 rounded-lg text-amber-800 hover:bg-amber-200/70 cursor-pointer"
+                  title="Fermer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Selection Action Bar */}
+          {selectedProductIds.size > 0 && (
+            <div className="px-3.5 py-2.5 border-b border-red-200 bg-red-50/90 flex items-center justify-between gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-lg bg-red-600 text-white font-black tabular-nums whitespace-nowrap">
+                  {selectedProductIds.size} sélectionné{selectedProductIds.size > 1 ? 's' : ''}
+                </span>
+                {selectedProductIds.size < filteredProducts.length && (
+                  <button
+                    type="button"
+                    onClick={selectAllFiltered}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-red-200 text-red-800 hover:bg-red-100 text-[11px] font-bold cursor-pointer transition whitespace-nowrap"
+                  >
+                    Tout sélectionner ({filteredProducts.length})
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <button
+                  type="button"
+                  disabled={isBulkDeleting}
+                  onClick={handleBulkDeleteSelected}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer whitespace-nowrap shadow-xs disabled:opacity-50 ${
+                    confirmBulkDelete
+                      ? 'bg-red-700 hover:bg-red-800 text-white ring-2 ring-red-300'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>
+                    {isBulkDeleting
+                      ? 'Suppression...'
+                      : confirmBulkDelete
+                        ? `Confirmer la suppression (${selectedProductIds.size}) ?`
+                        : `Supprimer (${selectedProductIds.size})`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="px-2.5 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 text-[11px] font-bold cursor-pointer transition whitespace-nowrap"
+                >
+                  Annuler sélection
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 font-black uppercase tracking-wider text-[10.5px]">
+                  <th className="py-2.5 px-2.5 w-9 text-center">
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      onChange={toggleSelectPage}
+                      aria-label="Sélectionner tous les produits affichés sur cette page"
+                      title="Tout sélectionner sur cette page"
+                      className="w-4 h-4 rounded border-gray-300 text-[#0759A4] focus:ring-[#0759A4] cursor-pointer align-middle"
+                    />
+                  </th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Image</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap">Code</th>
-                  <th className="py-2.5 px-3 min-w-[230px]">Produit</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setSortMode((prev) =>
+                          prev === 'code-asc' ? 'code-desc' : prev === 'code-desc' ? 'default' : 'code-asc'
+                        );
+                      }}
+                      className={`inline-flex items-center gap-1 uppercase cursor-pointer hover:text-[#0759A4] transition ${
+                        sortMode === 'code-asc' || sortMode === 'code-desc' ? 'text-[#0759A4]' : ''
+                      }`}
+                      title="Trier par code"
+                    >
+                      <span>Code</span>
+                      {sortMode === 'code-asc' ? (
+                        <ArrowUp className="w-3 h-3" />
+                      ) : sortMode === 'code-desc' ? (
+                        <ArrowDown className="w-3 h-3" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 opacity-50" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="py-2.5 px-3 min-w-[230px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setSortMode((prev) =>
+                          prev === 'alpha-asc' ? 'alpha-desc' : prev === 'alpha-desc' ? 'default' : 'alpha-asc'
+                        );
+                      }}
+                      className={`inline-flex items-center gap-1 uppercase cursor-pointer hover:text-[#0759A4] transition ${
+                        sortMode === 'alpha-asc' || sortMode === 'alpha-desc' ? 'text-[#0759A4]' : ''
+                      }`}
+                      title="Trier par nom alphabétique (A → Z / Z → A)"
+                    >
+                      <span>Produit</span>
+                      {sortMode === 'alpha-asc' ? (
+                        <ArrowDownAZ className="w-3.5 h-3.5" />
+                      ) : sortMode === 'alpha-desc' ? (
+                        <ArrowUpZA className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 opacity-50" />
+                      )}
+                    </button>
+                  </th>
                   <th className="py-2.5 px-3 whitespace-nowrap text-center">100% / 50% / ✕</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane 2</th>
@@ -1351,7 +1820,26 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane Sec</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Marjane Sec 2</th>
                   <th className="py-2.5 px-3 whitespace-nowrap">Département</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap">Catégorie</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setSortMode((prev) => (prev === 'category-asc' ? 'default' : 'category-asc'));
+                      }}
+                      className={`inline-flex items-center gap-1 uppercase cursor-pointer hover:text-[#0759A4] transition ${
+                        sortMode === 'category-asc' ? 'text-[#0759A4]' : ''
+                      }`}
+                      title="Trier par catégorie (A → Z)"
+                    >
+                      <span>Catégorie</span>
+                      {sortMode === 'category-asc' ? (
+                        <ArrowDownAZ className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 opacity-50" />
+                      )}
+                    </button>
+                  </th>
                   <th className="py-2.5 px-3 whitespace-nowrap text-center">Quantité</th>
                   <th className="py-2.5 px-3 whitespace-nowrap text-center">Visibilité</th>
                   <th className="py-2.5 px-3 whitespace-nowrap text-right sticky right-0 bg-gray-50 dark:bg-slate-800 shadow-[-4px_0_8px_rgba(0,0,0,0.05)] z-10">
@@ -1459,13 +1947,28 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                       <tr
                         key={product.id}
                         style={{
-                          backgroundColor: catTheme.rowBgLight,
-                          borderLeft: `4px solid ${catTheme.solid}`,
+                          backgroundColor: selectedProductIds.has(product.id)
+                            ? '#FEF2F2'
+                            : catTheme.rowBgLight,
+                          borderLeft: `4px solid ${
+                            selectedProductIds.has(product.id) ? '#DC2626' : catTheme.solid
+                          }`,
                         }}
                         className={`hover:brightness-[0.98] dark:hover:brightness-110 transition-all ${
                           !product.isEnabled ? 'opacity-60' : ''
                         }`}
                       >
+                        {/* 0. Multi-select Checkbox */}
+                        <td className="py-2 px-2.5 text-center whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedProductIds.has(product.id)}
+                            onChange={() => toggleSelectProduct(product.id)}
+                            aria-label={`Sélectionner ${product.name}`}
+                            className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer align-middle"
+                          />
+                        </td>
+
                         {/* 1. image_html (Click image to zoom, click edit badge to change URL) */}
                         <td className="py-2 px-3 whitespace-nowrap">
                           {isEditingField('imageUrl') ? (
@@ -1547,41 +2050,92 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                               className="w-20 px-2 py-1 rounded bg-white dark:bg-slate-800 border-2 border-[#0759A4] text-xs font-mono font-black text-gray-900 dark:text-white outline-none shadow-sm"
                             />
                           ) : (
-                            <div className="flex items-center gap-1">
-                              {isMissingCode ? (
-                                <button
-                                  type="button"
-                                  onClick={() => startInlineEdit(product, 'code')}
-                                  className="inline-block px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 font-mono font-bold text-[11px] cursor-text hover:ring-2 hover:ring-amber-400"
-                                  title="Cliquer pour ajouter le code court"
-                                >
-                                  Indisponible (-)
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => startInlineEdit(product, 'code')}
-                                  className={`font-mono text-xs font-black px-2 py-0.5 rounded border select-none transition cursor-text hover:ring-2 hover:ring-[#0759A4]/40 ${
-                                    isDuplicateCode
-                                      ? 'bg-amber-100 text-amber-900 border-amber-400'
-                                      : 'bg-white/90 dark:bg-slate-800/90 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700'
-                                  }`}
-                                  title="Cliquer pour modifier le code"
-                                >
-                                  {product.code}
-                                </button>
-                              )}
-                              {isDuplicateCode && (
-                                <button
-                                  type="button"
-                                  onClick={() => openCodeConflict(product.code)}
-                                  className="px-1 py-0.5 rounded bg-amber-200 text-amber-900 text-[9px] font-black cursor-pointer"
-                                  title="Inspecter le doublon de code"
-                                >
-                                  !
-                                </button>
-                              )}
-                            </div>
+                            (() => {
+                              const rowCodeDisabled = isProductCodeDisabled(product, noCodeSettings);
+                              const missingBc = getProductBarcodeVariants(product).length === 0;
+                              return (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {rowCodeDisabled || isMissingCode || isProductCode0000(product.code) ? (
+                                    rowCodeDisabled ||
+                                    isProductBarcodeVerified(product, barcodeVotes) ||
+                                    isProductCode0000(product.code) ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => startInlineEdit(product, 'code')}
+                                        className="inline-block px-2 py-0.5 rounded bg-sky-50 text-[#0759A4] border border-sky-300 font-mono font-black text-[11px] cursor-text hover:ring-2 hover:ring-sky-400 whitespace-nowrap"
+                                        title={
+                                          rowCodeDisabled
+                                            ? 'Code désactivé — Statut : Non adressé (cliquer pour modifier)'
+                                            : 'Code-barres vérifié — Non adressé (cliquer pour saisir un code court)'
+                                        }
+                                      >
+                                        Non adressé
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => startInlineEdit(product, 'code')}
+                                        className="inline-block px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 font-mono font-bold text-[11px] cursor-text hover:ring-2 hover:ring-amber-400"
+                                        title="Cliquer pour ajouter le code court"
+                                      >
+                                        Indisponible (-)
+                                      </button>
+                                    )
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => startInlineEdit(product, 'code')}
+                                      className={`font-mono text-xs font-black px-2 py-0.5 rounded border select-none transition cursor-text hover:ring-2 hover:ring-[#0759A4]/40 ${
+                                        isDuplicateCode
+                                          ? 'bg-amber-100 text-amber-900 border-amber-400'
+                                          : 'bg-white/90 dark:bg-slate-800/90 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700'
+                                      }`}
+                                      title="Cliquer pour modifier le code"
+                                    >
+                                      {product.code}
+                                    </button>
+                                  )}
+                                  {isDuplicateCode && !rowCodeDisabled && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openCodeConflict(product.code)}
+                                      className="px-1 py-0.5 rounded bg-amber-200 text-amber-900 text-[9px] font-black cursor-pointer"
+                                      title="Inspecter le doublon de code"
+                                    >
+                                      !
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      triggerHaptic('light');
+                                      toggleProductCodeDisabled(product.id);
+                                    }}
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black border transition cursor-pointer select-none ${
+                                      rowCodeDisabled
+                                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                                        : isMissingCode || missingBc
+                                          ? 'bg-white/90 hover:bg-slate-100 text-slate-700 border-slate-300 border-dashed'
+                                          : 'bg-transparent hover:bg-slate-100 text-gray-400 hover:text-slate-700 border-transparent hover:border-slate-300'
+                                    }`}
+                                    title={
+                                      rowCodeDisabled
+                                        ? 'Code désactivé (statut Non adressé) — Cliquer pour réactiver le code'
+                                        : 'Désactiver le code pour afficher le statut Non adressé'
+                                    }
+                                  >
+                                    {rowCodeDisabled ? (
+                                      <>
+                                        <Unlock className="w-2.5 h-2.5" />
+                                        <span>Désactivé</span>
+                                      </>
+                                    ) : (
+                                      <Unlock className="w-2.5 h-2.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              );
+                            })()
                           )}
                         </td>
 
@@ -1900,7 +2454,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           </button>
                         </td>
 
-                        {/* Actions (Colonne fixée à droite pour éditer facilement sans scroll) */}
+                        {/* Actions (Colonne fixée à droite pour éditer / supprimer facilement sans modal) */}
                         <td className="py-2 px-3 whitespace-nowrap text-right sticky right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shadow-[-4px_0_8px_rgba(0,0,0,0.05)]">
                           <div className="flex items-center justify-end gap-1">
                             <button
@@ -1915,11 +2469,24 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                             </button>
                             <button
                               type="button"
-                              onClick={() => setProductToDelete(product)}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
-                              title="Supprimer l'article"
+                              onClick={() => handleQuickDeleteSingle(product)}
+                              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg font-black text-[10.5px] transition cursor-pointer whitespace-nowrap ${
+                                fastDeleteMode
+                                  ? 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200'
+                                  : inlineConfirmDeleteId === product.id
+                                    ? 'bg-red-600 text-white shadow-xs animate-pulse'
+                                    : 'text-red-500 hover:text-red-700 hover:bg-red-50'
+                              }`}
+                              title={
+                                fastDeleteMode
+                                  ? 'Supprimer immédiatement (1 clic)'
+                                  : inlineConfirmDeleteId === product.id
+                                    ? 'Cliquer à nouveau pour supprimer'
+                                    : 'Supprimer cet article'
+                              }
                             >
                               <Trash2 className="w-3.5 h-3.5" />
+                              {inlineConfirmDeleteId === product.id && <span>Confirmer ?</span>}
                             </button>
                           </div>
                         </td>
@@ -1928,7 +2495,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   })
                 ) : (
                   <tr>
-                    <td colSpan={15} className="py-12 text-center text-gray-400 dark:text-slate-500">
+                    <td colSpan={16} className="py-12 text-center text-gray-400 dark:text-slate-500">
                       <Layers className="w-10 h-10 mx-auto text-gray-300 dark:text-slate-700 mb-2" />
                       {products.length === 0 ? (
                         <>
@@ -2148,13 +2715,32 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          setConflictModalData(null);
-                          setProductToDelete(p);
+                        onClick={async () => {
+                          if (!fastDeleteMode && inlineConfirmDeleteId !== p.id) {
+                            triggerHaptic('warning');
+                            setInlineConfirmDeleteId(p.id);
+                            setTimeout(() => {
+                              setInlineConfirmDeleteId((prev) => (prev === p.id ? null : prev));
+                            }, 3500);
+                            return;
+                          }
+                          setInlineConfirmDeleteId(null);
+                          setLastDeletedBatch([p]);
+                          await deleteProduct(p.id);
+                          setConflictModalData((prev) => {
+                            if (!prev) return null;
+                            const remaining = prev.products.filter((item) => item.id !== p.id);
+                            return remaining.length > 1 ? { ...prev, products: remaining } : null;
+                          });
+                          showToast(`🗑️ "${p.name}" supprimé (Annuler possible)`);
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 transition cursor-pointer"
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          inlineConfirmDeleteId === p.id
+                            ? 'bg-red-600 text-white shadow-xs'
+                            : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100'
+                        }`}
                       >
-                        Supprimer
+                        {inlineConfirmDeleteId === p.id ? 'Confirmer ?' : 'Supprimer'}
                       </button>
                     </div>
                   </div>
@@ -2792,6 +3378,43 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 </div>
               </div>
 
+              {(() => {
+                const effectiveCodeDisabled =
+                  editingProduct.codeDisabled !== undefined
+                    ? Boolean(editingProduct.codeDisabled)
+                    : isProductCodeDisabled(editingProduct, {
+                        disabledCodeProductIds: noCodeSettings.disabledCodeProductIds,
+                      });
+                return (
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs font-black text-gray-900 dark:text-white">
+                        Désactiver le code (Statut : Non adressé)
+                      </div>
+                      <div className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                        Affiche « Non adressé » comme statut code (visible dans la recherche s&apos;il a un code-barres).
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          codeDisabled: !effectiveCodeDisabled,
+                        })
+                      }
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition cursor-pointer shrink-0 border ${
+                        effectiveCodeDisabled
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-200 border-gray-300 dark:border-slate-600'
+                      }`}
+                    >
+                      {effectiveCodeDisabled ? 'Non adressé (Désactivé)' : 'Code requis'}
+                    </button>
+                  </div>
+                );
+              })()}
+
               <div>
                 <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1">
                   Nom du Produit
@@ -3091,6 +3714,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   barcodeMarjane: (fd.get('barcodeMarjane') as string) || undefined,
                   imageUrl: sanitizeImageUrl(fd.get('imageUrl') as string),
                   isEnabled: true,
+                  codeDisabled: fd.get('codeDisabled') === 'on',
                   verificationStatus: vStatus,
                   isVerified100: vStatus === '100',
                 });
@@ -3168,6 +3792,22 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 />
               </div>
 
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  name="codeDisabled"
+                  className="w-4 h-4 accent-slate-900 rounded cursor-pointer"
+                />
+                <div className="text-xs">
+                  <div className="font-black text-gray-900 dark:text-white">
+                    Désactiver le code (Statut : Non adressé)
+                  </div>
+                  <div className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                    Affiche le statut « Non adressé » à la place du code court (un code-barres reste requis pour la recherche)
+                  </div>
+                </div>
+              </label>
+
               <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-slate-800/70 border border-gray-200 dark:border-slate-700 space-y-1.5">
                 <div className="text-xs font-bold text-gray-700 dark:text-slate-300">
                   Icône de fiabilité à côté du nom
@@ -3211,41 +3851,6 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------------- */}
-      {/* MODALE SUPPRESSION                                                  */}
-      {/* ------------------------------------------------------------------- */}
-      {productToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 max-w-sm w-full space-y-3 text-center border border-gray-200 dark:border-slate-800 shadow-xl text-gray-900 dark:text-white">
-            <Trash2 className="w-10 h-10 text-red-500 mx-auto" />
-            <h4 className="text-base font-black">Confirmer la suppression</h4>
-            <p className="text-xs text-gray-500 dark:text-slate-400">
-              Voulez-vous vraiment supprimer &quot;{productToDelete.name}&quot; (#{productToDelete.id}) ?
-            </p>
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setProductToDelete(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-xs font-bold cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await deleteProduct(productToDelete.id);
-                  setProductToDelete(null);
-                  showToast('Produit supprimé.');
-                }}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black cursor-pointer"
-              >
-                Supprimer
-              </button>
-            </div>
           </div>
         </div>
       )}

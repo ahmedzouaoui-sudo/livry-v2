@@ -1,4 +1,4 @@
-import { GuideConfig, GuideStepConfig, TipArticleBlock } from '../types';
+import { CategoryColorKey, CustomTipCategory, GuideConfig, GuideStepConfig, TipArticleBlock } from '../types';
 import { supabaseApi, supabasePublic, activeSchema } from './supabaseClient';
 import { sanitizeImageUrl } from '../utils/securityUtils';
 import { WHATSAPP_DISPLAY_NUMBER } from '../components/SuggestOneScreen';
@@ -14,6 +14,10 @@ export const DEFAULT_GUIDE_CONFIG: GuideConfig = {
   summaryTitle: 'Sommaire du Guide',
   footerHint: 'Appuyez sur une étape ou glissez pour naviguer · Livry Finder',
   themePreset: 'rose-blue',
+  globalBgType: 'theme',
+  globalGradientAngle: 135,
+  globalOverlayOpacity: 50,
+  summarySidebarPosition: 'right',
   heroBanner: {
     badge: 'Guide Officiel Pickeur',
     headline: "Kifach tkhdam b'Livry Finder b'ser3a",
@@ -29,10 +33,15 @@ export const DEFAULT_GUIDE_CONFIG: GuideConfig = {
     audiencePickeurLabel: '🛒 Pickeurs',
     audienceLivreurLabel: '🛵 Livreurs',
     audienceReferentLabel: '⭐ Référents',
-    allCategoriesLabel: 'Toutes catégories',
+    allCategoriesLabel: 'Toutes',
     emptyTitle: 'Aucun article ou astuce trouvé',
     emptySubtitle: "Les articles et astuces publiés par l'administrateur s'afficheront ici.",
     heroBgImageUrl: '',
+    customCategories: [],
+  },
+  noCodeSettings: {
+    allowAllWithoutCode: false,
+    disabledCodeProductIds: [],
   },
   steps: [
     {
@@ -106,6 +115,64 @@ export const DEFAULT_GUIDE_CONFIG: GuideConfig = {
   },
 };
 
+export function sanitizeCssColor(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(trimmed)) {
+    return trimmed;
+  }
+  if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*(0|1|0?\.\d+))?\s*\)$/.test(trimmed)) {
+    return trimmed;
+  }
+  return undefined;
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(min, Math.min(max, num));
+}
+
+const VALID_CAT_COLORS: CategoryColorKey[] = [
+  'blue',
+  'emerald',
+  'amber',
+  'rose',
+  'purple',
+  'orange',
+  'slate',
+];
+
+function sanitizeCustomCategories(raw: unknown): CustomTipCategory[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: CustomTipCategory[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const item = raw[i];
+    const name =
+      typeof item === 'string'
+        ? item.trim()
+        : item && typeof item === 'object' && typeof (item as any).name === 'string'
+          ? (item as any).name.trim()
+          : '';
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const rawColor =
+      item && typeof item === 'object' ? ((item as any).color as CategoryColorKey) : undefined;
+    const color: CategoryColorKey =
+      rawColor && VALID_CAT_COLORS.includes(rawColor) ? rawColor : 'blue';
+    const id =
+      item && typeof item === 'object' && typeof (item as any).id === 'string' && (item as any).id.trim()
+        ? (item as any).id.trim()
+        : `cat-${i}-${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    out.push({ id, name, color });
+  }
+  return out;
+}
+
 function sanitizeArticleBlocks(rawBlocks?: unknown): TipArticleBlock[] {
   if (!Array.isArray(rawBlocks)) return [];
   return rawBlocks
@@ -144,6 +211,15 @@ export function sanitizeGuideConfig(raw: Partial<GuideConfig>): GuideConfig {
   const def = DEFAULT_GUIDE_CONFIG;
   const rawSteps = Array.isArray(raw.steps) && raw.steps.length > 0 ? raw.steps : def.steps;
 
+  const validBgTypes = ['theme', 'solid', 'gradient', 'image'] as const;
+  const validMediaPos = ['bottom', 'top', 'left', 'right', 'hidden'] as const;
+  const validTextAlign = ['left', 'center', 'right'] as const;
+  const validVertAlign = ['top', 'center', 'bottom'] as const;
+  const validHeadlineSize = ['sm', 'md', 'lg'] as const;
+  const validImageSize = ['sm', 'md', 'lg', 'xl'] as const;
+  const validImageFit = ['contain', 'cover'] as const;
+  const validImageRounded = ['none', 'md', 'xl', '2xl'] as const;
+
   const mergedSteps: GuideStepConfig[] = rawSteps.slice(0, 15).map((step, idx) => {
     const fallbackStep = def.steps[idx] || {
       id: idx,
@@ -165,6 +241,51 @@ export function sanitizeGuideConfig(raw: Partial<GuideConfig>): GuideConfig {
       accentColor: merged.accentColor || defaultAccentForIndex(idx),
       customImageUrl: merged.customImageUrl ? sanitizeImageUrl(merged.customImageUrl) : undefined,
       customBlocks: sanitizeArticleBlocks(merged.customBlocks),
+      backgroundType: validBgTypes.includes(merged.backgroundType as any)
+        ? merged.backgroundType
+        : 'theme',
+      backgroundColor: sanitizeCssColor(merged.backgroundColor),
+      gradientFrom: sanitizeCssColor(merged.gradientFrom),
+      gradientTo: sanitizeCssColor(merged.gradientTo),
+      gradientAngle:
+        merged.gradientAngle !== undefined
+          ? clampNumber(merged.gradientAngle, 0, 360, 135)
+          : 135,
+      backgroundImageUrl: merged.backgroundImageUrl
+        ? sanitizeImageUrl(merged.backgroundImageUrl)
+        : undefined,
+      backgroundOverlayOpacity:
+        merged.backgroundOverlayOpacity !== undefined
+          ? clampNumber(merged.backgroundOverlayOpacity, 0, 95, 55)
+          : 55,
+      titleColor: sanitizeCssColor(merged.titleColor),
+      subtitleColor: sanitizeCssColor(merged.subtitleColor),
+      textColor: sanitizeCssColor(merged.textColor),
+      badgeBgColor: sanitizeCssColor(merged.badgeBgColor),
+      badgeTextColor: sanitizeCssColor(merged.badgeTextColor),
+      ctaBgColor: sanitizeCssColor(merged.ctaBgColor),
+      ctaTextColor: sanitizeCssColor(merged.ctaTextColor),
+      secondaryCtaBgColor: sanitizeCssColor(merged.secondaryCtaBgColor),
+      secondaryCtaTextColor: sanitizeCssColor(merged.secondaryCtaTextColor),
+      cardBgColor: sanitizeCssColor(merged.cardBgColor),
+      mediaPosition: validMediaPos.includes(merged.mediaPosition as any)
+        ? merged.mediaPosition
+        : 'bottom',
+      textAlign: validTextAlign.includes(merged.textAlign as any) ? merged.textAlign : 'left',
+      contentVerticalAlign: validVertAlign.includes(merged.contentVerticalAlign as any)
+        ? merged.contentVerticalAlign
+        : 'center',
+      headlineSize: validHeadlineSize.includes(merged.headlineSize as any)
+        ? merged.headlineSize
+        : 'md',
+      imageSize: validImageSize.includes(merged.imageSize as any) ? merged.imageSize : 'md',
+      imageFit: validImageFit.includes(merged.imageFit as any) ? merged.imageFit : 'contain',
+      imageRounded: validImageRounded.includes(merged.imageRounded as any)
+        ? merged.imageRounded
+        : 'xl',
+      hideBadge: Boolean(merged.hideBadge),
+      hidePrimaryCta: Boolean(merged.hidePrimaryCta),
+      hideSecondaryCta: Boolean(merged.hideSecondaryCta),
     };
   });
 
@@ -178,6 +299,9 @@ export function sanitizeGuideConfig(raw: Partial<GuideConfig>): GuideConfig {
   const safeHeroBgImg = raw.astucesPage?.heroBgImageUrl
     ? sanitizeImageUrl(raw.astucesPage.heroBgImageUrl) || ''
     : '';
+  const safeGlobalBgImg = raw.globalBgImageUrl
+    ? sanitizeImageUrl(raw.globalBgImageUrl)
+    : undefined;
 
   const validThemes: Array<NonNullable<GuideConfig['themePreset']>> = [
     'rose-blue',
@@ -201,6 +325,29 @@ export function sanitizeGuideConfig(raw: Partial<GuideConfig>): GuideConfig {
     summaryTitle: raw.summaryTitle?.trim() || def.summaryTitle,
     footerHint: raw.footerHint?.trim() || def.footerHint,
     themePreset,
+    globalBgType: validBgTypes.includes(raw.globalBgType as any) ? raw.globalBgType : 'theme',
+    globalBgColor: sanitizeCssColor(raw.globalBgColor),
+    globalGradientFrom: sanitizeCssColor(raw.globalGradientFrom),
+    globalGradientTo: sanitizeCssColor(raw.globalGradientTo),
+    globalGradientAngle:
+      raw.globalGradientAngle !== undefined
+        ? clampNumber(raw.globalGradientAngle, 0, 360, 135)
+        : 135,
+    globalBgImageUrl: safeGlobalBgImg,
+    globalOverlayOpacity:
+      raw.globalOverlayOpacity !== undefined
+        ? clampNumber(raw.globalOverlayOpacity, 0, 95, 50)
+        : 50,
+    headerBgColor: sanitizeCssColor(raw.headerBgColor),
+    headerTextColor: sanitizeCssColor(raw.headerTextColor),
+    summarySidebarPosition:
+      raw.summarySidebarPosition === 'left' ||
+      raw.summarySidebarPosition === 'right' ||
+      raw.summarySidebarPosition === 'hidden'
+        ? raw.summarySidebarPosition
+        : 'right',
+    summaryCardBgColor: sanitizeCssColor(raw.summaryCardBgColor),
+    summaryTextColor: sanitizeCssColor(raw.summaryTextColor),
     heroBanner: {
       badge: raw.heroBanner?.badge?.trim() || def.heroBanner!.badge,
       headline: raw.heroBanner?.headline?.trim() || def.heroBanner!.headline,
@@ -220,6 +367,19 @@ export function sanitizeGuideConfig(raw: Partial<GuideConfig>): GuideConfig {
       emptyTitle: rawAst.emptyTitle?.trim() || defAst.emptyTitle,
       emptySubtitle: rawAst.emptySubtitle?.trim() || defAst.emptySubtitle,
       heroBgImageUrl: safeHeroBgImg,
+      customCategories: sanitizeCustomCategories(rawAst.customCategories),
+    },
+    noCodeSettings: {
+      allowAllWithoutCode: Boolean(raw.noCodeSettings?.allowAllWithoutCode),
+      disabledCodeProductIds: Array.isArray(raw.noCodeSettings?.disabledCodeProductIds)
+        ? Array.from(
+            new Set(
+              raw.noCodeSettings.disabledCodeProductIds
+                .map((id) => Number(id))
+                .filter((id) => Number.isFinite(id) && id > 0)
+            )
+          )
+        : [],
     },
     steps: mergedSteps,
     slide1: {

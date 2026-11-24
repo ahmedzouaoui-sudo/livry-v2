@@ -70,6 +70,7 @@ export interface Product {
   isVerified100?: boolean; // Code-barres vérifié 100% khdam par Admin
   verificationStatus?: 'none' | 'broken' | '50' | '100'; // '100' = bleue, '50' = orange, 'broken' = rouge (makhdamch daba)
   barcodeMjValide?: string; // alias
+  codeDisabled?: boolean; // Option "sans code": désactive l'obligation de code / code-barres pour rester visible
 }
 
 export interface DepartmentConfig {
@@ -82,14 +83,22 @@ export interface DepartmentConfig {
   tagText: string;
 }
 
-export type TipCategory =
-  | 'Général'
-  | 'Pesée & Balance'
-  | 'Scanner & Caisse'
-  | 'Fruits & Légumes'
-  | 'Boucherie'
-  | 'Fromage'
-  | 'Boulangerie';
+export type TipCategory = string;
+
+export type CategoryColorKey =
+  | 'blue'
+  | 'emerald'
+  | 'amber'
+  | 'rose'
+  | 'purple'
+  | 'orange'
+  | 'slate';
+
+export interface CustomTipCategory {
+  id: string;
+  name: string;
+  color?: CategoryColorKey;
+}
 
 export interface TipArticleBlock {
   id: string;
@@ -180,6 +189,34 @@ export interface GuideStepConfig {
   customImageUrl?: string;
   customImageCaption?: string;
   customBlocks?: TipArticleBlock[];
+  // Full per-step visual, background, typography & placement controls
+  backgroundType?: 'theme' | 'solid' | 'gradient' | 'image';
+  backgroundColor?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
+  gradientAngle?: number;
+  backgroundImageUrl?: string;
+  backgroundOverlayOpacity?: number;
+  titleColor?: string;
+  subtitleColor?: string;
+  textColor?: string;
+  badgeBgColor?: string;
+  badgeTextColor?: string;
+  ctaBgColor?: string;
+  ctaTextColor?: string;
+  secondaryCtaBgColor?: string;
+  secondaryCtaTextColor?: string;
+  cardBgColor?: string;
+  mediaPosition?: 'bottom' | 'top' | 'left' | 'right' | 'hidden';
+  textAlign?: 'left' | 'center' | 'right';
+  contentVerticalAlign?: 'top' | 'center' | 'bottom';
+  headlineSize?: 'sm' | 'md' | 'lg';
+  imageSize?: 'sm' | 'md' | 'lg' | 'xl';
+  imageFit?: 'contain' | 'cover';
+  imageRounded?: 'none' | 'md' | 'xl' | '2xl';
+  hideBadge?: boolean;
+  hidePrimaryCta?: boolean;
+  hideSecondaryCta?: boolean;
 }
 
 export interface AstucesPageConfig {
@@ -195,6 +232,7 @@ export interface AstucesPageConfig {
   emptyTitle: string;
   emptySubtitle: string;
   heroBgImageUrl?: string;
+  customCategories?: CustomTipCategory[];
 }
 
 export interface GuideConfig {
@@ -204,6 +242,19 @@ export interface GuideConfig {
   summaryTitle?: string;
   footerHint: string;
   themePreset?: 'rose-blue' | 'ocean' | 'emerald' | 'amber' | 'midnight';
+  // Global full-page style & layout controls
+  globalBgType?: 'theme' | 'solid' | 'gradient' | 'image';
+  globalBgColor?: string;
+  globalGradientFrom?: string;
+  globalGradientTo?: string;
+  globalGradientAngle?: number;
+  globalBgImageUrl?: string;
+  globalOverlayOpacity?: number;
+  headerBgColor?: string;
+  headerTextColor?: string;
+  summarySidebarPosition?: 'right' | 'left' | 'hidden';
+  summaryCardBgColor?: string;
+  summaryTextColor?: string;
   heroBanner?: {
     badge: string;
     headline: string;
@@ -211,6 +262,10 @@ export interface GuideConfig {
     ctaLabel: string;
   };
   astucesPage?: AstucesPageConfig;
+  noCodeSettings?: {
+    allowAllWithoutCode?: boolean;
+    disabledCodeProductIds?: number[];
+  };
   steps: GuideStepConfig[];
   slide1: {
     beforeBadge: string;

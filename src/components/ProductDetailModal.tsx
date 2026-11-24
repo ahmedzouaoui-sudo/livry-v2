@@ -10,10 +10,17 @@ import {
   Plus,
   Edit3,
   Lock,
+  Unlock,
   Shield,
+  Trash2,
 } from 'lucide-react';
 import { Product } from '../types';
-import { DEPARTMENT_CONFIGS, getEffectiveBarcodeVariants, formatProductCodeBadge } from '../utils/productUtils';
+import {
+  DEPARTMENT_CONFIGS,
+  getEffectiveBarcodeVariants,
+  formatProductCodeBadge,
+  isProductCodeDisabled,
+} from '../utils/productUtils';
 import { BarcodeCard } from './BarcodeCard';
 import { QuantityCalculator } from './QuantityCalculator';
 import { extractProductUnitInfo, recalculateBarcodeWithMultiplier } from '../utils/productWeight';
@@ -44,19 +51,32 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   onCopySuccess,
 }) => {
-  const { role, setRole, barcodeVotes, openSuggestForProduct, showToast, updateProduct, setSelectedProduct } = useApp();
+  const {
+    role,
+    setRole,
+    barcodeVotes,
+    noCodeSettings,
+    toggleProductCodeDisabled,
+    openSuggestForProduct,
+    showToast,
+    updateProduct,
+    deleteProduct,
+    setSelectedProduct,
+  } = useApp();
   const [imgError, setImgError] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
 
-  // Direct In-Place Edit Modal state
+  // Direct In-Place Edit Modal & Quick Delete state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [confirmDeleteInline, setConfirmDeleteInline] = useState(false);
 
   // Admin auth modal (for quick unlock directly from product page)
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
 
   useEffect(() => {
     setSelectedVariantIndex(0);
+    setConfirmDeleteInline(false);
   }, [product.id]);
 
   useEffect(() => {
@@ -138,7 +158,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     setSelectedVariantIndex(idx);
   };
 
-  const codeBadge = formatProductCodeBadge(product.code);
+  const codeDisabled = isProductCodeDisabled(product, noCodeSettings);
+  const displayCodeBadge = formatProductCodeBadge(
+    product.code,
+    product,
+    barcodeVotes,
+    noCodeSettings
+  );
+  const showMissingCodePrompt = displayCodeBadge === 'Indisponible';
 
   return (
     <div className="fixed inset-0 z-50 bg-[#F8F7FC]/90 dark:bg-[#070B14]/90 backdrop-blur-2xl text-gray-900 dark:text-slate-100 flex flex-col w-full h-full overflow-y-auto animate-in fade-in duration-150 transition-colors">
@@ -234,17 +261,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         <div className="glass-surface rounded-2xl p-3.5 sm:p-4 space-y-1.5 transition-colors">
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className="px-2 py-0.5 rounded-lg text-xs font-mono font-black tracking-wider shadow-2xs tabular-nums"
+              className="px-2 py-0.5 rounded-lg text-xs font-mono font-black tracking-wider shadow-2xs tabular-nums whitespace-nowrap"
               style={{
-                backgroundColor: codeBadge === 'Indisponible' ? '#EA580C' : '#0759A4',
+                backgroundColor: showMissingCodePrompt ? '#EA580C' : '#0759A4',
                 color: '#FFFFFF',
               }}
             >
-              {codeBadge}
+              {displayCodeBadge}
             </span>
 
-            {/* If code is Indisponible, show orange Aidez-nous button */}
-            {codeBadge === 'Indisponible' && (
+            {/* If code is Indisponible and NOT disabled, show orange Aidez-nous button */}
+            {showMissingCodePrompt && (
               <button
                 type="button"
                 onClick={() => {
@@ -334,6 +361,30 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 onCopySuccess={onCopySuccess}
               />
             )}
+          </div>
+        ) : codeDisabled ? (
+          <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-center text-slate-700 dark:text-slate-200 text-xs space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-200/80 dark:bg-slate-800 font-black text-slate-800 dark:text-slate-100">
+              <Unlock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
+              <span>Non adressé — Code désactivé</span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              Statut code : Non adressé. Ajoutez un code-barres si disponible via Aidez-nous.
+            </p>
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onClose();
+                  openSuggestForProduct(product);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold hover:bg-slate-100 active:scale-95 transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Ajouter un code si disponible</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 text-center text-amber-900 dark:text-amber-200 text-xs font-bold space-y-2.5">
@@ -446,6 +497,23 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  triggerHaptic('medium');
+                  toggleProductCodeDisabled(product.id);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-black shadow-xs active:scale-95 transition cursor-pointer select-none border ${
+                  codeDisabled
+                    ? 'bg-slate-800 hover:bg-slate-900 text-white border-slate-700'
+                    : 'bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700'
+                }`}
+                title="Désactiver ou réactiver l'obligation de code pour cet article"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                <span>{codeDisabled ? 'Code désactivé' : 'Désactiver code'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   triggerHaptic('light');
                   setIsEditModalOpen(true);
                 }}
@@ -453,6 +521,31 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Modifier</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirmDeleteInline) {
+                    triggerHaptic('warning');
+                    setConfirmDeleteInline(true);
+                    setTimeout(() => setConfirmDeleteInline(false), 4000);
+                    return;
+                  }
+                  triggerHaptic('warning');
+                  await deleteProduct(product.id);
+                  showToast(`🗑️ "${product.name}" supprimé.`);
+                  onClose();
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none shrink-0 ${
+                  confirmDeleteInline
+                    ? 'bg-red-700 text-white ring-2 ring-red-300'
+                    : 'bg-red-50 hover:bg-red-600 text-red-700 hover:text-white border border-red-200'
+                }`}
+                title={confirmDeleteInline ? 'Cliquer à nouveau pour supprimer' : 'Supprimer cet article'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{confirmDeleteInline ? 'Confirmer ?' : 'Supprimer'}</span>
               </button>
             </div>
           </div>

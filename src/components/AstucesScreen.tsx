@@ -31,9 +31,18 @@ import {
   Code2,
   Copy,
   CloudUpload,
+  Tag,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { AstucesPageConfig, GuideConfig, TipArticleBlock, TipCategory, TipPost } from '../types';
+import {
+  AstucesPageConfig,
+  CategoryColorKey,
+  CustomTipCategory,
+  GuideConfig,
+  TipArticleBlock,
+  TipCategory,
+  TipPost,
+} from '../types';
 import { triggerHaptic } from '../utils/haptics';
 import { sanitizeImageUrl } from '../utils/securityUtils';
 import { compressImageFileToDataUrl } from '../utils/imageCompress';
@@ -98,7 +107,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTip, setEditingTip] = useState<TipPost | null>(null);
   const [formTitle, setFormTitle] = useState('');
-  const [formCategory, setFormCategory] = useState<TipCategory>('Scanner & Caisse');
+  const [formCategory, setFormCategory] = useState<TipCategory>('');
   const [formTargetAudience, setFormTargetAudience] = useState<'Tous' | 'Pickeur' | 'Livreur' | 'Référent'>('Tous');
   const [formContent, setFormContent] = useState('');
   const [formAuthorName, setFormAuthorName] = useState('');
@@ -107,6 +116,13 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
   const [isSavingTip, setIsSavingTip] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Admin Custom Categories Manager State
+  const [isManagingCategories, setIsManagingCategories] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState<CategoryColorKey>('blue');
+  const [inlineModalCatName, setInlineModalCatName] = useState('');
+  const [isSavingCategories, setIsSavingCategories] = useState(false);
 
   // Supabase Table SQL & Sync State for Astuces
   const [isAstucesSqlOpen, setIsAstucesSqlOpen] = useState(false);
@@ -159,33 +175,101 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const heroBgFileInputRef = useRef<HTMLInputElement>(null);
 
-  const categories: TipCategory[] = [
-    'Général',
-    'Pesée & Balance',
-    'Scanner & Caisse',
-    'Fruits & Légumes',
-    'Boucherie',
-    'Fromage',
-    'Boulangerie',
-  ];
+  const customCategories: CustomTipCategory[] = useMemo(() => {
+    const src = isEditingPage
+      ? pageUiDraft.customCategories
+      : guideConfig.astucesPage?.customCategories;
+    return Array.isArray(src) ? src : [];
+  }, [isEditingPage, pageUiDraft.customCategories, guideConfig.astucesPage?.customCategories]);
 
-  const getCategoryColor = (cat: TipCategory) => {
-    switch (cat) {
-      case 'Pesée & Balance':
-        return { bg: '#EBF4FC', text: '#0759A4', border: '#D0E3F7', grad: 'from-sky-600 to-blue-800' };
-      case 'Scanner & Caisse':
-        return { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', grad: 'from-amber-600 to-orange-800' };
-      case 'Fruits & Légumes':
-        return { bg: '#E8F5E9', text: '#1B5E20', border: '#C8E6C9', grad: 'from-emerald-600 to-teal-800' };
-      case 'Boucherie':
-        return { bg: '#FFEBEE', text: '#B71C1C', border: '#FFCDD2', grad: 'from-rose-600 to-red-900' };
-      case 'Fromage':
-        return { bg: '#FFF8E1', text: '#B78103', border: '#FFE082', grad: 'from-yellow-600 to-amber-800' };
-      case 'Boulangerie':
-        return { bg: '#FFF3E0', text: '#E65100', border: '#FFE0B2', grad: 'from-orange-500 to-amber-800' };
-      default:
-        return { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB', grad: 'from-slate-600 to-slate-900' };
+  const CATEGORY_PALETTE: Record<
+    CategoryColorKey,
+    { label: string; bg: string; text: string; border: string; swatch: string }
+  > = {
+    blue: { label: 'Bleu', bg: '#EBF4FC', text: '#0759A4', border: '#D0E3F7', swatch: '#0759A4' },
+    emerald: { label: 'Vert', bg: '#E8F5E9', text: '#1B5E20', border: '#C8E6C9', swatch: '#16A34A' },
+    amber: { label: 'Ambre', bg: '#FEF3C7', text: '#92400E', border: '#FDE68A', swatch: '#D97706' },
+    rose: { label: 'Rose', bg: '#FFEBEE', text: '#B71C1C', border: '#FFCDD2', swatch: '#E11D48' },
+    purple: { label: 'Violet', bg: '#F3E8FF', text: '#6B21A8', border: '#E9D5FF', swatch: '#9333EA' },
+    orange: { label: 'Orange', bg: '#FFF3E0', text: '#E65100', border: '#FFE0B2', swatch: '#EA580C' },
+    slate: { label: 'Ardoise', bg: '#F1F5F9', text: '#334155', border: '#CBD5E1', swatch: '#475569' },
+  };
+
+  const getCategoryColor = (catName: TipCategory) => {
+    const matched = customCategories.find(
+      (c) => c.name.toLowerCase() === (catName || '').trim().toLowerCase()
+    );
+    const key: CategoryColorKey = matched?.color || 'slate';
+    return CATEGORY_PALETTE[key] || CATEGORY_PALETTE.slate;
+  };
+
+  const persistCustomCategories = async (nextCats: CustomTipCategory[]) => {
+    setIsSavingCategories(true);
+    try {
+      const updatedAstuces = {
+        ...(guideConfig.astucesPage || DEFAULT_GUIDE_CONFIG.astucesPage!),
+        customCategories: nextCats,
+      };
+      if (isEditingPage) {
+        setPageUiDraft((prev) => ({ ...prev, customCategories: nextCats }));
+      }
+      const res = await updateGuideConfig({
+        ...guideConfig,
+        astucesPage: updatedAstuces,
+      });
+      return res;
+    } finally {
+      setIsSavingCategories(false);
     }
+  };
+
+  const handleAddCustomCategory = async (
+    rawName: string,
+    color: CategoryColorKey = newCategoryColor
+  ): Promise<string | null> => {
+    const clean = rawName.trim();
+    if (!clean) {
+      showToast('⚠️ Écrivez un nom de catégorie');
+      return null;
+    }
+    const existing = customCategories.find(
+      (c) => c.name.toLowerCase() === clean.toLowerCase()
+    );
+    if (existing) {
+      showToast('ℹ️ Cette catégorie existe déjà');
+      return existing.name;
+    }
+    triggerHaptic('light');
+    const newItem: CustomTipCategory = {
+      id: `cat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: clean,
+      color,
+    };
+    const nextCats = [...customCategories, newItem];
+    const res = await persistCustomCategories(nextCats);
+    setNewCategoryName('');
+    setInlineModalCatName('');
+    if (res.success) {
+      showToast(`🏷️ Catégorie "${clean}" ajoutée & sauvegardée !`);
+    } else {
+      showToast(`🏷️ Catégorie "${clean}" ajoutée localement`);
+    }
+    return newItem.name;
+  };
+
+  const handleDeleteCustomCategory = async (catId: string, catName: string) => {
+    triggerHaptic('warning');
+    const nextCats = customCategories.filter((c) => c.id !== catId);
+    if (selectedCat === catName) setSelectedCat('ALL');
+    if (formCategory === catName) setFormCategory('');
+    await persistCustomCategories(nextCats);
+    showToast(`🗑️ Catégorie "${catName}" supprimée`);
+  };
+
+  const handleChangeCategoryColor = async (catId: string, color: CategoryColorKey) => {
+    triggerHaptic('light');
+    const nextCats = customCategories.map((c) => (c.id === catId ? { ...c, color } : c));
+    await persistCustomCategories(nextCats);
   };
 
   const getAudienceBadge = (audience?: 'Tous' | 'Pickeur' | 'Livreur' | 'Référent') => {
@@ -243,12 +327,13 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const handleOpenCreate = () => {
     setEditingTip(null);
     setFormTitle('');
-    setFormCategory('Scanner & Caisse');
+    setFormCategory(customCategories[0]?.name || '');
     setFormTargetAudience('Tous');
     setFormContent('');
     setFormAuthorName('Admin Livry');
     setFormImageUrl('');
     setFormBlocks([]);
+    setInlineModalCatName('');
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -257,12 +342,13 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const handleOpenEdit = (tip: TipPost) => {
     setEditingTip(tip);
     setFormTitle(tip.title);
-    setFormCategory(tip.category);
+    setFormCategory(tip.category || '');
     setFormTargetAudience(tip.targetAudience || 'Tous');
     setFormContent(tip.content);
     setFormAuthorName(tip.authorName || 'Admin Livry');
     setFormImageUrl(tip.imageUrl || '');
     setFormBlocks(tip.blocks ? tip.blocks.map((b) => ({ ...b })) : []);
+    setInlineModalCatName('');
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -1033,57 +1119,203 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-2.5 glass-surface rounded-2xl focus-within:border-[#0759A4] transition-colors">
-        <div className="flex items-center h-[44px] px-3.5">
-          <Search className="w-4 h-4 text-gray-400 mr-2.5 shrink-0" />
-          <input
-            type="text"
-            value={searchTip}
-            onChange={(e) => setSearchTip(e.target.value)}
-            placeholder={activeAstucesUi.searchPlaceholder}
-            className="w-full h-full bg-transparent border-none outline-none text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400"
-          />
-          {searchTip && (
-            <button
-              type="button"
-              onClick={() => setSearchTip('')}
-              className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+      {/* Search Bar + Alphabetical Sort */}
+      <div className="mb-2.5 flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 glass-surface rounded-2xl focus-within:border-[#0759A4] transition-colors">
+          <div className="flex items-center h-[44px] px-3.5">
+            <Search className="w-4 h-4 text-gray-400 mr-2.5 shrink-0" />
+            <input
+              type="text"
+              value={searchTip}
+              onChange={(e) => setSearchTip(e.target.value)}
+              placeholder={activeAstucesUi.searchPlaceholder}
+              className="w-full h-full bg-transparent border-none outline-none text-xs font-medium text-gray-900 dark:text-white placeholder-gray-400"
+            />
+            {searchTip && (
+              <button
+                type="button"
+                onClick={() => setSearchTip('')}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Category Filter Chips */}
-      <div className="flex items-center gap-1.5 mb-3.5 overflow-x-auto pb-1 no-scrollbar">
-        <button
-          type="button"
-          onClick={() => setSelectedCat('ALL')}
-          className={`px-3 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer select-none ${
-            selectedCat === 'ALL'
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
-              : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
-          }`}
-        >
-          {activeAstucesUi.allCategoriesLabel}
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setSelectedCat(cat)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer select-none ${
-              selectedCat === cat
-                ? 'bg-[#0759A4] text-white shadow-xs'
-                : 'glass-pill text-gray-600 dark:text-slate-300 hover:bg-white/90 dark:hover:bg-slate-800/80'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {/* Admin Custom Category Filter Bar (Only user-created categories + Admin create control) */}
+      {(customCategories.length > 0 || role === 'Admin') && (
+        <div className="mb-3.5 space-y-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <button
+              type="button"
+              onClick={() => setSelectedCat('ALL')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer select-none whitespace-nowrap ${
+                selectedCat === 'ALL'
+                  ? 'bg-gray-900 text-white shadow-xs'
+                  : 'glass-pill text-gray-700 hover:bg-white/90'
+              }`}
+            >
+              {activeAstucesUi.allCategoriesLabel || 'Toutes'}
+            </button>
+
+            {customCategories.map((cat) => {
+              const isSel = selectedCat === cat.name;
+              const pal = CATEGORY_PALETTE[cat.color || 'blue'] || CATEGORY_PALETTE.blue;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCat(cat.name)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer select-none whitespace-nowrap border"
+                  style={
+                    isSel
+                      ? {
+                          backgroundColor: pal.swatch,
+                          color: '#ffffff',
+                          borderColor: pal.swatch,
+                        }
+                      : {
+                          backgroundColor: '#ffffff',
+                          color: pal.text,
+                          borderColor: pal.border,
+                        }
+                  }
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+
+            {role === 'Admin' && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsManagingCategories((v) => !v);
+                }}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-black transition shrink-0 cursor-pointer border whitespace-nowrap ${
+                  isManagingCategories
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-blue-50 text-[#0759A4] border-blue-200 hover:bg-blue-100'
+                }`}
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span>{isManagingCategories ? 'Fermer catégories' : '+ Catégorie'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Admin Custom Category Manager Drawer */}
+          {role === 'Admin' && isManagingCategories && (
+            <div className="glass-surface rounded-2xl p-3.5 border border-blue-200/80 space-y-3 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-black text-gray-900 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-[#0759A4]" />
+                  <span>Mes Catégories Personnalisées (Sauvegardées sur Supabase)</span>
+                </p>
+                {isSavingCategories && (
+                  <span className="text-[10px] font-bold text-[#0759A4] flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Sync...</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      void handleAddCustomCategory(newCategoryName, newCategoryColor);
+                    }
+                  }}
+                  placeholder="Nom de la nouvelle catégorie..."
+                  className="flex-1 min-w-[180px] px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-900 outline-none focus:border-[#0759A4]"
+                />
+                <div className="flex items-center gap-1">
+                  {(Object.keys(CATEGORY_PALETTE) as CategoryColorKey[]).map((key) => {
+                    const pal = CATEGORY_PALETTE[key];
+                    const active = newCategoryColor === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setNewCategoryColor(key)}
+                        className={`w-6 h-6 rounded-full cursor-pointer border-2 transition ${
+                          active ? 'scale-110 border-gray-900 shadow-xs' : 'border-white opacity-75 hover:opacity-100'
+                        }`}
+                        style={{ backgroundColor: pal.swatch }}
+                        title={pal.label}
+                      />
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  disabled={isSavingCategories || !newCategoryName.trim()}
+                  onClick={() => void handleAddCustomCategory(newCategoryName, newCategoryColor)}
+                  className="px-3.5 py-2 rounded-xl bg-[#0759A4] hover:bg-blue-700 disabled:opacity-45 text-white text-xs font-black flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Créer</span>
+                </button>
+              </div>
+
+              {customCategories.length > 0 ? (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {customCategories.map((cat) => {
+                    const pal = CATEGORY_PALETTE[cat.color || 'blue'] || CATEGORY_PALETTE.blue;
+                    return (
+                      <div
+                        key={cat.id}
+                        className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-xl border text-xs font-bold"
+                        style={{
+                          backgroundColor: pal.bg,
+                          color: pal.text,
+                          borderColor: pal.border,
+                        }}
+                      >
+                        <span>{cat.name}</span>
+                        <select
+                          aria-label={`Couleur pour ${cat.name}`}
+                          value={cat.color || 'blue'}
+                          onChange={(e) =>
+                            void handleChangeCategoryColor(cat.id, e.target.value as CategoryColorKey)
+                          }
+                          className="text-[10px] bg-white/80 rounded px-1 py-0.5 text-gray-800 border border-black/10 outline-none cursor-pointer"
+                        >
+                          {(Object.keys(CATEGORY_PALETTE) as CategoryColorKey[]).map((k) => (
+                            <option key={k} value={k}>
+                              {CATEGORY_PALETTE[k].label}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteCustomCategory(cat.id, cat.name)}
+                          className="p-1 rounded-lg hover:bg-red-500 hover:text-white text-red-600 transition cursor-pointer"
+                          title="Supprimer cette catégorie"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-500">
+                  Aucune catégorie créée pour l&apos;instant. Créez vos propres catégories ci-dessus.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Clean List View with Large Unobstructed Photos (Tap row -> Opens full Editorial Article) */}
       {filteredTips.length > 0 ? (
@@ -1147,16 +1379,18 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                         >
                           {audStyle.label}
                         </span>
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-[8px] border"
-                          style={{
-                            backgroundColor: catStyle.bg,
-                            color: catStyle.text,
-                            borderColor: catStyle.border,
-                          }}
-                        >
-                          {post.category}
-                        </span>
+                        {post.category && post.category.trim() && (
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-[8px] border"
+                            style={{
+                              backgroundColor: catStyle.bg,
+                              color: catStyle.text,
+                              borderColor: catStyle.border,
+                            }}
+                          >
+                            {post.category}
+                          </span>
+                        )}
                         {(extraPhotosCount > 1 || (post.blocks && post.blocks.length > 0)) && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-[8px] bg-blue-50 dark:bg-blue-950/50 text-[#0759A4] dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/60 flex items-center gap-1">
                             <Layers className="w-2.5 h-2.5" />
@@ -1391,12 +1625,14 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                         >
                           {aud.label}
                         </span>
-                        <span
-                          className="text-[10px] font-bold px-2.5 py-0.5 rounded-lg border"
-                          style={{ backgroundColor: cat.bg, color: cat.text, borderColor: cat.border }}
-                        >
-                          {readingArticle.category}
-                        </span>
+                        {readingArticle.category && readingArticle.category.trim() && (
+                          <span
+                            className="text-[10px] font-bold px-2.5 py-0.5 rounded-lg border"
+                            style={{ backgroundColor: cat.bg, color: cat.text, borderColor: cat.border }}
+                          >
+                            {readingArticle.category}
+                          </span>
+                        )}
                       </>
                     );
                   })()}
@@ -1587,26 +1823,51 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
-                    Rayon / Domaine
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                    Catégorie personnalisée
                   </label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value as TipCategory)}
-                    className="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white font-medium outline-none focus:border-[#0759A4]"
+                    className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 font-medium outline-none focus:border-[#0759A4]"
                   >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
+                    <option value="">Sans catégorie</option>
+                    {customCategories.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
                       </option>
                     ))}
+                    {formCategory &&
+                      !customCategories.some(
+                        (c) => c.name.toLowerCase() === formCategory.toLowerCase()
+                      ) && <option value={formCategory}>{formCategory}</option>}
                   </select>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <input
+                      type="text"
+                      value={inlineModalCatName}
+                      onChange={(e) => setInlineModalCatName(e.target.value)}
+                      placeholder="Nouvelle catégorie..."
+                      className="flex-1 min-w-0 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-[11px] text-gray-900 outline-none focus:border-[#0759A4]"
+                    />
+                    <button
+                      type="button"
+                      disabled={!inlineModalCatName.trim() || isSavingCategories}
+                      onClick={async () => {
+                        const created = await handleAddCustomCategory(inlineModalCatName, 'blue');
+                        if (created) setFormCategory(created);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0759A4] border border-blue-200 text-[11px] font-black disabled:opacity-45 cursor-pointer shrink-0"
+                    >
+                      + Créer
+                    </button>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] font-bold text-gray-600 mb-1">
                     Auteur / Signature
                   </label>
                   <input
@@ -1614,7 +1875,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                     value={formAuthorName}
                     onChange={(e) => setFormAuthorName(e.target.value)}
                     placeholder="ex: Admin Livry"
-                    className="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4]"
+                    className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-900 outline-none focus:border-[#0759A4]"
                   />
                 </div>
               </div>

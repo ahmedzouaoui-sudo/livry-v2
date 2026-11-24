@@ -8,6 +8,7 @@ import {
   HeartHandshake,
   CheckCircle2,
   BookOpen,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Product } from '../types';
@@ -21,6 +22,11 @@ import {
 import { triggerHaptic } from '../utils/haptics';
 import { AppTutorialModal, TUTORIAL_STORAGE_KEY } from './AppTutorialModal';
 import { Verified100Badge, getProductVerificationStatus } from './Verified100Badge';
+import {
+  WHATSAPP_PHONE_NUMBER,
+  WhatsAppIcon,
+  openWhatsApp,
+} from './SuggestOneScreen';
 
 export const HomeScreen: React.FC = () => {
   const {
@@ -29,13 +35,18 @@ export const HomeScreen: React.FC = () => {
     setActiveTab,
     products,
     barcodeVotes,
+    noCodeSettings,
     setSelectedProduct,
     setSuggestActiveView,
     setSuggestInitialProduct,
     openSuggestForProduct,
+    role,
+    deleteProduct,
+    showToast,
   } = useApp();
 
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const deferredQuery = useDeferredValue(searchQuery);
 
@@ -61,14 +72,16 @@ export const HomeScreen: React.FC = () => {
       'ALL',
       true,
       false,
-      barcodeVotes
+      barcodeVotes,
+      undefined,
+      noCodeSettings
     );
-  }, [products, deferredQuery, barcodeVotes]);
+  }, [products, deferredQuery, barcodeVotes, noCodeSettings]);
 
   const isSearching = searchQuery.trim().length > 0;
 
   const handleProductClick = (product: Product) => {
-    const status = getProductDisplayStatus(product, barcodeVotes);
+    const status = getProductDisplayStatus(product, barcodeVotes, noCodeSettings);
     if (status === 'UNAVAILABLE_NO_BARCODE') {
       triggerHaptic('warning');
       return;
@@ -103,6 +116,25 @@ export const HomeScreen: React.FC = () => {
             decoding="async"
           />
         </div>
+
+        {/* Lightweight Orange Blinking Notification Above Search Bar */}
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic('light');
+            const cleanCode = searchQuery.trim();
+            const msg = cleanCode
+              ? `Salam, makhdemch lia had lcode (${cleanCode}), momkin tsa3dni?`
+              : `Salam, makhdemch lia code, momkin tsa3dni?`;
+            openWhatsApp(`https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`);
+          }}
+          className="animate-soft-blink mb-2 inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-orange-500 hover:bg-orange-600 text-white border border-orange-300/80 shadow-xs text-[11px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+          title="Envoyer un message WhatsApp si un code ne fonctionne pas"
+        >
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" aria-hidden="true" />
+          <WhatsAppIcon className="w-3.5 h-3.5 text-white shrink-0" />
+          <span className="truncate">Ila makhdemch lik code sift WhatsApp</span>
+        </button>
 
         {/* Big Search Bar - Single persistent input across all states */}
         <div
@@ -221,10 +253,11 @@ export const HomeScreen: React.FC = () => {
       {/* ========================================================================= */}
       {isSearching && (
         <div className="flex-1 w-full max-w-[560px] mx-auto flex flex-col mb-3 overflow-y-auto animate-in fade-in duration-150">
-          <div className="flex items-center justify-between px-1 mb-2">
-            <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400 tabular-nums">
+          <div className="flex items-center justify-between gap-2 px-1 mb-2">
+            <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400 tabular-nums whitespace-nowrap">
               {filteredProducts.length} résultat{filteredProducts.length > 1 ? 's' : ''}
             </span>
+
             <button
               type="button"
               onClick={() => {
@@ -232,16 +265,22 @@ export const HomeScreen: React.FC = () => {
                 setSearchQuery('');
                 inputRef.current?.focus();
               }}
-              className="text-[11px] font-bold text-[#0759A4] dark:text-blue-400 hover:underline cursor-pointer"
+              className="text-[11px] font-bold text-[#0759A4] dark:text-blue-400 hover:underline cursor-pointer whitespace-nowrap shrink-0"
             >
-              Effacer pour voir les boutons
+              Effacer
             </button>
           </div>
 
           {filteredProducts.length > 0 ? (
             <div className="space-y-1.5 pb-3">
               {filteredProducts.map((product) => {
-                const codeBadge = formatProductCodeBadge(product.code);
+                const displayCodeLabel = formatProductCodeBadge(
+                  product.code,
+                  product,
+                  barcodeVotes,
+                  noCodeSettings
+                );
+                const showMissingPrompt = displayCodeLabel === 'Indisponible';
                 const deptConf = DEPARTMENT_CONFIGS[product.department] || DEPARTMENT_CONFIGS['Fruits et légumes'];
                 const primaryBarcode = getPrimaryBarcode(product, barcodeVotes);
 
@@ -273,19 +312,19 @@ export const HomeScreen: React.FC = () => {
                     {/* Details: White text */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                        {/* Code badge: If Indisponible -> Limouni (Orange), else White */}
+                        {/* Code badge */}
                         <span
-                          className="px-1.5 py-0.5 rounded-[6px] font-mono font-black text-[10px] sm:text-[11px] shadow-2xs shrink-0 tabular-nums"
+                          className="px-1.5 py-0.5 rounded-[6px] font-mono font-black text-[10px] sm:text-[11px] shadow-2xs shrink-0 tabular-nums whitespace-nowrap"
                           style={{
-                            backgroundColor: codeBadge === 'Indisponible' ? '#EA580C' : '#FFFFFF',
-                            color: codeBadge === 'Indisponible' ? '#FFFFFF' : deptConf.accentColor,
+                            backgroundColor: showMissingPrompt ? '#EA580C' : '#FFFFFF',
+                            color: showMissingPrompt ? '#FFFFFF' : deptConf.accentColor,
                           }}
                         >
-                          {codeBadge}
+                          {displayCodeLabel}
                         </span>
 
-                        {/* If code is indisponible, show orange Aidez-nous button */}
-                        {codeBadge === 'Indisponible' && (
+                        {/* If code is indisponible and NOT disabled, show orange Aidez-nous button */}
+                        {showMissingPrompt && (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -322,10 +361,45 @@ export const HomeScreen: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Badge */}
-                    <div className="shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded-[7px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
-                      <CheckCircle2 className="w-3 h-3 text-white" />
-                      <span className="hidden xs:inline">Valide</span>
+                    {/* Admin Quick Delete + Status Badge */}
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      {role === 'Admin' && (
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirmDeleteId !== product.id) {
+                              triggerHaptic('warning');
+                              setConfirmDeleteId(product.id);
+                              setTimeout(() => {
+                                setConfirmDeleteId((prev) => (prev === product.id ? null : prev));
+                              }, 3500);
+                              return;
+                            }
+                            setConfirmDeleteId(null);
+                            triggerHaptic('warning');
+                            await deleteProduct(product.id);
+                            showToast(`🗑️ "${product.name}" supprimé`);
+                          }}
+                          className={`px-1.5 py-1.5 rounded-[8px] text-white transition active:scale-90 cursor-pointer shadow-2xs inline-flex items-center gap-1 text-[9.5px] font-black ${
+                            confirmDeleteId === product.id
+                              ? 'bg-red-600 ring-2 ring-white/80'
+                              : 'bg-red-600/80 hover:bg-red-600'
+                          }`}
+                          title={
+                            confirmDeleteId === product.id
+                              ? 'Cliquer encore pour supprimer'
+                              : 'Supprimer cet article (Admin)'
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-white" />
+                          {confirmDeleteId === product.id && <span>OK ?</span>}
+                        </button>
+                      )}
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-[7px] bg-white/20 text-white text-[9.5px] font-bold backdrop-blur-xs">
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                        <span className="hidden xs:inline">{primaryBarcode ? 'Valide' : 'Actif'}</span>
+                      </div>
                     </div>
                   </div>
                 );

@@ -483,17 +483,54 @@ export function getCleanProductCode(code: string | undefined): string {
 }
 
 /**
- * Format product code badge:
- * - If code is 0000 -> "Non adressé"
- * - If empty or invalid -> "Indisponible"
- * - Otherwise -> clean code
+ * Checks whether a product's barcode is verified:
+ * - Admin marked it 100% khdam (`verificationStatus === '100'` or `isVerified100 === true`)
+ * - Or community-approved via 15+ likes when not explicitly marked broken/50%
  */
-export function formatProductCodeBadge(code: string | undefined): string {
-  if (!code) return 'Indisponible';
+export function isProductBarcodeVerified(
+  product: Product | null | undefined,
+  votesMap?: Record<string, import('../types').BarcodeVoteRecord>
+): boolean {
+  if (!product) return false;
+  if (product.verificationStatus === '100' || product.isVerified100 === true) {
+    return true;
+  }
+  if (product.verificationStatus === 'broken' || product.verificationStatus === '50') {
+    return false;
+  }
+  if (votesMap && Object.keys(votesMap).length > 0) {
+    const variants = getEffectiveBarcodeVariants(product, votesMap);
+    if (variants.some((v) => v.isCommunityApproved)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Format product code badge:
+ * - If code is disabled (codeDisabled) -> "Non adressé"
+ * - If code is 0000 -> "Non adressé"
+ * - If valid short code -> clean code
+ * - If missing/empty/invalid AND barcode is verified -> "Non adressé"
+ * - Otherwise -> "Indisponible"
+ */
+export function formatProductCodeBadge(
+  code: string | undefined,
+  product?: Product | null,
+  votesMap?: Record<string, import('../types').BarcodeVoteRecord>,
+  noCodeSettings?: NoCodeVisibilitySettings
+): string {
+  if (product && isProductCodeDisabled(product, noCodeSettings)) {
+    return 'Non adressé';
+  }
   const clean = getCleanProductCode(code);
-  if (!clean || clean === '-' || clean.trim() === '') return 'Indisponible';
   if (clean === '0000') return 'Non adressé';
-  return clean;
+  if (clean && clean !== '-' && clean.trim() !== '') return clean;
+  if (product && isProductBarcodeVerified(product, votesMap)) {
+    return 'Non adressé';
+  }
+  return 'Indisponible';
 }
 
 /**
@@ -567,6 +604,27 @@ export function getEffectiveBarcodeVariants(
   return result;
 }
 
+export interface NoCodeVisibilitySettings {
+  allowAllWithoutCode?: boolean;
+  disabledCodeProductIds?: number[] | Set<number>;
+}
+
+/**
+ * Checks whether code/barcode requirement is disabled for this product
+ * (either per-article or via global admin setting).
+ */
+export function isProductCodeDisabled(
+  product: Product,
+  settings?: NoCodeVisibilitySettings
+): boolean {
+  if (product.codeDisabled) return true;
+  if (settings?.allowAllWithoutCode) return true;
+  const ids = settings?.disabledCodeProductIds;
+  if (!ids) return false;
+  if (ids instanceof Set) return ids.has(product.id);
+  return Array.isArray(ids) && ids.includes(product.id);
+}
+
 /**
  * Check if a product has at least one valid and active barcode.
  */
@@ -577,52 +635,92 @@ export function hasProductBarcodes(
   return getEffectiveBarcodeVariants(product, votesMap).length > 0;
 }
 
+/**
+ * Returns true if the product should be visible in search & department library.
+ * Strict rule: ONLY products with at least one active barcode are visible.
+ */
+export function isProductVisibleInCatalog(
+  product: Product,
+  votesMap?: Record<string, import('../types').BarcodeVoteRecord>,
+  _noCodeSettings?: NoCodeVisibilitySettings
+): boolean {
+  if (!product.isEnabled) return false;
+  if (isProductCodeXXXX(product.code)) return false;
+  return hasProductBarcodes(product, votesMap);
+}
+
 export type ProductDisplayStatus =
-  | 'HIDDEN_XXXX'           // Code XXXX -> Never shown
-  | 'HIDDEN_NO_CODE_NO_BC'   // No code and no barcode -> Never shown
-  | 'UNAVAILABLE_NO_BARCODE' // Has code, but no barcode -> Hidden by user rule "okhbi libla code barres"
-  | 'AVAILABLE_NO_CODE'      // Has barcode, but no code -> Shown, clickable, code badge says "Indisponible"
-  | 'AVAILABLE_NON_ADRESSE'  // Has barcode and code 0000 -> Shown, clickable, code badge says "Non adressé"
-  | 'AVAILABLE_FULL';        // Has code AND barcode -> Normal active product
+  | 'HIDDEN_XXXX'             // Code XXXX -> Never shown
+  | 'HIDDEN_NO_CODE_NO_BC'    // No code and no barcode -> Hidden (shown in Aidez-nous)
+  | 'UNAVAILABLE_NO_BARCODE'  // Has code, but no barcode -> Hidden (shown in Aidez-nous)
+  | 'AVAILABLE_CODE_DISABLED' // Legacy status kept for compatibility
+  | 'AVAILABLE_NO_CODE'       // Has barcode, but no code -> Shown, clickable, code badge says "Indisponible"
+  | 'AVAILABLE_NON_ADRESSE'   // Has barcode and code 0000 / disabled / verified -> Shown, clickable, code badge says "Non adressé"
+  | 'AVAILABLE_FULL';         // Has code AND barcode -> Normal active product
 
 /**
  * Determines exact display and interaction status based on user rules:
  * 1. LI 3ANDO CODE XXXX MKIBANCH BMERA
- * 2. okhbi libla code barres kidima khli ghir li fihom codebarre -> Any product without barcode is hidden
- * 3. 0000 -> Non adressé
+ * 2. Only products WITH a barcode appear in search/catalog; products without barcodes go to Aidez-nous
+ * 3. Products with disabled code (codeDisabled), code 0000, or verified barcode show "Non adressé"
  */
 export function getProductDisplayStatus(
   product: Product,
-  votesMap?: Record<string, import('../types').BarcodeVoteRecord>
+  votesMap?: Record<string, import('../types').BarcodeVoteRecord>,
+  noCodeSettings?: NoCodeVisibilitySettings
 ): ProductDisplayStatus {
   const isXXXX = isProductCodeXXXX(product.code);
   if (isXXXX) return 'HIDDEN_XXXX';
 
   const hasCode = hasValidProductCode(product.code);
   const hasBc = hasProductBarcodes(product, votesMap);
+  const codeDisabled = isProductCodeDisabled(product, noCodeSettings);
 
-  // User rule: "okhbi libla code barres kidima khlighirli fihom codebarre"
   if (!hasBc) {
     return hasCode ? 'UNAVAILABLE_NO_BARCODE' : 'HIDDEN_NO_CODE_NO_BC';
   }
 
-  if (isProductCode0000(product.code)) {
+  if (codeDisabled || isProductCode0000(product.code)) {
     return 'AVAILABLE_NON_ADRESSE';
   }
 
   if (!hasCode) {
+    if (isProductBarcodeVerified(product, votesMap)) {
+      return 'AVAILABLE_NON_ADRESSE';
+    }
     return 'AVAILABLE_NO_CODE';
   }
 
   return 'AVAILABLE_FULL';
 }
 
+function tokenizeWords(text: string): string[] {
+  return normalizeSearchText(text)
+    .split(/[\s\-_'’.,/()]+/)
+    .filter(Boolean);
+}
+
+function pickSingleBestCodeMatch(list: Product[]): Product[] {
+  if (list.length <= 1) return list;
+  const sorted = [...list].sort((a, b) => {
+    const aVer = a.verificationStatus === '100' || a.isVerified100 ? 1 : 0;
+    const bVer = b.verificationStatus === '100' || b.isVerified100 ? 1 : 0;
+    if (aVer !== bVer) return bVer - aVer;
+    const aImg = a.imageUrl ? 1 : 0;
+    const bImg = b.imageUrl ? 1 : 0;
+    if (aImg !== bImg) return bImg - aImg;
+    return a.id - b.id;
+  });
+  return [sorted[0]];
+}
+
 /**
- * Filter products in real-time (< 100ms) with multiple criteria.
- * Enforces user rules:
+ * Filter products in real-time (< 100ms) with strict rules:
  * - Products with code XXXX are hidden
- * - Products without barcodes are hidden (okhbi libla code barres kidima khli ghir li fihom codebarre)
- * - Products with code 0000 are displayed with "Non adressé"
+ * - ONLY products with barcodes appear when onlyWithBarcodes=true
+ * - Search ONLY matches by CODE (short code / barcode) OR product NAME
+ * - If searching by CODE (exact code or exact barcode): returns ONLY 1 article
+ * - If searching by NAME: returns strictly products whose name matches what the user typed
  */
 export function filterProducts(
   products: Product[],
@@ -632,36 +730,35 @@ export function filterProducts(
   onlyWithBarcodes = true,
   includeXXXX = false,
   barcodeVotes?: Record<string, import('../types').BarcodeVoteRecord>,
-  currentWorkerNumber?: string
+  currentWorkerNumber?: string,
+  noCodeSettings?: NoCodeVisibilitySettings
 ): Product[] {
   const cleanQuery = (query || '').replace(/^#\s*/, '').trim();
   const normQuery = normalizeSearchText(cleanQuery);
   const isNumericQuery = /^\d+$/.test(normQuery);
-  const queryTokens = normQuery.split(/\s+/).filter(Boolean);
+  const queryWords = tokenizeWords(cleanQuery);
 
   // 1. Initial filter by active state and user visibility rules
   const candidates = products.filter((p) => {
     if (!p.isEnabled) return false;
-
-    // RULE: Products without barcodes NEVER appear in search or library
-    // (Until a barcode is entered for them, then they become accessible)
-    if (!hasProductBarcodes(p, barcodeVotes)) {
-      return false;
-    }
 
     // Rule 1: LI 3ANDO CODE XXXX MKIBANCH BMERA
     if (!includeXXXX && isProductCodeXXXX(p.code)) {
       return false;
     }
 
-    const status = getProductDisplayStatus(p, barcodeVotes);
+    // Rule 6: ONLY products with barcodes appear in search & library
+    if (onlyWithBarcodes && !hasProductBarcodes(p, barcodeVotes)) {
+      return false;
+    }
+
+    const status = getProductDisplayStatus(p, barcodeVotes, noCodeSettings);
 
     if (!includeXXXX && status === 'HIDDEN_XXXX') {
       return false;
     }
 
-    // Rule 2: okhbi libla code barres kidima khli ghir li fihom codebarre
-    if (status === 'HIDDEN_NO_CODE_NO_BC' || status === 'UNAVAILABLE_NO_BARCODE') {
+    if (onlyWithBarcodes && (status === 'HIDDEN_NO_CODE_NO_BC' || status === 'UNAVAILABLE_NO_BARCODE')) {
       return false;
     }
 
@@ -680,113 +777,209 @@ export function filterProducts(
     return candidates;
   }
 
-  // 2. Score candidate products
-  interface ScoredProduct {
-    product: Product;
-    score: number;
+  // 2A. NUMERIC QUERY: CODE (short code / barcode) OR numeric word in product name
+  if (isNumericQuery) {
+    const exactCodeMatches: Product[] = [];
+    const exactBarcodeMatches: Product[] = [];
+    const prefixCodeMatches: Product[] = [];
+    const prefixBarcodeMatches: Product[] = [];
+    const nameNumericMatches: Array<{ product: Product; score: number }> = [];
+
+    for (const p of candidates) {
+      const codeDisabled = isProductCodeDisabled(p, noCodeSettings);
+      const rawCode = codeDisabled ? '' : getCleanProductCode(p.code);
+      const normCode = rawCode.toLowerCase();
+      const variants = getEffectiveBarcodeVariants(p, barcodeVotes, currentWorkerNumber);
+
+      if (normCode && normCode === normQuery) {
+        exactCodeMatches.push(p);
+        continue;
+      }
+
+      if (variants.some((v) => v.code === normQuery)) {
+        exactBarcodeMatches.push(p);
+        continue;
+      }
+
+      if (normCode && normCode.startsWith(normQuery)) {
+        prefixCodeMatches.push(p);
+        continue;
+      }
+
+      if (normQuery.length >= 6 && variants.some((v) => v.code.startsWith(normQuery))) {
+        prefixBarcodeMatches.push(p);
+        continue;
+      }
+
+      const nameWords = tokenizeWords(p.name);
+      if (nameWords.some((w) => w === normQuery || w.startsWith(normQuery))) {
+        nameNumericMatches.push({
+          product: p,
+          score: nameWords.some((w) => w === normQuery) ? 200 : 100,
+        });
+      }
+    }
+
+    // Rule 4: If code matches, strictly return ONLY ONE article
+    if (exactCodeMatches.length > 0) {
+      return pickSingleBestCodeMatch(exactCodeMatches);
+    }
+    if (exactBarcodeMatches.length > 0) {
+      return pickSingleBestCodeMatch(exactBarcodeMatches);
+    }
+    if (prefixCodeMatches.length > 0) {
+      prefixCodeMatches.sort((a, b) => {
+        const ca = getCleanProductCode(a.code).length;
+        const cb = getCleanProductCode(b.code).length;
+        if (ca !== cb) return ca - cb;
+        return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+      });
+      return prefixCodeMatches;
+    }
+    if (prefixBarcodeMatches.length > 0) {
+      return prefixBarcodeMatches;
+    }
+
+    nameNumericMatches.sort((a, b) => b.score - a.score);
+    return nameNumericMatches.map((m) => m.product);
   }
 
-  const scored: ScoredProduct[] = [];
+  // 2B. TEXT QUERY: STRICTLY PRODUCT NAME (or exact alphanumeric short code)
+  const exactAlnumCodeMatches: Product[] = [];
+  const scoredNames: Array<{ product: Product; score: number }> = [];
 
   for (const p of candidates) {
-    const rawCode = getCleanProductCode(p.code);
+    const codeDisabled = isProductCodeDisabled(p, noCodeSettings);
+    const rawCode = codeDisabled ? '' : getCleanProductCode(p.code);
     const normCode = rawCode.toLowerCase();
-    const is0000 = isProductCode0000(p.code);
+
+    if (normCode && normCode === normQuery) {
+      exactAlnumCodeMatches.push(p);
+      continue;
+    }
+
     const normName = normalizeSearchText(p.name);
-    const normCategory = normalizeSearchText(p.category || '');
-    const variants = getEffectiveBarcodeVariants(p, barcodeVotes, currentWorkerNumber);
+    const nameWords = tokenizeWords(p.name);
 
     let score = 0;
-
-    // --- Search for 'non adresse' matching 0000 items ---
-    if (is0000 && (normQuery === 'non adresse' || normQuery === 'non adresse' || normQuery.includes('non adr') || (queryTokens.includes('non') && queryTokens.includes('adresse')))) {
-      score += 10000;
-    }
-
-    // --- A. NUMERIC SHORT CODE QUERY (2, 3, 4 digits or any digits) ---
-    if (isNumericQuery) {
-      // 1. Exact match on short code (e.g. typing "6037", "552", "12", "83", "0000") -> Top Priority
-      if (normCode === normQuery) {
-        score += 10000;
+    if (normName === normQuery) {
+      score = 10000;
+    } else if (normName.startsWith(normQuery)) {
+      score = 7000;
+    } else if (
+      queryWords.length > 0 &&
+      queryWords.every((token) => nameWords.some((w) => w.startsWith(token)))
+    ) {
+      score = 3000;
+      if (queryWords.every((token) => nameWords.includes(token))) {
+        score += 2000;
       }
-      // 2. Short code starts with query (e.g. typing "60" matches "6037", "12" matches "125")
-      else if (normCode && normCode.startsWith(normQuery)) {
-        score += 6000 + Math.max(0, 50 - normCode.length);
-      }
-      // 3. Short code ends with query
-      else if (normCode && normCode.endsWith(normQuery)) {
-        score += 4000;
-      }
-      // 4. Short code contains query
-      else if (normCode && normCode.includes(normQuery)) {
-        score += 3000;
-      }
-
-      // 5. Barcode matching
-      for (const v of variants) {
-        const cleanVCode = v.code;
-        // Exact barcode match
-        if (cleanVCode === normQuery) {
-          score += 2500;
-          break;
-        }
-        // Barcode starts with query
-        else if (cleanVCode.startsWith(normQuery)) {
-          score += 1500;
-          break;
-        }
-        // Barcode contains query (only for queries >= 4 digits to avoid noise with 2 or 3 digits)
-        else if (normQuery.length >= 4 && cleanVCode.includes(normQuery)) {
-          score += 1000;
-          break;
-        }
-      }
-
-      // 6. Product name contains the numeric query (e.g., "500" matching "500g")
       if (normName.includes(normQuery)) {
-        score += 500;
-      }
-    }
-
-    // --- B. TEXT QUERY OR MULTI-WORD QUERY (Product Name / Designation) ---
-    if (score === 0) {
-      // Exact name match
-      if (normName === normQuery) {
-        score += 8000;
-      }
-      // Name starts with query
-      else if (normName.startsWith(normQuery)) {
-        score += 5000;
-      }
-      // Code match (alphanumeric code)
-      else if (normCode && normCode === normQuery) {
-        score += 7000;
-      }
-      // Multi-word matching across name, category, and code
-      else if (queryTokens.length > 0) {
-        const combined = `${normName} ${normCategory} ${normCode} ${is0000 ? 'non adresse' : ''}`;
-        const allTokensFound = queryTokens.every((token) => combined.includes(token));
-        if (allTokensFound) {
-          score += 2000;
-          // Extra bonus if all tokens found directly in product name
-          if (queryTokens.every((token) => normName.includes(token))) {
-            score += 1000;
-          }
-          // Extra bonus if product name contains exact phrase
-          if (normName.includes(normQuery)) {
-            score += 1000;
-          }
-        }
+        score += 1500;
       }
     }
 
     if (score > 0) {
-      scored.push({ product: p, score });
+      scoredNames.push({ product: p, score });
     }
   }
 
-  // Sort descending by relevance score
-  scored.sort((a, b) => b.score - a.score);
+  if (exactAlnumCodeMatches.length > 0) {
+    return pickSingleBestCodeMatch(exactAlnumCodeMatches);
+  }
 
-  return scored.map((s) => s.product);
+  scoredNames.sort((a, b) => b.score - a.score);
+  return scoredNames.map((s) => s.product);
+}
+
+export type ProductSortMode =
+  | 'default'
+  | 'alpha-asc'
+  | 'alpha-desc'
+  | 'code-asc'
+  | 'code-desc'
+  | 'category-asc';
+
+const FRENCH_NUMERIC_COLLATOR = new Intl.Collator('fr', {
+  sensitivity: 'base',
+  numeric: true,
+});
+
+/**
+ * Returns the normalized uppercase A-Z first character (or '#' for digits/other) of a product name.
+ */
+export function getNormalizedInitialLetter(name: string): string {
+  const norm = normalizeSearchText(name);
+  if (!norm) return '#';
+  const ch = norm.charAt(0).toUpperCase();
+  return ch >= 'A' && ch <= 'Z' ? ch : '#';
+}
+
+/**
+ * Returns sorted unique initial letters present across a list of products.
+ */
+export function getAvailableInitialLetters(list: Product[]): string[] {
+  const set = new Set<string>();
+  for (const p of list) {
+    set.add(getNormalizedInitialLetter(p.name));
+  }
+  return Array.from(set).sort((a, b) => {
+    if (a === '#') return 1;
+    if (b === '#') return -1;
+    return a.localeCompare(b, 'fr');
+  });
+}
+
+/**
+ * Sorts a list of products by alphabetical name, short code, or category without mutating the source array.
+ */
+export function sortProducts(list: Product[], mode: ProductSortMode): Product[] {
+  if (mode === 'default' || list.length <= 1) {
+    return list;
+  }
+
+  const copy = [...list];
+
+  switch (mode) {
+    case 'alpha-asc':
+      return copy.sort((a, b) => {
+        const cmp = FRENCH_NUMERIC_COLLATOR.compare((a.name || '').trim(), (b.name || '').trim());
+        return cmp !== 0 ? cmp : a.id - b.id;
+      });
+
+    case 'alpha-desc':
+      return copy.sort((a, b) => {
+        const cmp = FRENCH_NUMERIC_COLLATOR.compare((b.name || '').trim(), (a.name || '').trim());
+        return cmp !== 0 ? cmp : a.id - b.id;
+      });
+
+    case 'code-asc':
+    case 'code-desc': {
+      const dir = mode === 'code-asc' ? 1 : -1;
+      return copy.sort((a, b) => {
+        const codeA = getCleanProductCode(a.code);
+        const codeB = getCleanProductCode(b.code);
+        if (!codeA && !codeB) {
+          return FRENCH_NUMERIC_COLLATOR.compare((a.name || '').trim(), (b.name || '').trim());
+        }
+        if (!codeA) return 1; // Products without code always at bottom
+        if (!codeB) return -1;
+        const cmp = FRENCH_NUMERIC_COLLATOR.compare(codeA, codeB) * dir;
+        if (cmp !== 0) return cmp;
+        return FRENCH_NUMERIC_COLLATOR.compare((a.name || '').trim(), (b.name || '').trim());
+      });
+    }
+
+    case 'category-asc':
+      return copy.sort((a, b) => {
+        const catA = (a.category || 'Général').trim();
+        const catB = (b.category || 'Général').trim();
+        const cmp = FRENCH_NUMERIC_COLLATOR.compare(catA, catB);
+        if (cmp !== 0) return cmp;
+        return FRENCH_NUMERIC_COLLATOR.compare((a.name || '').trim(), (b.name || '').trim());
+      });
+
+    default:
+      return list;
+  }
 }

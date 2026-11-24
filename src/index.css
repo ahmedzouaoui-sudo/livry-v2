@@ -74,6 +74,20 @@
     -webkit-backdrop-filter: blur(14px) saturate(150%);
     border: 1px solid rgba(255, 255, 255, 0.78);
   }
+
+  @keyframes soft-blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.62;
+    }
+  }
+
+  .animate-soft-blink {
+    animation: soft-blink 1.5s ease-in-out infinite;
+    will-change: opacity;
+  }
 }
 
 /* Neutralize and reposition any Netlify injected deploy badges/drawers */

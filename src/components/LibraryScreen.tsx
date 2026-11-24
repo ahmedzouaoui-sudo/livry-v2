@@ -1,12 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Croissant, Apple, Beef, UtensilsCrossed, ChevronRight, Search, CheckCircle2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Croissant,
+  Apple,
+  Beef,
+  UtensilsCrossed,
+  ChevronRight,
+  Search,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department } from '../types';
-import { DEPARTMENT_CONFIGS, filterProducts, hasProductBarcodes } from '../utils/productUtils';
+import {
+  DEPARTMENT_CONFIGS,
+  filterProducts,
+  isProductVisibleInCatalog,
+} from '../utils/productUtils';
 import { ProductCard } from './ProductCard';
 
 export const LibraryScreen: React.FC = () => {
-  const { products, setActiveTab, setSelectedProduct, barcodeVotes } = useApp();
+  const { products, setActiveTab, setSelectedProduct, barcodeVotes, noCodeSettings } = useApp();
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [deptSearch, setDeptSearch] = useState('');
@@ -18,30 +30,29 @@ export const LibraryScreen: React.FC = () => {
     'Fromage et charcuterie',
   ];
 
-  // Count products by department (strictly products with valid barcodes)
+  // Count products by department (including code-disabled articles)
   const countsByDept = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const d of departmentsList) {
       counts[d] = products.filter(
-        (p) => p.isEnabled && p.department === d && hasProductBarcodes(p, barcodeVotes)
+        (p) => p.department === d && isProductVisibleInCatalog(p, barcodeVotes, noCodeSettings)
       ).length;
     }
     return counts;
-  }, [products, barcodeVotes]);
+  }, [products, barcodeVotes, noCodeSettings]);
 
-  // Categories in the selected department (strictly products with valid barcodes)
+  // Categories in the selected department (sorted A-Z)
   const categoriesInDept = useMemo(() => {
     if (!selectedDept) return [];
     const set = new Set<string>();
     products
-      .filter((p) => p.isEnabled && p.department === selectedDept && hasProductBarcodes(p, barcodeVotes))
+      .filter((p) => p.department === selectedDept && isProductVisibleInCatalog(p, barcodeVotes, noCodeSettings))
       .forEach((p) => {
         if (p.category) set.add(p.category);
       });
-    return Array.from(set);
-  }, [products, selectedDept, barcodeVotes]);
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  }, [products, selectedDept, barcodeVotes, noCodeSettings]);
 
-  // Filtered products inside selected department
   const deptProducts = useMemo(() => {
     if (!selectedDept) return [];
     return filterProducts(
@@ -51,9 +62,11 @@ export const LibraryScreen: React.FC = () => {
       selectedCategory,
       true,
       false,
-      barcodeVotes
+      barcodeVotes,
+      undefined,
+      noCodeSettings
     );
-  }, [products, selectedDept, deptSearch, selectedCategory, barcodeVotes]);
+  }, [products, selectedDept, deptSearch, selectedCategory, barcodeVotes, noCodeSettings]);
 
   const getDeptIcon = (dept: Department, size = 'w-9 h-9') => {
     switch (dept) {
@@ -75,7 +88,7 @@ export const LibraryScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            if (selectedDept) {
+              if (selectedDept) {
               setSelectedDept(null);
               setSelectedCategory('ALL');
               setDeptSearch('');
@@ -178,8 +191,8 @@ export const LibraryScreen: React.FC = () => {
             );
           })()}
 
-          {/* Search inside this department */}
-          <div className="relative w-full shadow-2xs rounded-2xl bg-white border border-[#E0E0E6]/90">
+          {/* Search Row */}
+          <div className="relative shadow-2xs rounded-2xl bg-white border border-[#E0E0E6]/90">
             <div className="flex items-center h-11 px-3.5">
               <Search className="w-4 h-4 text-gray-400 shrink-0 mr-2" />
               <input
@@ -198,7 +211,7 @@ export const LibraryScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedCategory('ALL')}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 ${
+                className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer whitespace-nowrap ${
                   selectedCategory === 'ALL'
                     ? 'bg-[#413960] text-white shadow-xs'
                     : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
@@ -211,7 +224,7 @@ export const LibraryScreen: React.FC = () => {
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 ${
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer whitespace-nowrap ${
                     selectedCategory === cat
                       ? 'bg-[#B43167] text-white shadow-xs'
                       : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'

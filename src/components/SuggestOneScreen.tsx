@@ -25,8 +25,12 @@ import { Department, Product } from '../types';
 import {
   DEPARTMENT_CONFIGS,
   isProductMissingCode,
-  isProductMissingBarcode,
-  isProductIncomplete,
+  isProductCodeXXXX,
+  isProductCode0000,
+  isProductCodeDisabled,
+  isProductBarcodeVerified,
+  hasProductBarcodes,
+  getPrimaryBarcode,
   formatProductCodeBadge,
   normalizeSearchText,
   hasValidProductCode,
@@ -143,6 +147,8 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
     setSuggestInitialProduct,
     suggestActiveView,
     setSuggestActiveView,
+    barcodeVotes,
+    noCodeSettings,
   } = useApp();
 
   // Admin Direct In-Place Edit state
@@ -186,7 +192,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
     whatsappUrl: string;
   } | null>(null);
 
-  // Search in incomplete products view
+  // Search & filter in incomplete products view
   const [incompleteSearchQuery, setIncompleteSearchQuery] = useState('');
   const [incompleteFilter, setIncompleteFilter] = useState<'ALL' | 'WITH_CODE_NO_BARCODE' | 'NO_CODE' | 'NO_BARCODE'>('ALL');
 
@@ -213,33 +219,61 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
     }
   }, [suggestInitialProduct, setSuggestActiveView]);
 
-  // Products that HAVE code but MISSING barcode (User request: "fihom les codes mais bla code barres")
+  const isMissingEffectiveBarcode = (p: Product) => !hasProductBarcodes(p, barcodeVotes);
+  const isEffectiveMissingCode = (p: Product) =>
+    isProductMissingCode(p) &&
+    !isProductCodeDisabled(p, noCodeSettings) &&
+    !isProductCode0000(p.code) &&
+    !isProductBarcodeVerified(p, barcodeVotes);
+
+  // Products that HAVE code (or non-adressé) but MISSING barcode
   const withCodeNoBarcodeProducts = useMemo(() => {
-    return products.filter((p) => hasValidProductCode(p.code) && isProductMissingBarcode(p));
-  }, [products]);
+    return products.filter(
+      (p) =>
+        p.isEnabled &&
+        !isProductCodeXXXX(p.code) &&
+        hasValidProductCode(p.code) &&
+        !hasProductBarcodes(p, barcodeVotes)
+    );
+  }, [products, barcodeVotes]);
 
-  // Count incomplete products (missing code OR missing barcode)
+  // All active non-XXXX products missing a barcode (with or without code) OR missing a required short code
   const incompleteProducts = useMemo(() => {
-    return products.filter(isProductIncomplete);
-  }, [products]);
+    return products.filter((p) => {
+      if (!p.isEnabled || isProductCodeXXXX(p.code)) return false;
+      const missingBc = !hasProductBarcodes(p, barcodeVotes);
+      if (missingBc) return true;
+      return isEffectiveMissingCode(p);
+    });
+  }, [products, barcodeVotes, noCodeSettings]);
 
-  // Filter incomplete products by search and filter type
+  const noCodeIncompleteCount = useMemo(
+    () => incompleteProducts.filter(isEffectiveMissingCode).length,
+    [incompleteProducts, barcodeVotes, noCodeSettings]
+  );
+
+  const noBarcodeIncompleteCount = useMemo(
+    () => incompleteProducts.filter(isMissingEffectiveBarcode).length,
+    [incompleteProducts, barcodeVotes]
+  );
+
+  // Filter incomplete products by search (name or code) and filter type
   const filteredIncompleteProducts = useMemo(() => {
-    const q = normalizeSearchText(incompleteSearchQuery);
+    const cleanQ = incompleteSearchQuery.replace(/^#\s*/, '').trim();
+    const q = normalizeSearchText(cleanQ);
     return incompleteProducts.filter((p) => {
       if (incompleteFilter === 'WITH_CODE_NO_BARCODE') {
-        if (!hasValidProductCode(p.code) || !isProductMissingBarcode(p)) return false;
+        if (!hasValidProductCode(p.code) || hasProductBarcodes(p, barcodeVotes)) return false;
       }
-      if (incompleteFilter === 'NO_CODE' && !isProductMissingCode(p)) return false;
-      if (incompleteFilter === 'NO_BARCODE' && !isProductMissingBarcode(p)) return false;
+      if (incompleteFilter === 'NO_CODE' && !isEffectiveMissingCode(p)) return false;
+      if (incompleteFilter === 'NO_BARCODE' && hasProductBarcodes(p, barcodeVotes)) return false;
 
       if (!q) return true;
       const matchName = normalizeSearchText(p.name).includes(q);
       const matchCode = p.code ? normalizeSearchText(p.code).includes(q) : false;
-      const matchDept = normalizeSearchText(p.department).includes(q);
-      return matchName || matchCode || matchDept;
+      return matchName || matchCode;
     });
-  }, [incompleteProducts, incompleteSearchQuery, incompleteFilter]);
+  }, [incompleteProducts, incompleteSearchQuery, incompleteFilter, barcodeVotes, noCodeSettings]);
 
   // Handle Barcode scanned via camera
   const handleScanSuccess = (scannedCode: string) => {
@@ -674,7 +708,12 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] px-2 py-0.5 rounded-[5px] bg-[#0759A4] text-white font-mono font-bold tabular-nums">
-                      {formatProductCodeBadge(editingExistingProduct.code)}
+                      {formatProductCodeBadge(
+                        editingExistingProduct.code,
+                        editingExistingProduct,
+                        barcodeVotes,
+                        noCodeSettings
+                      )}
                     </span>
                     <span className="text-[10px] text-gray-500 dark:text-slate-400 truncate">
                       {DEPARTMENT_CONFIGS[editingExistingProduct.department]?.shortName || editingExistingProduct.department}
@@ -1102,7 +1141,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                 type="text"
                 value={incompleteSearchQuery}
                 onChange={(e) => setIncompleteSearchQuery(e.target.value)}
-                placeholder="Rechercher dans les produits à compléter..."
+                placeholder="Rechercher par code ou nom..."
                 className="w-full h-[36px] pl-8 pr-3 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium outline-none focus:border-[#0759A4] text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 placeholder:text-gray-400"
               />
             </div>
@@ -1153,7 +1192,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                     : 'bg-gray-100 dark:bg-slate-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40'
                 }`}
               >
-                Sans code ({incompleteProducts.filter(isProductMissingCode).length})
+                Sans code ({noCodeIncompleteCount})
               </button>
               <button
                 type="button"
@@ -1167,7 +1206,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                     : 'bg-blue-50 dark:bg-blue-950/40 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
                 }`}
               >
-                Sans code-barres ({incompleteProducts.filter(isProductMissingBarcode).length})
+                Sans code-barres ({noBarcodeIncompleteCount})
               </button>
             </div>
           </div>
@@ -1176,11 +1215,11 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5 pb-6">
             {filteredIncompleteProducts.length > 0 ? (
               filteredIncompleteProducts.map((p) => {
-                const missingCode = isProductMissingCode(p);
-                const missingBarcode = isProductMissingBarcode(p);
-                const codeBadge = formatProductCodeBadge(p.code);
+                const missingCode = isEffectiveMissingCode(p);
+                const missingBarcode = isMissingEffectiveBarcode(p);
+                const codeBadge = formatProductCodeBadge(p.code, p, barcodeVotes, noCodeSettings);
                 const conf = DEPARTMENT_CONFIGS[p.department] || DEPARTMENT_CONFIGS['Fruits et légumes'];
-                const primaryBarcode = p.barcodeMarjane || p.barcodeP2 || p.barcodeInterne;
+                const primaryBarcode = getPrimaryBarcode(p, barcodeVotes);
 
                 return (
                   <div
