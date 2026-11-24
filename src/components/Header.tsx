@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { LogOut, Database, Sun, Moon } from 'lucide-react';
+import { LogOut, Database } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
 import { PWAInstallButton } from './PWAInstallButton';
 import { AdminAuthModal } from './AdminAuthModal';
 
 export const Header: React.FC = () => {
-  const { role, setRole, activeTab, setActiveTab, setSearchQuery, showToast, isDarkMode, toggleDarkMode } = useApp();
+  const { role, setRole, activeTab, setActiveTab, setSearchQuery, showToast } = useApp();
 
   // Secret 8-click counter on the logo to open Admin authentication
   const [logoTapCount, setLogoTapCount] = useState(0);
@@ -74,27 +74,9 @@ export const Header: React.FC = () => {
             </div>
           </button>
 
-          {/* Right Actions: PWA Install + Dark Mode Toggle + Admin Controls */}
+          {/* Right Actions: PWA Install + Admin Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <PWAInstallButton />
-
-            {/* Sun / Moon Theme Toggle Button */}
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                toggleDarkMode();
-              }}
-              aria-label={isDarkMode ? 'Passer au mode clair' : 'Passer au mode sombre'}
-              title={isDarkMode ? 'Mode Clair' : 'Mode Sombre'}
-              className="w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-[12px] bg-white/70 dark:bg-white/10 backdrop-blur-md hover:bg-white/95 dark:hover:bg-white/15 border border-white/80 dark:border-white/15 text-gray-700 dark:text-amber-300 flex items-center justify-center transition active:scale-95 cursor-pointer select-none shadow-2xs"
-            >
-              {isDarkMode ? (
-                <Sun className="w-4 h-4 text-amber-300" />
-              ) : (
-                <Moon className="w-4 h-4 text-[#0759A4]" />
-              )}
-            </button>
 
             {role === 'Admin' && (
               <>

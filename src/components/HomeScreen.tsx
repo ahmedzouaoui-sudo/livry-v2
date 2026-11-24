@@ -260,6 +260,10 @@ export const HomeScreen: React.FC = () => {
                           alt={product.name}
                           className="w-full h-full object-contain"
                           loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       ) : (
                         <ShoppingBag className="w-4 h-4 text-gray-400" />

@@ -23,6 +23,7 @@ import {
   getLocalActivityLogs,
 } from '../services/activityLogService';
 import { triggerHaptic } from '../utils/haptics';
+import { triggerCsvDownload, triggerFileDownload } from '../utils/fileDownload';
 
 interface ActivityLogModalProps {
   isOpen: boolean;
@@ -148,15 +149,7 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
 
   const triggerDownload = (content: string, filename: string, mimeType: string) => {
     triggerHaptic('success');
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    triggerFileDownload(content, filename, mimeType);
     onExportToast?.(`📄 Fichier téléchargé : ${filename}`);
   };
 
@@ -173,7 +166,9 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
 
   const handleDownloadCsv = () => {
     const csv = buildActivityLogsCsv(logs);
-    triggerDownload(csv, `livry_finder_historique_${dateStamp}.csv`, 'text/csv;charset=utf-8');
+    triggerHaptic('success');
+    triggerCsvDownload(csv, `livry_finder_historique_${dateStamp}.csv`);
+    onExportToast?.(`📄 Fichier téléchargé : livry_finder_historique_${dateStamp}.csv`);
   };
 
   const handleDownloadJson = () => {

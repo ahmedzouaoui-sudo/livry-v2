@@ -33,9 +33,13 @@ import {
   markDeviceOffline,
   fetchUserDevices,
 } from '../services/deviceTrackerService';
-import { supabasePublic } from '../services/supabaseClient';
+import { supabasePublic, supabaseApi } from '../services/supabaseClient';
 import { triggerHaptic } from '../utils/haptics';
-import { ensureDailyBackup } from '../services/dailyBackupService';
+import {
+  ensureDailyBackup,
+  recoverLatestSavedProducts,
+  saveEmergencyCatalogSnapshot,
+} from '../services/dailyBackupService';
 import { sanitizeImageUrl } from '../utils/securityUtils';
 import { logAppEvent } from '../services/activityLogService';
 import {
@@ -120,6 +124,7 @@ interface AppContextType {
   deleteProduct: (id: number) => Promise<void>;
   resetCatalogue: () => void;
   clearAllProducts: () => Promise<void>;
+  restoreLatestBackupNow: () => Promise<void>;
   seedInitialCatalogueToSupabase: () => Promise<void>;
   syncWithSupabase: (isManual?: boolean) => Promise<SyncResult>;
   seedSupabase: () => Promise<void>;
@@ -133,15 +138,28 @@ interface AppContextType {
   importProductsCsv: (csvContent: string, mode?: 'merge' | 'replace') => { success: boolean; count: number; error?: string };
   exportCatalogueCsv: () => string;
   tips: TipPost[];
-  addTip: (tip: Omit<TipPost, 'id' | 'createdAt' | 'likes'>) => void;
-  updateTip: (updated: TipPost) => void;
-  deleteTip: (id: string) => void;
+  addTip: (tip: Omit<TipPost, 'id' | 'createdAt' | 'likes'>) => Promise<{ success: boolean; error?: string }>;
+  updateTip: (updated: TipPost) => Promise<{ success: boolean; error?: string }>;
+  deleteTip: (id: string) => Promise<{ success: boolean; error?: string }>;
   likeTip: (id: string) => void;
+  syncTipsNow: () => Promise<{
+    success: boolean;
+    count: number;
+    targetTable?: 'astuces' | 'tips';
+    needsTableSql?: boolean;
+    error?: string;
+  }>;
+  restoreDefaultTips: () => Promise<{
+    success: boolean;
+    count: number;
+    targetTable?: 'astuces' | 'tips';
+    error?: string;
+  }>;
 
   // Editable Full-Page Guide Configuration
   guideConfig: GuideConfig;
-  updateGuideConfig: (nextConfig: GuideConfig) => Promise<{ success: boolean; error?: string }>;
-  resetGuideConfig: () => Promise<void>;
+  updateGuideConfig: (nextConfig: GuideConfig) => Promise<{ success: boolean; config: GuideConfig; error?: string }>;
+  resetGuideConfig: () => Promise<{ success: boolean; config: GuideConfig; error?: string }>;
 }
 
 const STORAGE_KEY_PRODUCTS = 'finder_livry_products_v3';
@@ -183,7 +201,56 @@ export const INITIAL_BARCODE_VOTES: Record<string, BarcodeVoteRecord> = {
   },
 };
 
-const INITIAL_TIPS: TipPost[] = [];
+export const INITIAL_TIPS: TipPost[] = [
+  {
+    id: 'tip-1',
+    title: 'Scanner une étiquette humide ou froissée',
+    content:
+      'Aux rayons Boucherie et Surgelés, la buée ou le film plastique froissé empêche la douchette de biper. Astuce : Ouvrez la fiche produit sur Finder Livry et cliquez sur le bouton Plein écran pour scanner le code directement sur votre smartphone.',
+    category: 'Scanner & Caisse',
+    authorRole: 'Pickeur',
+    authorName: 'Ahmed (Lead Pickeur)',
+    targetAudience: 'Tous',
+    createdAt: 'Il y a 2 jours',
+    likes: 14,
+  },
+  {
+    id: 'tip-2',
+    title: 'Pesée balance en panne ou illisible',
+    content:
+      "Si la balance du rayon Fruits & Légumes ne sort pas de code, vérifiez l'unité du produit (ex: 500g ou 100g). Utilisez le stepper (-) et (+) pour multiplier le poids exact (ex: 100g x 5 = 500g). Le code-barres s'ajuste automatiquement avec la clé de pesée Marjane.",
+    category: 'Pesée & Balance',
+    authorRole: 'Pickeur',
+    authorName: 'Yassine',
+    targetAudience: 'Pickeur',
+    createdAt: 'Il y a 3 jours',
+    likes: 9,
+  },
+  {
+    id: 'tip-3',
+    title: 'Code XXXX ou produit non répertorié',
+    content:
+      "Les codes marqués XXXX sont masqués du catalogue public. Si vous rencontrez un article sans code au stand Fromage ou Boucherie, prenez une photo et transmettez le nom à l'Admin pour qu'il le saisisse dans le panneau d'import CSV.",
+    category: 'Général',
+    authorRole: 'Admin',
+    authorName: 'Admin Livry',
+    targetAudience: 'Tous',
+    createdAt: 'Cette semaine',
+    likes: 18,
+  },
+  {
+    id: 'tip-4',
+    title: 'Astuce rapidité pour les Livreurs en caisse',
+    content:
+      'Mettez la luminosité de votre téléphone à 100% avant d’arriver au tapis de caisse. Les douchettes laser Marjane bipent en moins de 0.2 seconde sur écran blanc lumineux.',
+    category: 'Scanner & Caisse',
+    authorRole: 'Livreur',
+    authorName: 'Karim',
+    targetAudience: 'Livreur',
+    createdAt: 'Hier',
+    likes: 12,
+  },
+];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -200,15 +267,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_BARCODE_VOTES;
   });
 
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_THEME);
-      if (saved) return saved === 'dark';
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    } catch {
-      return false;
-    }
-  });
+  const barcodeVotesRef = useRef<Record<string, BarcodeVoteRecord>>(barcodeVotes);
+  useEffect(() => {
+    barcodeVotesRef.current = barcodeVotes;
+  }, [barcodeVotes]);
+
+  const isDarkMode = false;
 
   const [userIp, setUserIp] = useState<string | null>(() => {
     try {
@@ -218,24 +282,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // Dark mode effect
+  // Always enforce standard light mode and clear any legacy dark-mode cache
   useEffect(() => {
     try {
-      if (isDarkMode) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem(STORAGE_KEY_THEME, 'dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem(STORAGE_KEY_THEME, 'light');
-      }
-    } catch (e) {
-      console.warn('Dark mode switch error:', e);
-    }
-  }, [isDarkMode]);
-
-  const toggleDarkMode = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
+      document.documentElement.classList.remove('dark');
+      localStorage.removeItem(STORAGE_KEY_THEME);
+    } catch {}
   }, []);
+
+  const toggleDarkMode = useCallback(() => {}, []);
 
   // Registered Phones & Usage State
   const [userDevices, setUserDevices] = useState<UserDevice[]>([]);
@@ -401,15 +456,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const cached = localStorage.getItem(STORAGE_KEY_TIPS);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
         }
       }
     } catch (e) {
       console.warn('Error reading local tips cache:', e);
     }
-    return [];
+    return INITIAL_TIPS;
   });
+
+  const tipsRef = useRef<TipPost[]>(tips);
+  const tipsClearedIntentionallyRef = useRef(false);
+  useEffect(() => {
+    tipsRef.current = tips;
+  }, [tips]);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
@@ -450,6 +511,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isSyncing = syncStatus === 'syncing' || dataUpdateStatus === 'updating';
   const syncingRef = useRef(false);
+  const autoRecoveringRef = useRef(false);
+  const lastAutoRecoveryAtRef = useRef(0);
+  const intentionalClearUntilRef = useRef(0);
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -461,6 +525,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
+      if (products.length >= 10) {
+        saveEmergencyCatalogSnapshot(products);
+      }
     } catch (e) {
       console.warn('Local storage write limit or error:', e);
     }
@@ -473,6 +540,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Tips storage error:', e);
     }
   }, [tips]);
+
+  const runZeroArticleAutoRecovery = useCallback(
+    async (pushToSupabase = true, force = false): Promise<boolean> => {
+      if (autoRecoveringRef.current) return false;
+      const now = Date.now();
+      if (!force && now < intentionalClearUntilRef.current) return false;
+      if (!force && now - lastAutoRecoveryAtRef.current < 15000) return false;
+
+      autoRecoveringRef.current = true;
+      lastAutoRecoveryAtRef.current = now;
+      try {
+        const recovered = await recoverLatestSavedProducts();
+        if (!recovered.products || recovered.products.length === 0) {
+          return false;
+        }
+
+        setProducts(recovered.products);
+        try {
+          localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(recovered.products));
+        } catch {}
+
+        if (pushToSupabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+          await seedProductsToSupabase(recovered.products).catch(() => {});
+        }
+
+        const nowTime = new Date().toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const note = `Restauré auto (${recovered.products.length} articles à ${nowTime})`;
+        setLastSyncTimestamp(note);
+        try {
+          localStorage.setItem(STORAGE_KEY_LAST_SYNC, note);
+        } catch {}
+        setSyncStatus('synced');
+
+        logAppEvent({
+          category: 'BACKUP',
+          action: 'CATALOGUE_AUTO_RECOVERED',
+          actorRole: roleRef.current,
+          target: recovered.sourceLabel,
+          details: `Catalogue vide (0 article) restauré automatiquement : ${recovered.products.length} articles récupérés depuis "${recovered.sourceLabel}".`,
+        }).catch(() => {});
+
+        triggerHaptic('success');
+        showToast(
+          `🔄 0 article détecté : ${recovered.products.length} articles restaurés (${recovered.sourceLabel})`
+        );
+        return true;
+      } catch (err) {
+        console.warn('[AutoRecovery] Error:', err);
+        return false;
+      } finally {
+        autoRecoveringRef.current = false;
+      }
+    },
+    [showToast]
+  );
+
+  // Guard startup: if cached products ever start at 0, recover automatically
+  useEffect(() => {
+    if (productsRef.current.length === 0) {
+      runZeroArticleAutoRecovery(false, true).catch(() => {});
+    }
+  }, [runZeroArticleAutoRecovery]);
 
   const checkSupabaseStatus = useCallback(async () => {
     try {
@@ -513,6 +645,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const health = await checkSupabaseHealth();
         setSupabaseHealth(health);
         if (!health.connected || !health.tableExists) {
+          if (productsRef.current.length === 0) {
+            await runZeroArticleAutoRecovery(false);
+          }
           return;
         }
 
@@ -522,7 +657,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           fetchBarcodeVotesFromSupabase(),
         ]);
 
-        if (res.success && res.products.length > 0) {
+        if (res.success && res.products.length === 0) {
+          // 0 articles in Supabase -> auto-recover latest saved catalog
+          await runZeroArticleAutoRecovery(true);
+        } else if (res.success && res.products.length > 0) {
           const remoteList = res.products;
           const currentList = productsRef.current;
 
@@ -535,9 +673,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // Safety backup: if remote suddenly has many fewer products (e.g. accidental DB wipe),
             // preserve the larger local catalog in a dedicated backup key before updating
             if (currentList.length >= remoteList.length + 20) {
-              try {
-                localStorage.setItem('finder_livry_products_backup_v3', JSON.stringify(currentList));
-              } catch {}
+              saveEmergencyCatalogSnapshot(currentList);
             }
             setProducts(remoteList);
             // Keep currently opened product modal fresh if its data changed remotely
@@ -581,7 +717,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         if (tipsRes.success) {
-          setTips(tipsRes.tips);
+          if (tipsRes.tips.length > 0) {
+            setTips(tipsRes.tips);
+          } else if (!tipsClearedIntentionallyRef.current) {
+            const toRestore = tipsRef.current.length > 0 ? tipsRef.current : INITIAL_TIPS;
+            setTips(toRestore);
+            seedTipsToSupabase(toRestore).catch(() => {});
+          }
         }
 
         fetchGuideConfigFromCloud()
@@ -600,7 +742,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         syncingRef.current = false;
       }
     },
-    [showToast]
+    [runZeroArticleAutoRecovery, showToast]
   );
 
   const applyUpdate = useCallback(async (): Promise<void> => {
@@ -614,12 +756,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchGuideConfigFromCloud().catch(() => null),
       ]);
       if (tipsRes.success) {
-        setTips(tipsRes.tips);
+        if (tipsRes.tips.length > 0) {
+          setTips(tipsRes.tips);
+        } else if (!tipsClearedIntentionallyRef.current) {
+          const toRestore = tipsRef.current.length > 0 ? tipsRef.current : INITIAL_TIPS;
+          setTips(toRestore);
+          seedTipsToSupabase(toRestore).catch(() => {});
+        }
       }
       if (freshGuide) {
         setGuideConfig(freshGuide);
       }
-      if (res.success) {
+      if (res.success && res.products.length === 0) {
+        setDataUpdateStatus('up-to-date');
+        await runZeroArticleAutoRecovery(true);
+      } else if (res.success) {
         const remoteList = res.products;
         setProducts(remoteList);
         setDataUpdateStatus('up-to-date');
@@ -634,6 +785,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLastSyncTimestamp(note);
         localStorage.setItem(STORAGE_KEY_LAST_SYNC, note);
         setSyncStatus('synced');
+        checkSupabaseHealth().then(setSupabaseHealth).catch(() => {});
 
         logAppEvent({
           category: 'SYSTEM',
@@ -655,7 +807,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSyncStatus('error');
       showToast(`❌ Erreur : ${err.message}`);
     }
-  }, [showToast]);
+  }, [runZeroArticleAutoRecovery, showToast]);
 
   const dismissPendingUpdate = useCallback(() => {
     setPendingUpdateMessage(null);
@@ -679,6 +831,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let votesChannel: any = null;
     let productsChannel: any = null;
     let tipsChannel: any = null;
+    let astucesChannel: any = null;
     let realtimeDebounce: ReturnType<typeof setTimeout> | null = null;
 
     const triggerDebouncedAutoSync = () => {
@@ -698,12 +851,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (health.connected && health.tableExists) {
         await checkForUpdates(true);
 
+        const rtClient = health.schema === 'api' ? supabaseApi : supabasePublic;
+        const rtSchema = health.schema === 'api' ? 'api' : 'public';
+
         try {
-          productsChannel = supabasePublic
-            .channel('public:products_live')
+          productsChannel = rtClient
+            .channel(`${rtSchema}:products_live`)
             .on(
               'postgres_changes',
-              { event: '*', schema: 'public', table: 'products' },
+              { event: '*', schema: rtSchema, table: 'products' },
               () => {
                 triggerDebouncedAutoSync();
               }
@@ -714,17 +870,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         try {
-          tipsChannel = supabasePublic
-            .channel('public:tips_live')
+          tipsChannel = rtClient
+            .channel(`${rtSchema}:tips_live`)
             .on(
               'postgres_changes',
-              { event: '*', schema: 'public', table: 'tips' },
+              { event: '*', schema: rtSchema, table: 'tips' },
               async () => {
                 const [freshTips, freshGuide] = await Promise.all([
                   fetchTipsFromSupabase(),
                   fetchGuideConfigFromCloud().catch(() => null),
                 ]);
-                if (freshTips.success && isMounted) {
+                if (freshTips.success && freshTips.tips.length > 0 && isMounted) {
                   setTips(freshTips.tips);
                 }
                 if (freshGuide && isMounted) {
@@ -738,11 +894,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         try {
-          votesChannel = supabasePublic
-            .channel('public:barcode_votes_live')
+          astucesChannel = rtClient
+            .channel(`${rtSchema}:astuces_live`)
             .on(
               'postgres_changes',
-              { event: '*', schema: 'public', table: 'barcode_votes' },
+              { event: '*', schema: rtSchema, table: 'astuces' },
+              async () => {
+                const freshTips = await fetchTipsFromSupabase();
+                if (freshTips.success && isMounted) {
+                  if (freshTips.tips.length > 0 || tipsClearedIntentionallyRef.current) {
+                    setTips(freshTips.tips);
+                  }
+                }
+              }
+            )
+            .subscribe();
+        } catch (e) {
+          console.warn('Realtime notice for astuces:', e);
+        }
+
+        try {
+          votesChannel = rtClient
+            .channel(`${rtSchema}:barcode_votes_live`)
+            .on(
+              'postgres_changes',
+              { event: '*', schema: rtSchema, table: 'barcode_votes' },
               async () => {
                 const fresh = await fetchBarcodeVotesFromSupabase();
                 if (fresh.success && isMounted) {
@@ -767,16 +943,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (productsChannel) {
         try {
           supabasePublic.removeChannel(productsChannel);
+          supabaseApi.removeChannel(productsChannel);
         } catch {}
       }
       if (tipsChannel) {
         try {
           supabasePublic.removeChannel(tipsChannel);
+          supabaseApi.removeChannel(tipsChannel);
+        } catch {}
+      }
+      if (astucesChannel) {
+        try {
+          supabasePublic.removeChannel(astucesChannel);
+          supabaseApi.removeChannel(astucesChannel);
         } catch {}
       }
       if (votesChannel) {
         try {
           supabasePublic.removeChannel(votesChannel);
+          supabaseApi.removeChannel(votesChannel);
         } catch {}
       }
     };
@@ -833,120 +1018,167 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  const toggleProductStatus = useCallback(async (id: number) => {
-    const target = productsRef.current.find((p) => p.id === id);
-    if (!target) return;
-    const updated = { ...target, isEnabled: !target.isEnabled };
-    setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
-    upsertProductInSupabase(updated).catch(() => {});
-
-    logAppEvent({
-      category: 'PRODUCT',
-      action: 'PRODUCT_VISIBILITY_CHANGED',
-      actorRole: roleRef.current,
-      target: `#${target.id} ${target.name}`,
-      details: updated.isEnabled
-        ? `Produit rendu Visible (${target.code})`
-        : `Produit Masqué (${target.code})`,
-    }).catch(() => {});
-  }, []);
-
-  const updateProduct = useCallback(async (updatedRaw: Product) => {
-    const prev = productsRef.current.find((p) => p.id === updatedRaw.id);
-    const sanitizedImg = updatedRaw.imageUrl ? sanitizeImageUrl(updatedRaw.imageUrl) : undefined;
-    const updated: Product = {
-      ...updatedRaw,
-      imageUrl: sanitizedImg || undefined,
-    };
-
-    setProducts((prevList) => prevList.map((p) => (p.id === updated.id ? updated : p)));
-    upsertProductInSupabase(updated).catch(() => {});
-
-    const formatVStatus = (v?: string) => {
-      if (v === '100') return '100% Khdam (Bleu)';
-      if (v === '50') return '50% Khdam (Orange)';
-      if (v === 'broken') return 'Makhdamch daba (Rouge)';
-      return 'Aucune';
-    };
-
-    if (prev) {
-      const changes: string[] = [];
-      const prevV = prev.verificationStatus || (prev.isVerified100 ? '100' : 'none');
-      const nextV = updated.verificationStatus || (updated.isVerified100 ? '100' : 'none');
-
-      if (prev.code !== updated.code) changes.push(`Code: "${prev.code}" → "${updated.code}"`);
-      if (prev.name !== updated.name) changes.push(`Nom: "${prev.name}" → "${updated.name}"`);
-      if (prev.department !== updated.department) changes.push(`Rayon: "${prev.department}" → "${updated.department}"`);
-      if (prev.category !== updated.category) changes.push(`Catégorie: "${prev.category}" → "${updated.category}"`);
-      if (prev.quantite !== updated.quantite) changes.push(`Unité: "${prev.quantite || '-'}" → "${updated.quantite || '-'}"`);
-      if (prev.isEnabled !== updated.isEnabled) changes.push(`Visibilité: ${prev.isEnabled ? 'Visible' : 'Masqué'} → ${updated.isEnabled ? 'Visible' : 'Masqué'}`);
-      if ((prev.imageUrl || '') !== (updated.imageUrl || '')) changes.push(`Image modifiée`);
-      if ((prev.barcodeMarjane || '') !== (updated.barcodeMarjane || '')) changes.push(`Marjane: "${prev.barcodeMarjane || '-'}" → "${updated.barcodeMarjane || '-'}"`);
-      if ((prev.barcodeP2 || '') !== (updated.barcodeP2 || '')) changes.push(`Marjane 2: "${prev.barcodeP2 || '-'}" → "${updated.barcodeP2 || '-'}"`);
-      if ((prev.barcodeInterne || '') !== (updated.barcodeInterne || '')) changes.push(`Interne: "${prev.barcodeInterne || '-'}" → "${updated.barcodeInterne || '-'}"`);
-      if ((prev.barcodeMiniSecours || '') !== (updated.barcodeMiniSecours || '')) changes.push(`Mini: "${prev.barcodeMiniSecours || '-'}" → "${updated.barcodeMiniSecours || '-'}"`);
-      if ((prev.barcodeSecours || '') !== (updated.barcodeSecours || '')) changes.push(`Sec: "${prev.barcodeSecours || '-'}" → "${updated.barcodeSecours || '-'}"`);
-      if ((prev.barcodeP3 || '') !== (updated.barcodeP3 || '')) changes.push(`Sec 2: "${prev.barcodeP3 || '-'}" → "${updated.barcodeP3 || '-'}"`);
-      if (prevV !== nextV) changes.push(`Statut Icône: ${formatVStatus(prevV)} → ${formatVStatus(nextV)}`);
-
-      const onlyVerificationChanged = changes.length === 1 && prevV !== nextV;
+  const requireAdmin = useCallback(
+    (actionName: string): boolean => {
+      if (roleRef.current === 'Admin') return true;
       logAppEvent({
-        category: onlyVerificationChanged ? 'VERIFICATION' : 'PRODUCT',
-        action: onlyVerificationChanged
-          ? `BADGE_STATUS_${nextV.toUpperCase()}`
-          : 'PRODUCT_UPDATED',
+        category: 'AUTH',
+        action: 'UNAUTHORIZED_ADMIN_ATTEMPT',
         actorRole: roleRef.current,
-        target: `#${updated.id} ${updated.name} (Code: ${updated.code})`,
-        details: changes.length > 0 ? changes.join(' | ') : 'Produit ré-enregistré sans changement.',
+        target: actionName,
+        details: `Tentative non autorisée bloquée (${actionName}) sans session Admin active.`,
       }).catch(() => {});
-    } else {
+      showToast('🔒 Action réservée à l’Administrateur Data.');
+      return false;
+    },
+    [showToast]
+  );
+
+  const toggleProductStatus = useCallback(
+    async (id: number) => {
+      if (!requireAdmin('toggleProductStatus')) return;
+      const target = productsRef.current.find((p) => p.id === id);
+      if (!target) return;
+      const updated = { ...target, isEnabled: !target.isEnabled };
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      const res = await upsertProductInSupabase(updated);
+      if (!res.success && res.error) {
+        showToast(`⚠️ Sauvegarde locale OK mais erreur Supabase : ${res.error}`);
+      }
+
       logAppEvent({
         category: 'PRODUCT',
-        action: 'PRODUCT_UPDATED',
+        action: 'PRODUCT_VISIBILITY_CHANGED',
         actorRole: roleRef.current,
-        target: `#${updated.id} ${updated.name}`,
-        details: `Mise à jour produit (${updated.code}).`,
+        target: `#${target.id} ${target.name}`,
+        details: updated.isEnabled
+          ? `Produit rendu Visible (${target.code})`
+          : `Produit Masqué (${target.code})`,
       }).catch(() => {});
-    }
-  }, []);
+    },
+    [requireAdmin, showToast]
+  );
 
-  const addProduct = useCallback(async (newProduct: Omit<Product, 'id'>) => {
-    const maxId = productsRef.current.reduce((max, p) => Math.max(max, p.id), 0);
-    const sanitizedImg = newProduct.imageUrl ? sanitizeImageUrl(newProduct.imageUrl) : undefined;
-    const productWithId: Product = {
-      ...newProduct,
-      imageUrl: sanitizedImg || undefined,
-      id: maxId + 1,
-    };
-    setProducts((prev) => [productWithId, ...prev]);
-    upsertProductInSupabase(productWithId).catch(() => {});
+  const updateProduct = useCallback(
+    async (updatedRaw: Product) => {
+      const prev = productsRef.current.find((p) => p.id === updatedRaw.id);
+      const sanitizedImg = updatedRaw.imageUrl ? sanitizeImageUrl(updatedRaw.imageUrl) : undefined;
+      const updated: Product = {
+        ...updatedRaw,
+        imageUrl: sanitizedImg || undefined,
+      };
 
-    logAppEvent({
-      category: 'PRODUCT',
-      action: 'PRODUCT_CREATED',
-      actorRole: roleRef.current,
-      target: `#${productWithId.id} ${productWithId.name}`,
-      details: `Nouveau produit ajouté (Code: ${productWithId.code}, Rayon: ${productWithId.department}, Unité: ${productWithId.quantite || 'pièce'}).`,
-    }).catch(() => {});
-  }, []);
+      setProducts((prevList) => prevList.map((p) => (p.id === updated.id ? updated : p)));
+      const res = await upsertProductInSupabase(updated);
+      if (!res.success && res.error) {
+        showToast(`⚠️ Modifié localement · Erreur sync Supabase : ${res.error}`);
+      }
 
-  const deleteProduct = useCallback(async (id: number) => {
-    const target = productsRef.current.find((p) => p.id === id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    deleteProductInSupabase(id).catch(() => {});
+      const formatVStatus = (v?: string) => {
+        if (v === '100') return '100% Khdam (Bleu)';
+        if (v === '50') return '50% Khdam (Orange)';
+        if (v === 'broken') return 'Makhdamch daba (Rouge)';
+        return 'Aucune';
+      };
 
-    logAppEvent({
-      category: 'PRODUCT',
-      action: 'PRODUCT_DELETED',
-      actorRole: roleRef.current,
-      target: target ? `#${id} ${target.name} (${target.code})` : `#${id}`,
-      details: target
-        ? `Article "${target.name}" (Code: ${target.code}) supprimé du catalogue.`
-        : `Article #${id} supprimé du catalogue.`,
-    }).catch(() => {});
-  }, []);
+      if (prev) {
+        const changes: string[] = [];
+        const prevV = prev.verificationStatus || (prev.isVerified100 ? '100' : 'none');
+        const nextV = updated.verificationStatus || (updated.isVerified100 ? '100' : 'none');
+
+        if (prev.code !== updated.code) changes.push(`Code: "${prev.code}" → "${updated.code}"`);
+        if (prev.name !== updated.name) changes.push(`Nom: "${prev.name}" → "${updated.name}"`);
+        if (prev.department !== updated.department) changes.push(`Rayon: "${prev.department}" → "${updated.department}"`);
+        if (prev.category !== updated.category) changes.push(`Catégorie: "${prev.category}" → "${updated.category}"`);
+        if (prev.quantite !== updated.quantite) changes.push(`Unité: "${prev.quantite || '-'}" → "${updated.quantite || '-'}"`);
+        if (prev.isEnabled !== updated.isEnabled) changes.push(`Visibilité: ${prev.isEnabled ? 'Visible' : 'Masqué'} → ${updated.isEnabled ? 'Visible' : 'Masqué'}`);
+        if ((prev.imageUrl || '') !== (updated.imageUrl || '')) changes.push(`Image modifiée`);
+        if ((prev.barcodeMarjane || '') !== (updated.barcodeMarjane || '')) changes.push(`Marjane: "${prev.barcodeMarjane || '-'}" → "${updated.barcodeMarjane || '-'}"`);
+        if ((prev.barcodeP2 || '') !== (updated.barcodeP2 || '')) changes.push(`Marjane 2: "${prev.barcodeP2 || '-'}" → "${updated.barcodeP2 || '-'}"`);
+        if ((prev.barcodeInterne || '') !== (updated.barcodeInterne || '')) changes.push(`Interne: "${prev.barcodeInterne || '-'}" → "${updated.barcodeInterne || '-'}"`);
+        if ((prev.barcodeMiniSecours || '') !== (updated.barcodeMiniSecours || '')) changes.push(`Mini: "${prev.barcodeMiniSecours || '-'}" → "${updated.barcodeMiniSecours || '-'}"`);
+        if ((prev.barcodeSecours || '') !== (updated.barcodeSecours || '')) changes.push(`Sec: "${prev.barcodeSecours || '-'}" → "${updated.barcodeSecours || '-'}"`);
+        if ((prev.barcodeP3 || '') !== (updated.barcodeP3 || '')) changes.push(`Sec 2: "${prev.barcodeP3 || '-'}" → "${updated.barcodeP3 || '-'}"`);
+        if (prevV !== nextV) changes.push(`Statut Icône: ${formatVStatus(prevV)} → ${formatVStatus(nextV)}`);
+
+        const onlyVerificationChanged = changes.length === 1 && prevV !== nextV;
+        logAppEvent({
+          category: onlyVerificationChanged ? 'VERIFICATION' : 'PRODUCT',
+          action: onlyVerificationChanged
+            ? `BADGE_STATUS_${nextV.toUpperCase()}`
+            : 'PRODUCT_UPDATED',
+          actorRole: roleRef.current,
+          target: `#${updated.id} ${updated.name} (Code: ${updated.code})`,
+          details: changes.length > 0 ? changes.join(' | ') : 'Produit ré-enregistré sans changement.',
+        }).catch(() => {});
+      } else {
+        logAppEvent({
+          category: 'PRODUCT',
+          action: 'PRODUCT_UPDATED',
+          actorRole: roleRef.current,
+          target: `#${updated.id} ${updated.name}`,
+          details: `Mise à jour produit (${updated.code}).`,
+        }).catch(() => {});
+      }
+    },
+    [showToast]
+  );
+
+  const addProduct = useCallback(
+    async (newProduct: Omit<Product, 'id'>) => {
+      const maxId = productsRef.current.reduce((max, p) => Math.max(max, p.id), 0);
+      const sanitizedImg = newProduct.imageUrl ? sanitizeImageUrl(newProduct.imageUrl) : undefined;
+      const productWithId: Product = {
+        ...newProduct,
+        imageUrl: sanitizedImg || undefined,
+        id: maxId + 1,
+      };
+      setProducts((prev) => [productWithId, ...prev]);
+      const res = await upsertProductInSupabase(productWithId);
+      if (!res.success && res.error) {
+        showToast(`⚠️ Ajouté localement · Erreur sync Supabase : ${res.error}`);
+      }
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action: 'PRODUCT_CREATED',
+        actorRole: roleRef.current,
+        target: `#${productWithId.id} ${productWithId.name}`,
+        details: `Nouveau produit ajouté (Code: ${productWithId.code}, Rayon: ${productWithId.department}, Unité: ${productWithId.quantite || 'pièce'}).`,
+      }).catch(() => {});
+    },
+    [showToast]
+  );
+
+  const deleteProduct = useCallback(
+    async (id: number) => {
+      if (!requireAdmin('deleteProduct')) return;
+      const target = productsRef.current.find((p) => p.id === id);
+      const remainingCount = productsRef.current.filter((p) => p.id !== id).length;
+      if (remainingCount === 0) {
+        intentionalClearUntilRef.current = Date.now() + 60000;
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      const res = await deleteProductInSupabase(id);
+      if (!res.success && res.error) {
+        showToast(`⚠️ Supprimé localement · Erreur Supabase : ${res.error}`);
+      }
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action: 'PRODUCT_DELETED',
+        actorRole: roleRef.current,
+        target: target ? `#${id} ${target.name} (${target.code})` : `#${id}`,
+        details: target
+          ? `Article "${target.name}" (Code: ${target.code}) supprimé du catalogue.`
+          : `Article #${id} supprimé du catalogue.`,
+      }).catch(() => {});
+    },
+    [requireAdmin, showToast]
+  );
 
   const resetCatalogue = useCallback(() => {
+    if (!requireAdmin('resetCatalogue')) return;
     setProducts(INITIAL_PRODUCTS);
     localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
     logAppEvent({
@@ -957,12 +1189,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       details: `Réinitialisation aux ${INITIAL_PRODUCTS.length} articles par défaut.`,
     }).catch(() => {});
     showToast('Catalogue réinitialisé aux produits par défaut.');
-  }, [showToast]);
+  }, [requireAdmin, showToast]);
 
   const clearAllProducts = useCallback(async () => {
+    if (!requireAdmin('clearAllProducts')) return;
     const previousCount = productsRef.current.length;
+    if (previousCount >= 10) {
+      saveEmergencyCatalogSnapshot(productsRef.current);
+    }
+    intentionalClearUntilRef.current = Date.now() + 120000;
     setProducts([]);
-    localStorage.removeItem(STORAGE_KEY_PRODUCTS);
+    localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify([]));
     await deleteAllProductsFromSupabase();
     logAppEvent({
       category: 'SYSTEM',
@@ -972,9 +1209,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       details: `Suppression de tous les produits (${previousCount} articles supprimés).`,
     }).catch(() => {});
     showToast('Tous les produits ont été supprimés.');
-  }, [showToast]);
+  }, [requireAdmin, showToast]);
+
+  const restoreLatestBackupNow = useCallback(async () => {
+    await runZeroArticleAutoRecovery(true, true);
+  }, [runZeroArticleAutoRecovery]);
 
   const seedInitialCatalogueToSupabase = useCallback(async () => {
+    if (!requireAdmin('seedInitialCatalogueToSupabase')) return;
     setSyncStatus('syncing');
     try {
       const res = await seedProductsToSupabase(INITIAL_PRODUCTS);
@@ -997,14 +1239,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSyncStatus('error');
       showToast(`Erreur : ${err.message}`);
     }
-  }, [showToast]);
+  }, [requireAdmin, showToast]);
 
   const seedSupabase = useCallback(async () => {
+    if (!requireAdmin('seedSupabase')) return;
+    if (productsRef.current.length === 0) {
+      showToast('⚠️ Catalogue local vide : utilisez la restauration avant d’envoyer.');
+      return;
+    }
     setSyncStatus('syncing');
     try {
+      saveEmergencyCatalogSnapshot(productsRef.current);
       const res = await seedProductsToSupabase(productsRef.current);
       if (res.success) {
+        if (tipsRef.current.length > 0) {
+          await seedTipsToSupabase(tipsRef.current).catch(() => {});
+        }
+        await saveGuideConfigToCloud(guideConfig).catch(() => {});
         setSyncStatus('synced');
+        checkSupabaseHealth().then(setSupabaseHealth).catch(() => {});
         logAppEvent({
           category: 'IMPORT_EXPORT',
           action: 'SUPABASE_PUSH_ALL',
@@ -1012,7 +1265,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           target: 'Supabase Products',
           details: `${res.count} articles envoyés vers Supabase.`,
         }).catch(() => {});
-        showToast(`${res.count} articles envoyés vers Supabase.`);
+        triggerHaptic('success');
+        showToast(`✅ ${res.count} articles + astuces + guide envoyés vers Supabase !`);
       } else {
         setSyncStatus('error');
         showToast(`Erreur : ${res.error}`);
@@ -1021,20 +1275,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSyncStatus('error');
       showToast(`Erreur : ${err.message}`);
     }
-  }, [showToast]);
+  }, [guideConfig, requireAdmin, showToast]);
 
   const seedTips = useCallback(async () => {
+    if (!requireAdmin('seedTips')) return;
     try {
-      await seedTipsToSupabase(INITIAL_TIPS);
-      setTips(INITIAL_TIPS);
-      showToast('Astuces initialisées avec succès !');
+      const merged = tipsRef.current.length > 0 ? tipsRef.current : INITIAL_TIPS;
+      const res = await seedTipsToSupabase(merged);
+      setTips(merged);
+      if (res.success) {
+        showToast(
+          `✅ ${res.count} astuces sauvegardées sur Supabase (table "${res.targetTable || 'astuces'}") !`
+        );
+      } else {
+        showToast(`⚠️ Erreur astuces : ${res.error}`);
+      }
     } catch (err: any) {
       showToast(`Erreur astuces : ${err.message}`);
     }
-  }, [showToast]);
+  }, [requireAdmin, showToast]);
+
+  const syncTipsNow = useCallback(async () => {
+    if (!requireAdmin('syncTipsNow')) {
+      return { success: false, count: 0, error: 'Action réservée à l’Administrateur Data.' };
+    }
+    const listToSave = tipsRef.current.length > 0 ? tipsRef.current : INITIAL_TIPS;
+    if (tipsRef.current.length === 0) {
+      setTips(listToSave);
+    }
+    const res = await seedTipsToSupabase(listToSave);
+    if (res.success) {
+      logAppEvent({
+        category: 'TIPS',
+        action: 'TIPS_BATCH_SYNCED',
+        actorRole: roleRef.current,
+        target: `Table ${res.targetTable || 'astuces'}`,
+        details: `${res.count} astuces / articles enregistrés vers Supabase (${res.targetTable || 'astuces'}).`,
+      }).catch(() => {});
+      triggerHaptic('success');
+      showToast(
+        res.needsTableSql
+          ? `✅ ${res.count} astuces sauvées dans "tips" (créez la table "astuces" via SQL pour une table dédiée)`
+          : `✅ ${res.count} astuces sauvegardées dans la table "${res.targetTable || 'astuces'}" !`
+      );
+    } else {
+      showToast(`❌ Erreur sauvegarde astuces : ${res.error || 'échec Supabase'}`);
+    }
+    return res;
+  }, [requireAdmin, showToast]);
+
+  const restoreDefaultTips = useCallback(async () => {
+    if (!requireAdmin('restoreDefaultTips')) {
+      return { success: false, count: 0, error: 'Action réservée à l’Administrateur Data.' };
+    }
+    tipsClearedIntentionallyRef.current = false;
+    const existingIds = new Set(tipsRef.current.map((t) => t.id));
+    const missingDefaults = INITIAL_TIPS.filter((t) => !existingIds.has(t.id));
+    const merged = [...tipsRef.current, ...missingDefaults];
+    setTips(merged);
+    const res = await seedTipsToSupabase(merged);
+    if (res.success) {
+      logAppEvent({
+        category: 'TIPS',
+        action: 'TIPS_DEFAULTS_RESTORED',
+        actorRole: roleRef.current,
+        target: `Table ${res.targetTable || 'astuces'}`,
+        details: `${merged.length} astuces restaurées et synchronisées sur Supabase.`,
+      }).catch(() => {});
+      triggerHaptic('success');
+      showToast(`✅ ${merged.length} astuces restaurées & enregistrées sur Supabase !`);
+    } else {
+      showToast(`⚠️ Restaurées localement (${res.error || 'Supabase indisponible'})`);
+    }
+    return res;
+  }, [requireAdmin, showToast]);
 
   const importProductsCsv = useCallback(
     (csvContent: string, mode: 'merge' | 'replace' = 'merge') => {
+      if (!requireAdmin('importProductsCsv')) {
+        return { success: false, count: 0, error: 'Action réservée à l’Administrateur Data.' };
+      }
       try {
         const { products: parsed, error } = parseProductsFromCsv(csvContent);
         if (error || !parsed || parsed.length === 0) {
@@ -1068,7 +1388,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: false, count: 0, error: e.message };
       }
     },
-    []
+    [requireAdmin]
   );
 
   const exportCatalogueCsv = useCallback(() => {
@@ -1082,56 +1402,119 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return exportProductsToCsv(productsRef.current);
   }, []);
 
-  const addTip = useCallback((tipData: Omit<TipPost, 'id' | 'createdAt' | 'likes'>) => {
-    const safeImg = tipData.imageUrl ? sanitizeImageUrl(tipData.imageUrl) : undefined;
-    const newTip: TipPost = {
-      ...tipData,
-      imageUrl: safeImg || undefined,
-      id: `tip-${Date.now()}`,
-      createdAt: "Aujourd'hui",
-      likes: 0,
-    };
-    setTips((prev) => [newTip, ...prev]);
-    upsertTipInSupabase(newTip).catch(console.warn);
+  const addTip = useCallback(
+    async (tipData: Omit<TipPost, 'id' | 'createdAt' | 'likes'>) => {
+      if (!requireAdmin('addTip')) {
+        return { success: false, error: 'Action réservée à l’Administrateur Data.' };
+      }
+      tipsClearedIntentionallyRef.current = false;
+      const safeImg = tipData.imageUrl ? sanitizeImageUrl(tipData.imageUrl) : undefined;
+      const safeBlocks = Array.isArray(tipData.blocks)
+        ? tipData.blocks.map((b) => ({
+            ...b,
+            imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) : undefined,
+          }))
+        : undefined;
+      const newTip: TipPost = {
+        ...tipData,
+        imageUrl: safeImg || undefined,
+        blocks: safeBlocks && safeBlocks.length > 0 ? safeBlocks : undefined,
+        id: `tip-${Date.now()}`,
+        createdAt: "Aujourd'hui",
+        likes: 0,
+      };
+      setTips((prev) => [newTip, ...prev]);
 
-    logAppEvent({
-      category: 'TIPS',
-      action: 'TIP_CREATED',
-      actorRole: roleRef.current,
-      target: newTip.title,
-      details: `Nouveau tuto publié (${newTip.category} · cible: ${newTip.targetAudience || 'Tous'}).`,
-    }).catch(() => {});
-  }, []);
-
-  const updateTip = useCallback((updatedRaw: TipPost) => {
-    const safeImg = updatedRaw.imageUrl ? sanitizeImageUrl(updatedRaw.imageUrl) : undefined;
-    const updated: TipPost = { ...updatedRaw, imageUrl: safeImg || undefined };
-    setTips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    upsertTipInSupabase(updated).catch(console.warn);
-
-    logAppEvent({
-      category: 'TIPS',
-      action: 'TIP_UPDATED',
-      actorRole: roleRef.current,
-      target: updated.title,
-      details: `Tuto modifié (${updated.category} · cible: ${updated.targetAudience || 'Tous'}).`,
-    }).catch(() => {});
-  }, []);
-
-  const deleteTip = useCallback((id: string) => {
-    setTips((prev) => {
-      const target = prev.find((t) => t.id === id);
       logAppEvent({
         category: 'TIPS',
-        action: 'TIP_DELETED',
+        action: 'TIP_CREATED',
         actorRole: roleRef.current,
-        target: target?.title || id,
-        details: `Tuto supprimé (${target?.title || id}).`,
+        target: newTip.title,
+        details: `Nouveau tuto publié (${newTip.category} · cible: ${newTip.targetAudience || 'Tous'}).`,
       }).catch(() => {});
-      return prev.filter((t) => t.id !== id);
-    });
-    deleteTipInSupabase(id).catch(console.warn);
-  }, []);
+
+      const res = await upsertTipInSupabase(newTip);
+      if (res.success) {
+        showToast(
+          `✅ Article enregistré sur Supabase (table "${res.targetTable || 'astuces'}") !`
+        );
+      } else {
+        showToast(`⚠️ Enregistré localement (Supabase : ${res.error || 'erreur'})`);
+      }
+      return res;
+    },
+    [requireAdmin, showToast]
+  );
+
+  const updateTip = useCallback(
+    async (updatedRaw: TipPost) => {
+      if (!requireAdmin('updateTip')) {
+        return { success: false, error: 'Action réservée à l’Administrateur Data.' };
+      }
+      const safeImg = updatedRaw.imageUrl ? sanitizeImageUrl(updatedRaw.imageUrl) : undefined;
+      const safeBlocks = Array.isArray(updatedRaw.blocks)
+        ? updatedRaw.blocks.map((b) => ({
+            ...b,
+            imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) : undefined,
+          }))
+        : undefined;
+      const updated: TipPost = {
+        ...updatedRaw,
+        imageUrl: safeImg || undefined,
+        blocks: safeBlocks && safeBlocks.length > 0 ? safeBlocks : undefined,
+      };
+      setTips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+
+      logAppEvent({
+        category: 'TIPS',
+        action: 'TIP_UPDATED',
+        actorRole: roleRef.current,
+        target: updated.title,
+        details: `Tuto modifié (${updated.category} · cible: ${updated.targetAudience || 'Tous'}).`,
+      }).catch(() => {});
+
+      const res = await upsertTipInSupabase(updated);
+      if (res.success) {
+        showToast(
+          `✅ Modifications enregistrées sur Supabase (${res.targetTable || 'astuces'}) !`
+        );
+      } else {
+        showToast(`⚠️ Modifié localement (Supabase : ${res.error || 'erreur'})`);
+      }
+      return res;
+    },
+    [requireAdmin, showToast]
+  );
+
+  const deleteTip = useCallback(
+    async (id: string) => {
+      if (!requireAdmin('deleteTip')) {
+        return { success: false, error: 'Action réservée à l’Administrateur Data.' };
+      }
+      if (tipsRef.current.filter((t) => t.id !== id).length === 0) {
+        tipsClearedIntentionallyRef.current = true;
+      }
+      setTips((prev) => {
+        const target = prev.find((t) => t.id === id);
+        logAppEvent({
+          category: 'TIPS',
+          action: 'TIP_DELETED',
+          actorRole: roleRef.current,
+          target: target?.title || id,
+          details: `Tuto supprimé (${target?.title || id}).`,
+        }).catch(() => {});
+        return prev.filter((t) => t.id !== id);
+      });
+      const res = await deleteTipInSupabase(id);
+      if (res.success) {
+        showToast('🗑️ Article supprimé de Supabase');
+      } else {
+        showToast(`⚠️ Supprimé localement (Supabase : ${res.error || 'erreur'})`);
+      }
+      return res;
+    },
+    [requireAdmin, showToast]
+  );
 
   const likeTip = useCallback((id: string) => {
     setTips((prev) =>
@@ -1146,20 +1529,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   }, []);
 
-  const updateGuideConfig = useCallback(async (nextConfig: GuideConfig) => {
-    const res = await saveGuideConfigToCloud(nextConfig);
-    setGuideConfig(res.config);
-    await logAppEvent({
-      category: 'GUIDE',
-      action: 'GUIDE_UPDATED',
-      actorRole: roleRef.current,
-      target: `Guide Pickeur (v${res.config.version})`,
-      details: `Contenu du Guide modifié par Admin (${res.config.steps.map((s) => s.shortLabel).join(' / ')}).`,
-    });
-    return { success: res.success, error: res.error };
-  }, []);
+  const updateGuideConfig = useCallback(
+    async (nextConfig: GuideConfig) => {
+      if (!requireAdmin('updateGuideConfig')) {
+        return {
+          success: false,
+          config: guideConfig,
+          error: 'Action réservée à l’Administrateur Data.',
+        };
+      }
+      const res = await saveGuideConfigToCloud(nextConfig);
+      setGuideConfig(res.config);
+      await logAppEvent({
+        category: 'GUIDE',
+        action: 'GUIDE_UPDATED',
+        actorRole: roleRef.current,
+        target: `Guide Pickeur (v${res.config.version})`,
+        details: `Contenu du Guide modifié par Admin (${res.config.steps.map((s) => s.shortLabel).join(' / ')}).`,
+      });
+      return { success: res.success, config: res.config, error: res.error };
+    },
+    [guideConfig, requireAdmin]
+  );
 
   const resetGuideConfig = useCallback(async () => {
+    if (!requireAdmin('resetGuideConfig')) {
+      return {
+        success: false,
+        config: guideConfig,
+        error: 'Action réservée à l’Administrateur Data.',
+      };
+    }
     const res = await saveGuideConfigToCloud({
       ...DEFAULT_GUIDE_CONFIG,
       version: (guideConfig.version || 1) + 1,
@@ -1173,75 +1573,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       target: 'Guide Pickeur',
       details: 'Contenu du Guide réinitialisé aux valeurs par défaut.',
     });
-  }, [guideConfig.version]);
+    return { success: res.success, config: res.config, error: res.error };
+  }, [guideConfig, requireAdmin]);
 
   // Free Community Barcode Voting: Anyone can vote like or dislike!
   const voteBarcode = useCallback((barcode: string, type: 'like' | 'dislike') => {
     const voterId = getDeviceVoterId();
-    let isPromoted = false;
-    let isDeleted = false;
-    let newLikes = 0;
-    let newDislikes = 0;
+    const prev = barcodeVotesRef.current;
+    const currentRecord = prev[barcode] || {
+      barcode,
+      likes: 0,
+      dislikes: 0,
+      voters: {},
+    };
 
-    setBarcodeVotes((prev) => {
-      const currentRecord = prev[barcode] || {
-        barcode,
-        likes: 0,
-        dislikes: 0,
-        voters: {},
-      };
+    const previousVote = currentRecord.voters?.[voterId];
+    const updatedVoters = { ...(currentRecord.voters || {}) };
+    let updatedLikes = currentRecord.likes || 0;
+    let updatedDislikes = currentRecord.dislikes || 0;
 
-      const previousVote = currentRecord.voters?.[voterId];
-      const updatedVoters = { ...(currentRecord.voters || {}) };
-      let updatedLikes = currentRecord.likes || 0;
-      let updatedDislikes = currentRecord.dislikes || 0;
+    if (previousVote === type) {
+      delete updatedVoters[voterId];
+      if (type === 'like') updatedLikes = Math.max(0, updatedLikes - 1);
+      if (type === 'dislike') updatedDislikes = Math.max(0, updatedDislikes - 1);
+    } else {
+      if (previousVote === 'like') updatedLikes = Math.max(0, updatedLikes - 1);
+      if (previousVote === 'dislike') updatedDislikes = Math.max(0, updatedDislikes - 1);
 
-      if (previousVote === type) {
-        delete updatedVoters[voterId];
-        if (type === 'like') updatedLikes = Math.max(0, updatedLikes - 1);
-        if (type === 'dislike') updatedDislikes = Math.max(0, updatedDislikes - 1);
-      } else {
-        if (previousVote === 'like') updatedLikes = Math.max(0, updatedLikes - 1);
-        if (previousVote === 'dislike') updatedDislikes = Math.max(0, updatedDislikes - 1);
+      updatedVoters[voterId] = type;
+      if (type === 'like') updatedLikes += 1;
+      if (type === 'dislike') updatedDislikes += 1;
+    }
 
-        updatedVoters[voterId] = type;
-        if (type === 'like') updatedLikes += 1;
-        if (type === 'dislike') updatedDislikes += 1;
-      }
+    const isPromoted = updatedLikes >= 15;
+    const isDeleted = updatedDislikes >= 15;
+    const newLikes = updatedLikes;
+    const newDislikes = updatedDislikes;
 
-      const promoted = updatedLikes >= 15;
-      const deleted = updatedDislikes >= 15;
+    const updatedRecord: BarcodeVoteRecord = {
+      barcode,
+      likes: updatedLikes,
+      dislikes: updatedDislikes,
+      voters: updatedVoters,
+      statusOverride: isPromoted ? 'Valide' : undefined,
+      isDeleted,
+      lastVoterIp: userIp || undefined,
+    };
 
-      isPromoted = promoted;
-      isDeleted = deleted;
-      newLikes = updatedLikes;
-      newDislikes = updatedDislikes;
+    const nextVotes: Record<string, BarcodeVoteRecord> = {
+      ...prev,
+      [barcode]: updatedRecord,
+    };
 
-      const updatedRecord: BarcodeVoteRecord = {
-        barcode,
-        likes: updatedLikes,
-        dislikes: updatedDislikes,
-        voters: updatedVoters,
-        statusOverride: promoted ? 'Valide' : undefined,
-        isDeleted: deleted,
-        lastVoterIp: userIp || undefined,
-      };
+    barcodeVotesRef.current = nextVotes;
+    setBarcodeVotes(nextVotes);
 
-      try {
-        localStorage.setItem(
-          STORAGE_KEY_BARCODE_VOTES,
-          JSON.stringify({ ...prev, [barcode]: updatedRecord })
-        );
-      } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEY_BARCODE_VOTES, JSON.stringify(nextVotes));
+    } catch {}
 
-      const currentVoteType = updatedVoters[voterId] || null;
-      saveBarcodeVoteToSupabase(barcode, voterId, currentVoteType).catch(console.warn);
-
-      return {
-        ...prev,
-        [barcode]: updatedRecord,
-      };
-    });
+    const currentVoteType = updatedVoters[voterId] || null;
+    saveBarcodeVoteToSupabase(barcode, voterId, currentVoteType).catch(console.warn);
 
     logAppEvent({
       category: 'BARCODE_VOTE',
@@ -1269,6 +1661,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [showToast, userIp]);
 
   const resetBarcodeVotes = useCallback(() => {
+    if (!requireAdmin('resetBarcodeVotes')) return;
     setBarcodeVotes(INITIAL_BARCODE_VOTES);
     try {
       localStorage.setItem(STORAGE_KEY_BARCODE_VOTES, JSON.stringify(INITIAL_BARCODE_VOTES));
@@ -1281,7 +1674,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       details: 'Tous les votes codes-barres locaux ont été réinitialisés.',
     }).catch(() => {});
     showToast('Votes réinitialisés.');
-  }, [showToast]);
+  }, [requireAdmin, showToast]);
 
   const setRole = useCallback((newRole: Role) => {
     const prevRole = roleRef.current;
@@ -1349,6 +1742,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteProduct,
         resetCatalogue,
         clearAllProducts,
+        restoreLatestBackupNow,
         seedInitialCatalogueToSupabase,
         syncWithSupabase,
         seedSupabase,
@@ -1366,6 +1760,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateTip,
         deleteTip,
         likeTip,
+        syncTipsNow,
+        restoreDefaultTips,
         guideConfig,
         updateGuideConfig,
         resetGuideConfig,

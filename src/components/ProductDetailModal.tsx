@@ -18,6 +18,7 @@ import { BarcodeCard } from './BarcodeCard';
 import { QuantityCalculator } from './QuantityCalculator';
 import { extractProductUnitInfo, recalculateBarcodeWithMultiplier } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 import { useApp } from '../context/AppContext';
 import { ProductEditModal } from './ProductEditModal';
 import { AdminAuthModal } from './AdminAuthModal';
@@ -109,18 +110,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   const currentVariant = adjustedVariants[selectedVariantIndex] || adjustedVariants[0];
 
-  const handleShare = () => {
+  const handleShare = async () => {
     triggerHaptic('medium');
     const primaryCode = currentVariant?.code || product.code;
     const textToShare = `${product.name} (Code: ${product.code}) - Barcode: ${primaryCode}`;
     if (navigator.share) {
-      navigator.share({
-        title: product.name,
-        text: textToShare,
-      }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(textToShare);
+      try {
+        await navigator.share({
+          title: product.name,
+          text: textToShare,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed; fall back to clipboard below if not AbortError
+      }
+    }
+    const ok = await copyTextToClipboard(textToShare);
+    if (ok) {
       setCopiedShare(true);
+      showToast('Infos produit copiées dans le presse-papier !');
       setTimeout(() => setCopiedShare(false), 2000);
     }
   };

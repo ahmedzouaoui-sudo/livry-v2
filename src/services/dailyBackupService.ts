@@ -1,4 +1,5 @@
 import { Product } from '../types';
+import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { supabaseApi, supabasePublic, activeSchema } from './supabaseClient';
 import {
   deleteAllProductsFromSupabase,
@@ -116,6 +117,48 @@ function getPublicUrlForPath(path: string): string {
     .from(SUPABASE_STORAGE_BUCKET)
     .getPublicUrl(path);
   return data?.publicUrl || '';
+}
+
+/**
+ * Saves an emergency snapshot in localStorage only when the catalog is healthy.
+ */
+export function saveEmergencyCatalogSnapshot(products: Product[]): void {
+  if (typeof localStorage === 'undefined') return;
+  if (!Array.isArray(products) || products.length < MIN_PRODUCTS_FOR_AUTO_BACKUP) return;
+  try {
+    localStorage.setItem(EMERGENCY_BACKUP_KEY, JSON.stringify(products));
+  } catch {}
+}
+
+/**
+ * Reads a backup file reliably from Supabase Storage SDK download() first,
+ * falling back to direct public URL fetch if needed.
+ */
+export async function downloadStorageBackupText(
+  storagePath?: string,
+  publicUrl?: string
+): Promise<string | null> {
+  if (storagePath) {
+    try {
+      const { data, error } = await supabasePublic.storage
+        .from(SUPABASE_STORAGE_BUCKET)
+        .download(storagePath);
+      if (!error && data) {
+        return await data.text();
+      }
+    } catch {}
+  }
+
+  if (publicUrl) {
+    try {
+      const res = await fetch(publicUrl, { cache: 'no-store' });
+      if (res.ok) {
+        return await res.text();
+      }
+    } catch {}
+  }
+
+  return null;
 }
 
 /**
@@ -1033,4 +1076,54 @@ async function pruneOldStorageNightlyFiles(keepDays: number): Promise<void> {
         .remove(pathsToDelete);
     }
   } catch {}
+}
+
+/**
+ * Automatic recovery pipeline when catalog drops to 0 items:
+ * Priority:
+ * 1) Latest non-empty backup in Supabase (Cloud DB / Storage)
+ * 2) Local daily backup snapshots in localStorage
+ * 3) Local emergency snapshot (finder_livry_products_backup_v3)
+ * 4) Built-in INITIAL_PRODUCTS baseline catalog
+ */
+export async function recoverLatestSavedProducts(): Promise<{
+  products: Product[];
+  sourceLabel: string;
+}> {
+  try {
+    const listRes = await fetchDailyBackupsList();
+    if (listRes.success && listRes.backups.length > 0) {
+      for (const meta of listRes.backups) {
+        const fetched = await fetchBackupProductsById(meta.id, meta);
+        if (fetched.success && Array.isArray(fetched.products) && fetched.products.length > 0) {
+          return {
+            products: fetched.products,
+            sourceLabel: meta.title || `Backup ${meta.dateKey}`,
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[AutoRecovery] Cloud backup lookup notice:', err);
+  }
+
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const emergencyRaw = localStorage.getItem(EMERGENCY_BACKUP_KEY);
+      if (emergencyRaw) {
+        const arr = JSON.parse(emergencyRaw);
+        if (Array.isArray(arr) && arr.length > 0) {
+          return {
+            products: arr,
+            sourceLabel: "Sauvegarde d'urgence locale",
+          };
+        }
+      }
+    } catch {}
+  }
+
+  return {
+    products: INITIAL_PRODUCTS,
+    sourceLabel: `Catalogue initial Marjane (${INITIAL_PRODUCTS.length} articles)`,
+  };
 }

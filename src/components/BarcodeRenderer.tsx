@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Copy, Check, Maximize2, Minimize2, Smartphone } from 'lucide-react';
 import { encodeEan13, encodeEan8, formatBarcodeDigits } from '../utils/barcode';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 interface BarcodeRendererProps {
   code: string;
@@ -40,13 +41,15 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
   const guardBarHeight = standardBarHeight + guardExtraHeight;
   const totalSvgHeight = guardBarHeight + (showText ? 28 : 6);
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHaptic('success');
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    if (onCopy) onCopy();
-    setTimeout(() => setCopied(false), 2000);
+    const ok = await copyTextToClipboard(code);
+    if (ok) {
+      setCopied(true);
+      if (onCopy) onCopy();
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const toggleFullscreen = (e: React.MouseEvent) => {

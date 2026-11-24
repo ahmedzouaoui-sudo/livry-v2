@@ -9,6 +9,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600488005000",
     "barcodeMjValide": "2600488005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729518809/product/825b983bad64b907fe7503cde8441f38.webp"
@@ -21,6 +23,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2602042005000",
     "barcodeMjValide": "2602042005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743685259/product/5328ed5ea04a4b9c65ce519a2b4a019a.webp"
@@ -33,6 +37,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729518558/product/75fd907780636a3bb27d725ed7e0063a.webp"
   },
   {
@@ -43,6 +49,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781002981/product/7d5f769b24b94aa2d6eaf9477fb1f98c.webp"
   },
   {
@@ -53,6 +61,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2602042005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1666273689/product_optimized/d28d3104d7882798d30982d057a26582.webp"
   },
@@ -64,6 +74,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588258605/product_optimized/d29eefd634f09c7028f99249294b71d0.webp"
   },
   {
@@ -74,6 +86,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588258724/product_optimized/3f87bf8332e9c433f95bcf3e6275b72b.webp"
   },
   {
@@ -84,6 +98,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600943005000",
     "barcodeMjValide": "2600943005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683662/product/5fe83c8f8444aa44e45ec801c4a91a69.webp"
@@ -96,18 +112,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2619816005000",
     "barcodeMjValide": "2619816005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587303926/product_optimized/2bcb2077f1357292acb3ac563cab5be5.webp"
   },
   {
     "id": 10,
-    "code": "XXXX",
+    "code": "-",
     "name": "Demi douarad d’agneau à la pièce",
     "department": "Boucherie et volaille",
     "category": "Viandes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2651511000010"
   },
   {
@@ -118,6 +138,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2619754002500",
     "barcodeMjValide": "2619754002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1748966465/product/f4dfabbb76cf4d211ab33bc6015d137a.webp"
@@ -130,6 +152,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600477005000",
     "barcodeMjValide": "2600477005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1749035471/product/9ad7a918d53c5f65797ef69f8e7a5ec3.webp"
@@ -142,6 +166,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2609701005000",
     "barcodeMjValide": "2609701005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1666274785/product_optimized/4a9302e2a75bd914029d793b3e0d6568.webp"
@@ -154,6 +180,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2605562005000",
     "barcodeMjValide": "2605562005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744875432/product/81ccbff06753a42b9fde8333d6039724.webp"
@@ -166,6 +194,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2619088010000",
     "barcodeMjValide": "2619088010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743684497/product/a1a42ac1f3538121c8c239d953a9b10d.webp"
@@ -178,6 +208,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2608521005000",
     "barcodeMjValide": "2608521005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683797/product/a84d2bb98cc3441740afb686b5cbeb42.webp"
@@ -190,6 +222,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014098220",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587303798/product_optimized/7fc13f621b726e798ba428448894a649.webp"
   },
@@ -201,6 +235,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2608806002500",
     "barcodeMjValide": "2608806002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729518894/product/79b729e4f45c064164aaf487adc3ad4f.webp"
@@ -213,6 +249,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2601115005000",
     "barcodeMjValide": "2601115005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729518961/product/8f3f966651d9aab44c8a77df5cc12893.webp"
@@ -225,6 +263,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2654236002000",
     "barcodeMjValide": "2654236002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1732790631/product/2085f97f0f5af0c579d181ba8c9bff79.webp"
@@ -237,6 +277,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587304036/product_optimized/ac44da76cd6724e92f0d07ff4a5474e5.webp"
   },
   {
@@ -247,6 +289,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2601180005000",
     "barcodeMjValide": "2601180005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729519064/product/801b7fdf49b243de959a99e4c865dc3f.webp"
@@ -259,6 +303,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2601118005000",
     "barcodeMjValide": "2601118005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729519130/product/4a678f432cb897da47faa10c22ef3b06.webp"
@@ -271,6 +317,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMiniSecours": "22812575",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1768474801/product/bf4705507f3e3bc14b199ae4d0b94e42.webp"
   },
@@ -282,6 +330,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2608953005000",
     "barcodeMjValide": "2608953005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1760370279/product/2211ba66459a781ef7448f99e26c518a.webp"
@@ -294,16 +344,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744816375/product/5fadfec5c133a44a828b086725aef834.webp"
   },
   {
     "id": 27,
-    "code": "----",
+    "code": "-",
     "name": "Ris de bœuf 250g",
     "department": "Boucherie et volaille",
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014562370",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1732789155/product/76f46116e18f96af655acc03c41a4583.webp"
   },
@@ -315,6 +369,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2612222005000",
     "barcodeMjValide": "2612222005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587306611/product_optimized/69dc5afea40fed1291eec84d92b5757e.webp"
@@ -327,29 +383,39 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2606608005000",
     "barcodeMjValide": "2606608005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587306024/product_optimized/7419427e87e2f0c5839d637d7e9a1525.webp"
   },
   {
     "id": 30,
-    "code": "-",
+    "code": "9923",
     "name": "Saucisses de bœuf piquantes 500g",
     "department": "Boucherie et volaille",
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2685641005000",
+    "barcodeMjValide": "2685641005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587306238/product_optimized/c87431eb9c2aa859dc5f2b7ffe8f35e2.webp"
   },
   {
     "id": 31,
-    "code": "-",
+    "code": "7990",
     "name": "Steak de rumsteak 500g",
     "department": "Boucherie et volaille",
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2602037005000",
     "barcodeP2": "260203700500",
+    "barcodeMjValide": "2602037005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1749035822/product/a04f811a45b10c87c869f8d9b61b8722.webp"
   },
   {
@@ -360,6 +426,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2601174010000",
     "barcodeMjValide": "2601174010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683955/product/76809a925dc5c87558d9e45a35aedc97.webp"
@@ -372,6 +440,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2601174005000",
     "barcodeMjValide": "2601174005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683893/product/e73a94cfa9cae4ebd33aa81869348766.webp"
@@ -384,6 +454,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2619574005000",
     "barcodeMjValide": "2619574005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1748965831/product/d128d6f6d2673859b354146ab77736fa.webp"
@@ -396,6 +468,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2640895005000",
     "barcodeMjValide": "2640895005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756114904/product/085d50efea70ee1346a8c1779a402025.webp"
@@ -408,6 +482,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014098077",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1665054665/product_optimized/7f9457755959c381b704a0147b823db7.webp"
   },
@@ -419,6 +495,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2601177010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1748722471/product/e57b128f0e0f415289f00aa75bc24aa3.webp"
   },
@@ -430,6 +508,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viandes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2601177005000",
     "barcodeMjValide": "2601177005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1741263363/product/1ed0f6cdb58ae104ef69b2e52b06f82d.webp"
@@ -442,6 +522,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610104005000",
     "barcodeMjValide": "2610104005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781863416/product/ae85bebd918cd497557f27303aab7e52.webp"
@@ -454,6 +536,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610176005000",
     "barcodeMjValide": "2610176005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744276116/product/84309987c7895cc57cba2f3e9f1ac5f6.webp"
@@ -466,9 +550,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2609099002000",
-    "barcodeMjValide": "2609099002000",
     "barcodeInterne": "2000014287907",
+    "barcodeMjValide": "2609099002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642457831/product_optimized/f893c1a71662216d8730abeb7a7564b4.webp"
   },
   {
@@ -479,6 +565,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2623140002000",
     "barcodeMjValide": "2623140002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744297839/product/9e4d3345cc354014dabadb9e9338691a.webp"
@@ -491,6 +579,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610108002000",
     "barcodeMjValide": "2610108002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781864183/product/ab4721a0a0f05cfefd1daae37d575bcf.webp"
@@ -503,6 +593,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610108005000",
     "barcodeMjValide": "2610108005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756475430/product/ba07573d2e4f4d1c1ff5d3d07727da98.webp"
@@ -515,6 +607,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2606478002500",
     "barcodeMjValide": "2606478002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683296/product/fa018879c38406eb42100ec6d8fe78f9.webp"
@@ -527,6 +621,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2653197002500",
     "barcodeMjValide": "2653197002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743682901/product/e77b9f29463d7d58cb27dd1776308ed4.webp"
@@ -539,6 +635,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610109002500",
     "barcodeMjValide": "2610109002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744299862/product/a5533327beef862ecf314c24534f3561.webp"
@@ -551,6 +649,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2676541002000",
     "barcodeMjValide": "2676541002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642458091/product_optimized/2d1a2ec4188b40516cfc9aec717fc9ac.webp"
@@ -563,6 +663,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654379000017",
     "barcodeMjValide": "2654379000017",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751456591/product/f8ff4621c3f3f50891ee0ef6f20e683e.webp"
@@ -575,6 +677,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751456744/product/5ba787b53cc6058b96ad4e144a421133.webp"
   },
   {
@@ -584,7 +688,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "department": "Boucherie et volaille",
     "category": "Volaille",
     "quantite": "kg",
-    "isEnabled": true,
+    "isEnabled": false,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781771224/product/acb85d9d7b9ba301d807c05028f57dfa.webp"
   },
   {
@@ -595,6 +701,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751457160/product/379408d8ebecf5027fb82c1d657527b4.webp"
   },
   {
@@ -605,6 +713,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2678321002000",
     "barcodeMjValide": "2678321002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781864443/product/2368c84fae4c58ffca672eb8ca2bd5b5.webp"
@@ -617,6 +727,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781864649/product/6ff52cdb5dd7f7fabcf180904a39f227.webp"
   },
   {
@@ -627,6 +739,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781865002/product/50f3a5454801550be443ee971088c471.webp"
   },
   {
@@ -637,9 +751,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2608810010000",
-    "barcodeMjValide": "2608810010000",
     "barcodeInterne": "2000014744509",
+    "barcodeMjValide": "2608810010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751457451/product/00294c2be78caf2575a691447a13f872.webp"
   },
   {
@@ -650,6 +766,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2630485000011",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1745320897/product/dff11997c9dfd63a233e7df6d8b26796.webp"
   },
@@ -661,6 +779,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2634617000010",
     "barcodeMjValide": "2634617000010",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729100450/product/c72d3d8dded5193177cf1df01179443b.webp"
@@ -673,6 +793,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2606912002500",
     "barcodeMjValide": "2606912002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683455/product/aaf20b0b3bd66df9b5adeebc123984dd.webp"
@@ -685,6 +807,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1767090216/product/3f79aafdf05e278ba9e5fcde1c1b49c0.webp"
   },
   {
@@ -695,6 +819,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610177005000",
     "barcodeMjValide": "2610177005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1749642968/product/d5fe43c16f60ab6da70bfc374e3c5685.webp"
@@ -707,6 +833,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2665197002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744298169/product/90df81445f6498688d16ea41f7611735.webp"
   },
@@ -718,6 +846,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744298169/product/90df81445f6498688d16ea41f7611735.webp"
   },
   {
@@ -728,6 +858,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610183002000",
     "barcodeMjValide": "2610183002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744297315/product/a8947cf18368b219c7ef4740ff1802ba.webp"
@@ -740,6 +872,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2635864002500",
     "barcodeMjValide": "2635864002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743683095/product/dd71fded433303dfbc6f46eb82c0fbfc.webp"
@@ -752,6 +886,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610107002000",
     "barcodeMjValide": "2610107002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744050285/product/e63d6a58d5f8f47a03e4878fbcbdf8cb.webp"
@@ -764,6 +900,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2690870002000",
     "barcodeMjValide": "2690870002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642457751/product_optimized/0afc219f1fa598bc701136f0362c2f96.webp"
@@ -776,6 +914,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2608761002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642457670/product_optimized/1f0649888dc82669bb087b86bef5bc85.webp"
   },
@@ -787,6 +927,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2623140002500",
     "barcodeMjValide": "2623140002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587294832/product_optimized/6ce5b847ed8fc59fc76e574fb13ca2fd.webp"
@@ -799,6 +941,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610100005000",
     "barcodeMjValide": "2610100005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587296392/product_optimized/77ca3c2c976b183dab0d545b56bba057.webp"
@@ -811,6 +955,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2678514002000",
     "barcodeMjValide": "2678514002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781865447/product/34adfc86201274b1a8f190978e51ab13.webp"
@@ -823,6 +969,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2674581002000",
     "barcodeMjValide": "2674581002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781865254/product/d1ab0a1eec8118ac7790af7284392e3d.webp"
@@ -835,6 +983,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781865959/product/8f66876957148e10f9e61d9b23347171.webp"
   },
   {
@@ -845,6 +995,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1757417618/product/27b2cb2e9ddce1f0f5e529c15ea0ee86.webp"
   },
   {
@@ -855,6 +1007,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2625897002000",
     "barcodeMjValide": "2625897002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1757417618/product/27b2cb2e9ddce1f0f5e529c15ea0ee86.webp"
@@ -867,6 +1021,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2625897002000",
     "barcodeMjValide": "2625897002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743699054/product/5c29a0bae55c8f0c45f6a528d43f687f.webp"
@@ -879,6 +1035,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751457966/product/25b919558df747270d37ff9c029e2bec.webp"
   },
   {
@@ -889,6 +1047,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1767091002/product/37c931fae3098aa8307e49a800db1209.webp"
   },
   {
@@ -899,6 +1059,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639647002000",
     "barcodeMjValide": "2639647002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1732300328/product/2cf0d4c39e10d78cdf87db565f9a274f.webp"
@@ -911,6 +1073,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610106001000",
     "barcodeMjValide": "2610106001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587296691/product_optimized/68fa01ecdf095ad3e8b8d2918959e9b0.webp"
@@ -923,6 +1087,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2676432000017",
     "barcodeMjValide": "2676432000017",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751458281/product/48c266b867db63895cb4dbff3f32c654.webp"
@@ -935,6 +1101,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610099005000",
     "barcodeMjValide": "2610099005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781866270/product/657a1542373e918239a791dbaa833112.webp"
@@ -947,6 +1115,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600979002500",
     "barcodeMjValide": "2600979002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1759915801/product/27354837698a86a600e07c493dc34abc.webp"
@@ -959,6 +1129,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2635952002500",
     "barcodeMjValide": "2635952002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588272225/product_optimized/677e5822d746e355ca9729f3c0318f5c.webp"
@@ -971,6 +1143,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751458494/product/ff2279536a18eeebf36b135a205cbe10.webp"
   },
   {
@@ -981,6 +1155,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610168012500",
     "barcodeMjValide": "2610168012500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1591215388/product_optimized/f7c611c0c134e3c02b7dd6d417cb5c9e.webp"
@@ -993,6 +1169,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2654190013000",
     "barcodeMjValide": "2654190013000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781868709/product/0da5cc3ae5c974e079041746ddfef1f0.webp"
@@ -1005,6 +1183,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2653905013000",
     "barcodeMjValide": "2653905013000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1784816459/product/760179663e0b252a4dddba0c26c231d0.webp"
@@ -1017,6 +1197,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2635968013000",
     "barcodeMjValide": "2635968013000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1644262357/product_optimized/77fa86b5b116fc8565df87dbfe8effd4.webp"
@@ -1029,6 +1211,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2698128012500",
     "barcodeMjValide": "2698128012500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1749219824/product/66b284f22d763a8112a81a93b7b7f158.webp"
@@ -1041,6 +1225,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2698236025000",
     "barcodeMjValide": "2698236025000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1748602105/product/82a7d42833566a59cc8e6671975185e7.webp"
@@ -1053,6 +1239,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2630528002000",
     "barcodeMjValide": "2630528002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1748528434/product/095b3d3a2cec46cf9db3b411a5cee3bc.webp"
@@ -1065,6 +1253,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2666614002500",
     "barcodeMjValide": "2666614002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642490264/product_optimized/65764ed127968eba68c1b3e0b5ec9f45.webp"
@@ -1077,6 +1267,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2637594002500",
     "barcodeMjValide": "2637594002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587320718/product_optimized/939a04ef3101caf1681c0cf437f3d4c3.webp"
@@ -1089,6 +1281,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2666612002500",
     "barcodeMjValide": "2666612002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744298717/product/0645da7381ed8feb55f84c438126a7a1.webp"
@@ -1101,6 +1295,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2630208002000",
     "barcodeMjValide": "2630208002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642457408/product_optimized/5772722499e1d8f7715d3e48a79a88ae.webp"
@@ -1113,6 +1309,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2666611002000",
     "barcodeMjValide": "2666611002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1642457502/product_optimized/05cf2c525432ee302ab2d4fa09b6b3d1.webp"
@@ -1125,6 +1323,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2610120005000",
     "barcodeMjValide": "2610120005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1743695628/product/ed95e79aba2814c614b3c4c11282ea44.webp"
@@ -1137,6 +1337,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610121005000",
     "barcodeMjValide": "2610121005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587298149/product_optimized/e600965db805d75828f04e0575715e00.webp"
@@ -1149,6 +1351,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2698712001000",
     "barcodeMjValide": "2698712001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162857/product/83b3b0aeb8556acadcbe2bfcb513b895.webp"
@@ -1161,6 +1365,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2698708001000",
     "barcodeMjValide": "2698708001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165564/product/de68a85964cde4dbff60b60bf6e3c71c.webp"
@@ -1173,6 +1379,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2676421001000",
     "barcodeMjValide": "2676421001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155414/product/d095f950f30f3cf83d524d21c4c6ea65.webp"
@@ -1185,6 +1393,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776164562/product/1042ec9ccef4d797addaea38c27c590a.webp"
   },
   {
@@ -1195,6 +1405,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1768988165/product/c7b5134dcf2fbce0797c162c71409acf.webp"
   },
   {
@@ -1205,6 +1417,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156363/product/5ee0e03f862cfd35fee62c5841e10e65.webp"
   },
   {
@@ -1215,6 +1429,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639760001000",
     "barcodeMjValide": "2639760001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776858732/product/cf044440860fb43d5e311a00f95b7607.webp"
@@ -1227,6 +1443,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654765001000",
     "barcodeMjValide": "2654765001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165840/product/5734f4f195debeec4a3d4587606ae3df.webp"
@@ -1239,6 +1457,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2634280001000",
     "barcodeMjValide": "2634280001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162312/product/e1a9f4e353e897bcbc2295d6d39c77b4.webp"
@@ -1251,6 +1471,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654665001000",
     "barcodeMjValide": "2654665001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165916/product/302cd1bba194078257bdd4e2cba34a96.webp"
@@ -1263,6 +1485,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624487001000",
     "barcodeMjValide": "2624487001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744728912/product/e779cd0bfbe25eb6af50c9a7632654c5.webp"
@@ -1275,6 +1499,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639402001000",
     "barcodeMjValide": "2639402001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776858047/product/47ef6e0af211546694ac63f76b6a646c.webp"
@@ -1287,9 +1513,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2650159001000",
-    "barcodeMjValide": "2650159001000",
     "barcodeInterne": "2000014827356",
+    "barcodeMjValide": "2650159001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776160313/product/50eb0f96ea89fb7b17f061a190aa0a77.webp"
   },
   {
@@ -1300,6 +1528,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639985001000",
     "barcodeMjValide": "2639985001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761663450/product/e0d17f53a6cd6cdc2baefe1270515015.webp"
@@ -1312,6 +1542,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639663001000",
     "barcodeMjValide": "2639663001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776158795/product/6780ee280cd8c21c191f0115197655e5.webp"
@@ -1324,6 +1556,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639104001000",
     "barcodeMjValide": "2639104001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756223578/product/5e62ae090d962b5f91fdc3095b03712a.webp"
@@ -1336,6 +1570,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2654032001000",
     "barcodeMjValide": "2654032001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776161308/product/c9a86066944d6abdd85e60293494eace.webp"
@@ -1348,6 +1584,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2609811001000",
     "barcodeMjValide": "2609811001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761750049/product/a6143e0b88f494ad0b3c9f0ce8b2e5ea.webp"
@@ -1360,6 +1598,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2602489001000",
     "barcodeMjValide": "2602489001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159871/product/44e03290e2e145191bf6d08d6b1fbef6.webp"
@@ -1372,6 +1612,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1769079676/product/8d4012f525739fcc59c2e7b0c4e3780f.webp"
   },
   {
@@ -1382,6 +1624,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2631438001000",
     "barcodeMjValide": "2631438001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165356/product/37e99abf6a4a0e1567325fd5facedf68.webp"
@@ -1394,6 +1638,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1739446443/product/7801e95b6ad8b829026911e5d5aaec15.webp"
   },
   {
@@ -1404,6 +1650,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781795941/product/bcdc5c9c1693167d75198bc713545e0c.webp"
   },
   {
@@ -1414,6 +1662,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2634198001000",
     "barcodeMjValide": "2634198001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162453/product/f265567c716b409df0cf9c9f335de72d.webp"
@@ -1426,6 +1676,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2698124001000",
     "barcodeMjValide": "2698124001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776160066/product/d2a5263e2f18e392bc031dca62dcbf72.webp"
@@ -1438,6 +1690,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2640037001000",
     "barcodeMjValide": "2640037001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781797755/product/4c3319bd8b14f79a93c64ebf1e1336f5.webp"
@@ -1450,6 +1704,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2654011001000",
     "barcodeMjValide": "2654011001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781798026/product/21db61a1fb2292c0d77ab255b184a86f.webp"
@@ -1462,6 +1718,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2651879001000",
     "barcodeMjValide": "2651879001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155261/product/f1241df31466ee67ac6020ef36e86aa9.webp"
@@ -1474,6 +1732,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2625436001000",
     "barcodeMjValide": "2625436001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776154645/product/d26d00de33aab7199d87f2c715cd4d04.webp"
@@ -1486,6 +1746,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2623453001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781797343/product/d3539344ac91a2574b85852c18385821.webp"
   },
@@ -1497,6 +1759,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2654018001000",
     "barcodeMjValide": "2654018001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776160458/product/06461413c52555bfcda5d0e2dec9eb6e.webp"
@@ -1509,6 +1773,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "265419800100",
     "barcodeMjValide": "265419800100",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781797555/product/6684809636db0c027e1819cbef9270d7.webp"
@@ -1521,6 +1787,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2651984001000",
     "barcodeMjValide": "2651984001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776158675/product/d225fecd0be9e9672dcf7edc35fdb271.webp"
@@ -1533,6 +1801,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2671398001000",
     "barcodeMjValide": "2671398001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155704/product/8c3b7a02d7ca6acbc6ed43f09bf06298.webp"
@@ -1545,6 +1815,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2651098001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1788789685/product/6b2e97ea23a52065a25ac29c6f043d90.webp"
   },
@@ -1556,6 +1828,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1739444670/product/0784bf4292aaabb972eab32abd7b4b30.webp"
   },
   {
@@ -1566,6 +1840,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2687461001000",
     "barcodeMjValide": "2687461001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1754388429/product/0f3f91076beca64791f91c31031ea587.webp"
@@ -1578,6 +1854,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2637151001000",
     "barcodeMjValide": "2637151001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1614671490/product_optimized/f7d3b540ac62567e70e8641187ffb869.webp"
@@ -1590,18 +1868,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2695361001000",
     "barcodeMjValide": "2695361001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776160755/product/07e60f9c9a4ad0459f2c50193aab70d4.webp"
   },
   {
     "id": 139,
-    "code": "-",
+    "code": "5674",
     "name": "Fromage Edam Boule 100g - OR BLANC",
     "department": "Fromage et charcuterie",
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2678549001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1788789861/product/3e2e587165157a271b4ecd134315cf28.webp"
   },
@@ -1613,6 +1895,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2698123001000",
     "barcodeMjValide": "2698123001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159982/product/85f088166012ab519f04a44945aac46a.webp"
@@ -1625,6 +1909,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2685321001000",
     "barcodeMjValide": "2685321001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1614671875/product_optimized/07cd831fd526029253eb106305a423b9.webp"
@@ -1637,6 +1923,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2678549001000",
     "barcodeMjValide": "2678549001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1684832182/product_optimized/85d392bf6516ab869a174e0f8baa8daa.webp"
@@ -1649,6 +1937,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2651484001000",
     "barcodeMjValide": "2651484001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1749113723/product/5f330c39fca4afd1bffb50949b2905a9.webp"
@@ -1661,6 +1951,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2697482001000",
     "barcodeMjValide": "2697482001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776154771/product/82c18549ba48c9d89cde6bd2ee7f1ffa.webp"
@@ -1673,6 +1965,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624132001000",
     "barcodeMjValide": "2624132001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159457/product/c786685bb580789fe33f8df086a12df8.webp"
@@ -1685,6 +1979,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639514001000",
     "barcodeMjValide": "2639514001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756224134/product/2553130e557451b1510c3cc3ea2beab6.webp"
@@ -1697,6 +1993,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162243/product/ac9bfdd3ed3e6c1b09581a7dba865e0b.webp"
   },
   {
@@ -1707,6 +2005,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639044001000",
     "barcodeMjValide": "2639044001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159046/product/c4c9f4c10212b1aa452a03f88c2bf0dc.webp"
@@ -1719,6 +2019,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2632489001000",
     "barcodeMjValide": "2632489001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776160922/product/7435ceb032487756a043d5424fe4fc9f.webp"
@@ -1731,6 +2033,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2693930001000",
     "barcodeMjValide": "2693930001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1753973817/product/3e386b499e7ae41ec218b938121be8c3.webp"
@@ -1743,6 +2047,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600214001000",
     "barcodeMjValide": "2600214001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781793939/product/36a0ed3bfcfff96110d47abeb78072b2.webp"
@@ -1755,6 +2061,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600214001000",
     "barcodeMjValide": "2600214001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1753974178/product/f4044e8d107900a9c7fd34a22a16521d.webp"
@@ -1767,6 +2075,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2609878001000",
     "barcodeMjValide": "2609878001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761749326/product/c4c40c945e0298fa6709ba0499b7da72.webp"
@@ -1779,6 +2089,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2636540001000",
     "barcodeMjValide": "2636540001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1753973354/product/a5ea49d515776126bfec3037bef849e2.webp"
@@ -1791,6 +2103,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2675106001000",
     "barcodeMjValide": "2675106001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781251780/product/d9c4c414edf208ff0fb95820db5ecf83.webp"
@@ -1803,6 +2117,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2675106001000",
     "barcodeMjValide": "2675106001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1753974300/product/cf1eb6dbe6ce1fc55b95fac9b029ee61.webp"
@@ -1815,6 +2131,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2693930001000",
     "barcodeMjValide": "2693930001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776263886/product/051b7edffb7956d9f68d5274a8f6336b.webp"
@@ -1827,6 +2145,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014629639",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1739523520/product/8963cf56bf8aa36cc502bc84183898cb.webp"
   },
@@ -1838,6 +2158,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2634189001000",
     "barcodeMjValide": "2634189001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155865/product/e7fbc7c31974020ec4f677f2aacb0e93.webp"
@@ -1850,6 +2172,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639041001000",
     "barcodeMjValide": "2639041001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776163145/product/ce1dff485dc504f726d4c3446854c582.webp"
@@ -1862,6 +2186,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2635915001000",
     "barcodeMjValide": "2635915001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756221060/product/a0ae19ef46dc77453583a5e3cd5054eb.webp"
@@ -1874,6 +2200,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014629363",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1739441354/product/fee27a102e1f67203347b3bf67f3d1c3.webp"
   },
@@ -1885,6 +2213,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014629424",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1746458924/product/c73e054266c9a3da5ebdbaeb13d2d0f8.webp"
   },
@@ -1896,9 +2226,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2635928001000",
-    "barcodeMjValide": "2635928001000",
     "barcodeInterne": "2000014629554",
+    "barcodeMjValide": "2635928001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738359228/product/05dd196158333bfdec4dc56278ef142e.webp"
   },
   {
@@ -1909,6 +2241,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639785001000",
     "barcodeMjValide": "2639785001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761734968/product/c07d0213f33928a7769f6b49f93a3358.webp"
@@ -1921,6 +2255,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2635254001000",
     "barcodeMjValide": "2635254001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165234/product/2acc907062165d7056e43af844193782.webp"
@@ -1933,6 +2269,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2697454001000",
     "barcodeMjValide": "2697454001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776161907/product/36576d96efbe577dbc5c7af30be1528d.webp"
@@ -1945,6 +2283,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014629523",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738358437/product/13514cfa42d674bbe23573f298c8e958.webp"
   },
@@ -1956,6 +2296,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2605002001000",
     "barcodeMjValide": "2605002001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761752266/product/1efea1831e77da81665f5b437d7816ce.webp"
@@ -1968,9 +2310,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2676854001000",
-    "barcodeMjValide": "2676854001000",
     "barcodeInterne": "2000014424074",
+    "barcodeMjValide": "2676854001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1684832616/product_optimized/f96ede09165af9fa1f3ad57fddf0daf6.webp"
   },
   {
@@ -1981,6 +2325,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654398001000",
     "barcodeMjValide": "2654398001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776857199/product/2adf6c148bd13948a17c670c39564de7.webp"
@@ -1993,6 +2339,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014629325",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1739438720/product/3802a7c18b694d8ab08bc5b639bef38c.webp"
   },
@@ -2004,6 +2352,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2635147001000",
     "barcodeMjValide": "2635147001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155588/product/571fb83def86a7a21fff616c04cda8be.webp"
@@ -2016,6 +2366,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2631425001000",
     "barcodeMjValide": "2631425001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159650/product/93df5d69783038e286b081be4b407b30.webp"
@@ -2028,9 +2380,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639556001000",
-    "barcodeMjValide": "2639556001000",
     "barcodeInterne": "2000014629349",
+    "barcodeMjValide": "2639556001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1739440870/product/2a7589eabb49ddba36d2fd82c058e784.webp"
   },
   {
@@ -2041,9 +2395,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2605254001000",
-    "barcodeMjValide": "2605254001000",
     "barcodeInterne": "2000014629486",
+    "barcodeMjValide": "2605254001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738355544/product/f321dcef25de7d191710e3aab84fc68c.webp"
   },
   {
@@ -2054,9 +2410,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2605254001000",
-    "barcodeMjValide": "2605254001000",
     "barcodeInterne": "2000014629493",
+    "barcodeMjValide": "2605254001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738356380/product/609d1b55325f5875e3391a3af76ce77e.webp"
   },
   {
@@ -2067,6 +2425,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2608420001000",
     "barcodeMjValide": "2608420001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761751065/product/a95f428b892f1d6b4b244146e964a667.webp"
@@ -2079,6 +2439,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639517001000",
     "barcodeMjValide": "2639517001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162012/product/f465785d429444a3690752171ee26ec1.webp"
@@ -2091,6 +2453,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2691481001000",
     "barcodeMjValide": "2691481001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744728686/product/f80bbcd9fa7c04049deae3194dfb4460.webp"
@@ -2103,9 +2467,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2687564001000",
-    "barcodeMjValide": "2687564001000",
     "barcodeInterne": "2000014424104",
+    "barcodeMjValide": "2687564001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1684832396/product_optimized/2819d666dee40df60fdc347c35507247.webp"
   },
   {
@@ -2116,6 +2482,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639741001000",
     "barcodeMjValide": "2639741001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156145/product/58814a568f2c37be039cf620cd66a59d.webp"
@@ -2128,6 +2496,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639842001000",
     "barcodeMjValide": "2639842001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761747744/product/f0532f8c96d5d05e56054234d8371f5f.webp"
@@ -2140,6 +2510,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2630041001000",
     "barcodeMjValide": "2630041001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156213/product/e91b5d76c208d62f2d5ab813e3d6edc8.webp"
@@ -2152,6 +2524,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2631004001000",
     "barcodeMjValide": "2631004001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156048/product/9e55d224a8224425e278163192a10833.webp"
@@ -2164,9 +2538,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2698416001000",
-    "barcodeMjValide": "2698416001000",
     "barcodeInterne": "2000014629400",
+    "barcodeMjValide": "2698416001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738353386/product/812d4021dcb2ac7dca2e4838af8fda50.webp"
   },
   {
@@ -2177,6 +2553,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639579001000",
     "barcodeMjValide": "2639579001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159545/product/4676cdee57f9a96b76646a350e06e606.webp"
@@ -2189,6 +2567,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2657641001000",
     "barcodeMjValide": "2657641001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155028/product/cb151c650a83aeaac290b239d6688d02.webp"
@@ -2201,6 +2581,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2631484001000",
     "barcodeMjValide": "2631484001000",
     "imageUrl": "https://maisonriopedre.com/wp-content/uploads/2019/04/Fromage-de-brebis-curado.png"
@@ -2213,6 +2595,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2665126001000",
     "barcodeMjValide": "2665126001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776855926/product/839e3e4810e3e3093598366350059250.webp"
@@ -2225,6 +2609,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2630115001000",
     "barcodeMjValide": "2630115001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738345406/product/3495644d7d460a89ba2f5c0593b59465.webp"
@@ -2237,6 +2623,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2602366001000",
     "barcodeMjValide": "2602366001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761753037/product/b58dc0063adaacbfd1f1c8b55b0fc3d9.webp"
@@ -2249,6 +2637,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2698741001000",
     "barcodeMjValide": "2698741001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776161836/product/1982e084415b11c4856764cb84ae77b8.webp"
@@ -2261,6 +2651,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2651487001000",
     "barcodeMjValide": "2651487001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155516/product/a8c8732a71b2ad5b78016d76f0a1c39d.webp"
@@ -2273,6 +2665,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2615248001000",
     "barcodeMjValide": "2615248001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1614673104/product_optimized/35bc21f8b1adc1e52b6dc9744a0ba91a.webp"
@@ -2285,9 +2679,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2634521001000",
-    "barcodeMjValide": "2634521001000",
     "barcodeInterne": "2000014424043",
+    "barcodeMjValide": "2634521001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1684832661/product_optimized/2a4bcc7c0c6e63b8cbd2609f9018750c.webp"
   },
   {
@@ -2298,6 +2694,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639970001000",
     "barcodeMjValide": "2639970001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156980/product/c64bfbd7d4dd15d4a788df21e3dffb8b.webp"
@@ -2310,6 +2708,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2665126001000",
     "barcodeMjValide": "2665126001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776158391/product/742f500c049502358b21df1ebebfd307.webp"
@@ -2322,6 +2722,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2656541001000",
     "barcodeMjValide": "2656541001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162095/product/4f22bff7f59eed2b67bd2b330de7e0ee.webp"
@@ -2334,6 +2736,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2665132001000",
     "barcodeMjValide": "2665132001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776859393/product/5ca069b1f8a3123866a878d7cd95532e.webp"
@@ -2346,6 +2750,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2698730001000",
     "barcodeMjValide": "2698730001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761812141/product/3d65e4472ffe914fc8cacdfc2aea5cda.webp"
@@ -2358,6 +2764,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639158001000",
     "barcodeMjValide": "2639158001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756217331/product/111fa55325984a2edd2593c30d8c2e43.webp"
@@ -2370,6 +2778,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeP2": "2696730001000",
     "imageUrl": "https://glovo.dhmedia.io/image/pim-glovo/695e49f8b4ea467f81cee4a4.webp?t=W3sicmVzaXplIjp7Im1vZGUiOiJmaXQiLCJ3aWR0aCI6MzIwLCJoZWlnaHQiOjMyMH19XQ=="
   },
@@ -2381,6 +2791,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2643096001000",
     "barcodeMjValide": "2643096001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776856159/product/eaf98280c259d0b302b143846869a7cd.webp"
@@ -2393,6 +2805,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2636540001000",
     "barcodeMjValide": "2636540001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781251486/product/7aed006dbd25a10e9c5a57779d5eb693.webp"
@@ -2405,6 +2819,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2665131001000",
     "barcodeMjValide": "2665131001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776859197/product/25f1d10f8154730fe96a4e168726cc19.webp"
@@ -2417,6 +2833,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2641241001000",
     "barcodeMjValide": "2641241001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1614675115/product_optimized/c6fd1284430fbe1d4aa6bf35d50cf56b.webp"
@@ -2429,6 +2847,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2671254001000",
     "barcodeMjValide": "2671254001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776154954/product/1130b9ffbfe2709447c3e3aaa3cbad54.webp"
@@ -2441,6 +2861,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2695147001000",
     "barcodeMjValide": "2695147001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776857648/product/c5d3949e5c7a51b0700cd7e15b303a79.webp"
@@ -2453,6 +2875,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2666676001000",
     "barcodeMjValide": "2666676001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155794/product/6125d1b22af87d1b8ed304f8fa5a37e2.webp"
@@ -2465,6 +2889,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2634219001000",
     "barcodeMjValide": "2634219001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776164385/product/56d081907f4e496a66ff8aeec000578d.webp"
@@ -2477,6 +2903,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2695408001000",
     "barcodeMjValide": "2695408001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776159329/product/7c3a4add8cec2b2b5cc3aa63932fd32f.webp"
@@ -2489,6 +2917,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2698213001000",
     "barcodeMjValide": "2698213001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1766152921/product/f5bb2c39ecd8777ca4c7c121eac41a79.webp"
@@ -2501,6 +2931,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2665130001000",
     "barcodeMjValide": "2665130001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165010/product/fde185808cad5c97b9555e7d69eaa791.webp"
@@ -2513,6 +2945,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2657578001000",
     "barcodeMjValide": "2657578001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776155321/product/3052a3afd4c5ba057035d5a61f66b047.webp"
@@ -2525,6 +2959,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639870001000",
     "barcodeMjValide": "2639870001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165769/product/9e0a9661117df6dcf28642ffce006e93.webp"
@@ -2537,6 +2973,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639762001000",
     "barcodeMjValide": "2639762001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776158940/product/9d5597f55b1fec555da04ad0fc6f951c.webp"
@@ -2549,6 +2987,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639015001000",
     "barcodeMjValide": "2639015001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156581/product/8304b4f54e11d6aff4d07b460c53b655.webp"
@@ -2561,6 +3001,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639848001000",
     "barcodeMjValide": "2639848001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162172/product/528d87eed78af1b9d120aedacaa8582b.webp"
@@ -2573,6 +3015,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2668954001000",
     "barcodeMjValide": "2668954001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744727455/product/8a68aa7861ef8ccee4e6998763ac9420.webp"
@@ -2585,6 +3029,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639155001000",
     "barcodeMjValide": "2639155001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776157266/product/4f8bd8c2f55ab76223fe50637ad16fd1.webp"
@@ -2597,6 +3043,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639154001000",
     "barcodeMjValide": "2639154001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1777024905/product/baeae0bffcfd7dca03a19cdecd81b9fd.webp"
@@ -2609,6 +3057,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1788789516/product/d8664aa0be8cab45100f71971439cf05.webp"
   },
   {
@@ -2619,28 +3069,34 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639961001000",
     "barcodeMjValide": "2639961001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776856701/product/cc1307881717e6960a550e3521b4714c.webp"
   },
   {
     "id": 225,
-    "code": "----",
+    "code": "-",
     "name": "Fromage rose leaves en bloc 100g - JACK CHEESE",
     "department": "Fromage et charcuterie",
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156455/product/4460d9e2fc3f48ecab81d9d64ab72f03.webp"
   },
   {
     "id": 226,
-    "code": "----",
+    "code": "-",
     "name": "Fromage rose leaves en morceau 100g - JACKS CHEESE",
     "department": "Fromage et charcuterie",
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1768989667/product/27e5293bdfb2d60e404c15a0b933a12f.webp"
   },
   {
@@ -2651,6 +3107,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776156716/product/9d9b6dcde1e70c754955f16c283743e4.webp"
   },
   {
@@ -2661,6 +3119,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2677768001000",
     "barcodeMjValide": "2677768001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776162530/product/09554d0fb2d178d4103db7c121512c36.webp"
@@ -2673,6 +3133,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2677760001000",
     "barcodeMjValide": "2677760001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776161706/product/a0e001c5f667215d3a19d5f24db8ff99.webp"
@@ -2685,6 +3147,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776164690/product/c598580515d209a5a59c1c8ebf736eda.webp"
   },
   {
@@ -2695,6 +3159,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1768989944/product/452b7d6d412ef2963499f8d1f07802a9.webp"
   },
   {
@@ -2705,6 +3171,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776856992/product/35f2083afb4e207713795c8f762d5a41.webp"
   },
   {
@@ -2715,6 +3183,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165643/product/f92db71cb3c8b1314ac3b0cdabaf1a03.webp"
   },
   {
@@ -2725,6 +3195,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1768991403/product/ef01eb0f397d806187f34a3ce9ccda9d.webp"
   },
   {
@@ -2735,6 +3207,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677762001000",
     "barcodeMjValide": "2677762001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776158246/product/bb75655d42be2a09949b28060b7f2788.webp"
@@ -2747,6 +3221,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2639027001000",
     "barcodeMjValide": "2639027001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1744730575/product/718525f609aa646c4f45ee3520270050.webp"
@@ -2759,6 +3235,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2675649001000",
     "barcodeMjValide": "2675649001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776163786/product/3299b8e5a252d14ee0848d314fb1bb34.webp"
@@ -2771,6 +3249,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014629462",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738354751/product/06c3b6b0353faab3fde8515419dbbef5.webp"
   },
@@ -2782,6 +3262,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2665125001000",
     "barcodeMjValide": "2665125001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776859617/product/a551a62d2d0f7cd79ee597960722b09c.webp"
@@ -2794,6 +3276,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2639076001000",
     "barcodeMjValide": "2639076001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776857883/product/4f8f505b3cc36f5c3ca9276a0c75abdd.webp"
@@ -2806,6 +3290,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fromages",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2621587001000",
     "barcodeMjValide": "2621587001000",
     "imageUrl": "https://storage.googleapis.com/sales-img-ma-live/web/cache/sylius_large/28/23/9ba613f8c809cde840b6d946f17d.jpg"
@@ -2818,6 +3304,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771858381/product/d9ed6bf7fa1aacf6785a522ebf04080a.webp"
   },
   {
@@ -2828,6 +3316,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771845727/product/0ecacf2f948308d212074d737abc0b4c.webp"
   },
   {
@@ -2838,6 +3328,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771844267/product/fa491086f12dc61fb5059adde7b99ce1.webp"
   },
   {
@@ -2848,6 +3340,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2623455001000",
     "barcodeMjValide": "2623455001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783672278/product/d77f133ab36807f98a900171a3d0e41e.webp"
@@ -2860,18 +3354,24 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2623453001000",
     "barcodeMjValide": "2623453001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773220207/product/547ea7cb7334ade8db2ba1c7f79765d1.webp"
   },
   {
     "id": 247,
-    "code": "-",
+    "code": "1564",
     "name": "Cuisse de Dinde Mavi 100g",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2641674001000",
+    "barcodeMjValide": "2641674001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776165996/product/bd2e15e37ec97615c78b2832ac29f28f.webp"
   },
   {
@@ -2882,16 +3382,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771845801/product/a74fba3f87f63a0510f5ac5714c6b764.webp"
   },
   {
     "id": 249,
-    "code": "----",
+    "code": "-",
     "name": "Filet de dinde 100g - DEL PACHA",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794153",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771844681/product/e3ae9c1c57ea216dbb5f2eef0a983a0b.webp"
   },
@@ -2903,6 +3407,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2623454001000",
     "barcodeMjValide": "2623454001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773220486/product/a8892fa69d67bab50696c3e65645c609.webp"
@@ -2915,6 +3421,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641584001000",
     "barcodeMjValide": "2641584001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783607607/product/57a8165975c9c9fdb2cfb32fbbf689de.webp"
@@ -2927,6 +3435,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771845112/product/2bfe5abebcc29a662abd5eceef97ead9.webp"
   },
   {
@@ -2937,6 +3447,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773661423/product/e34232f0c42d0af8b319341a0a06503c.webp"
   },
   {
@@ -2947,16 +3459,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773661744/product/ed1900995e1eee8b5fd67759ae4f6ca4.webp"
   },
   {
     "id": 255,
-    "code": "----",
+    "code": "-",
     "name": "Galantine de canard tradition 100g - AGHBALOU",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014796706",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773660892/product/4ab4aeb40356e6130f5370b4b2f53192.webp"
   },
@@ -2968,6 +3484,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773396686/product/833cbd8d2826a4a7c426c14a37664e03.webp"
   },
   {
@@ -2978,6 +3496,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776166353/product/b689141d083e20a79e3964a7c37873a3.webp"
   },
   {
@@ -2988,6 +3508,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773396237/product/3947f03709683788dc358537c8a5b528.webp"
   },
   {
@@ -2998,6 +3520,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773396435/product/fc97bc3b7f10c2f023c2d3bdf8253ac1.webp"
   },
   {
@@ -3008,16 +3532,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771849756/product/13f07970070f1db106a30aa019d3b3e2.webp"
   },
   {
     "id": 261,
-    "code": "----",
+    "code": "-",
     "name": "Jambon cuit supérieur 100g - DINDY",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794443",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783678560/product/1dca51bca7a07a5c48b3c154725498a6.webp"
   },
@@ -3029,6 +3557,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641650001000",
     "barcodeMjValide": "2641650001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783607959/product/a036d9fb2822f7626177113dc20d0b49.webp"
@@ -3041,6 +3571,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2675438001000",
     "barcodeMjValide": "2675438001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1693600467/product/137f74318563ce3bc1822379f55885d7.webp"
@@ -3053,16 +3585,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771845355/product/55ae422bf93eb4b50ce86e5a6f9ec7b6.webp"
   },
   {
     "id": 265,
-    "code": "----",
+    "code": "-",
     "name": "Jambon de dinde aux fines herbes 100g",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794160",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783678720/product/77e9bd45e5e0be53ec182aaf351543c2.webp"
   },
@@ -3074,6 +3610,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2623455001000",
     "barcodeMjValide": "2623455001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_240/v1773223056/product/f1a1535b3713f62c547fdeafe1bf5275.webp"
@@ -3086,40 +3624,48 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641185001000",
     "barcodeMjValide": "2641185001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1790164803/product/3cdc435e5cfc1047a7092b9672e7c316.webp"
   },
   {
     "id": 268,
-    "code": "----",
+    "code": "-",
     "name": "Jambon de dinde paprika 100g - DEL PACHA",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794214",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771845665/product/0ab27a5ad2e7ae8d26ed8f157d6e0146.webp"
   },
   {
     "id": 269,
-    "code": "----",
+    "code": "-",
     "name": "Jambon duo fumé 100g - DINDY",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794467",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783677873/product/2e7ce5ac0d1fe961282ac10829cf6cf2.webp"
   },
   {
     "id": 270,
-    "code": "----",
+    "code": "-",
     "name": "Jambon filet aux herbes 100g - ANDALOUS",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014796447",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776853002/product/3f7622df7515fd931d33ac5a08449ef2.webp"
   },
@@ -3131,6 +3677,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773220486/product/a8892fa69d67bab50696c3e65645c609.webp"
   },
   {
@@ -3141,6 +3689,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773396066/product/f586621a6bcc83b4518a0d8a1bca9c87.webp"
   },
   {
@@ -3151,16 +3701,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781277450/product/0725b596bf1d779776380ca9ee7de7b9.webp"
   },
   {
     "id": 274,
-    "code": "----",
+    "code": "-",
     "name": "Kacher nature 100g - DINDY",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794474",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783607385/product/0182b3d2936415f9aaf5ba5c28524cf6.webp"
   },
@@ -3172,6 +3726,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781277354/product/cebca067ca3269d8fecdb4180e547351.webp"
   },
   {
@@ -3182,6 +3738,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771846374/product/aadf68bb4043d59147b8b235db3ed76a.webp"
   },
   {
@@ -3192,6 +3750,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783506728/product/4baa4eed5a10d415b012a487cb395512.webp"
   },
   {
@@ -3202,6 +3762,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783506343/product/2d02a58c69267eea7b050b8aa247b0fd.webp"
   },
   {
@@ -3212,6 +3774,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014796737",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776853781/product/1692532869d1371a9ecc9ec6e91b6d44.webp"
   },
@@ -3223,16 +3787,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773660616/product/732272ca4913dd5dc00f4724dbcd2578.webp"
   },
   {
     "id": 281,
-    "code": "----",
+    "code": "-",
     "name": "Mousse de poulet au piment 100g - ANDALOUS",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014796676",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776855136/product/3e8900a18ddae5b0ba3dd37a396f098c.webp"
   },
@@ -3244,6 +3812,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776166244/product/5055c2ea35bd252eac904f4df033f71e.webp"
   },
   {
@@ -3254,6 +3824,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2610967001000",
     "barcodeMjValide": "2610967001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783508012/product/712b181f5a4a0fa76fc063ab4fea1267.webp"
@@ -3266,6 +3838,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771844120/product/4df25596c77265591eb8e29dbf16432b.webp"
   },
   {
@@ -3276,6 +3850,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641580001000",
     "barcodeMjValide": "2641580001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783608858/product/51d17c06ae2c3d061e7cd364cfafadb9.webp"
@@ -3288,6 +3864,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641858001000",
     "barcodeMjValide": "2641858001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783672821/product/e2a4f208fdf956c5345a087380e7591a.webp"
@@ -3300,6 +3878,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624452001000",
     "barcodeMjValide": "2624452001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1773221269/product/63c7fb2dd34b7cc58af638d652df02ee.webp"
@@ -3312,6 +3892,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783672558/product/f360cf7bbf90484758d9109034437683.webp"
   },
   {
@@ -3322,6 +3904,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641593001000",
     "barcodeMjValide": "2641593001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1614675233/product_optimized/a378bac5a28b370eeed0b31d793a7d43.webp"
@@ -3334,6 +3918,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1614675364/product_optimized/3977ad4bcfec1f5dd724534587262f61.webp"
   },
   {
@@ -3344,6 +3930,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641854001000",
     "barcodeMjValide": "2641854001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783609026/product/f9931c5ed777255e83efd06b6fa6eca7.webp"
@@ -3356,8 +3944,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
-    "barcodeMarjane": "2541260010000",
-    "barcodeMjValide": "2541260010000",
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2654126001000",
+    "barcodeInterne": "2541260010000",
+    "barcodeMjValide": "2654126001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783672096/product/e9f04ce5a4b6791c1c09a52cc4a0986c.webp"
   },
   {
@@ -3368,6 +3959,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783507067/product/703c186461dc7c7b701ca56448d2a8d1.webp"
   },
   {
@@ -3378,6 +3971,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771846858/product/321bf2312c383424fb8ee972d5add187.webp"
   },
   {
@@ -3388,6 +3983,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771846921/product/c47d0131efa48564dbda4400832f0d93.webp"
   },
   {
@@ -3398,6 +3995,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783678915/product/7e37fd8ad3bc1569aeacee5e6bfe1325.webp"
   },
   {
@@ -3408,6 +4007,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783679200/product/a0f275f323ae5b8d9e8c52110f77df8e.webp"
   },
   {
@@ -3418,6 +4019,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783676774/product/f2d0d6c0545c9f704bad1e17d838f3d7.webp"
   },
   {
@@ -3428,16 +4031,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771847129/product/219711b5f686e33b3687f8eeacbe9377.webp"
   },
   {
     "id": 300,
-    "code": "----",
+    "code": "-",
     "name": "Surimi en mosaïque crabe 100g - DEL PACHA",
     "department": "Fromage et charcuterie",
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014794184",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771846984/product/8d5ad196d23004ebb8c203b704562ff5.webp"
   },
@@ -3449,6 +4056,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1771847067/product/27e0d8730456e241b4c7bc47744da904.webp"
   },
   {
@@ -3459,19 +4068,23 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Charcuterie",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654740001000",
-    "barcodeMjValide": "2654740001000",
     "barcodeInterne": "2000014796508",
+    "barcodeMjValide": "2654740001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1776854285/product/885197caf8690aa63b6e403ce776466f.webp"
   },
   {
     "id": 303,
-    "code": "XXXX",
+    "code": "-",
     "name": "Abricot ferme au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2626421005000"
   },
   {
@@ -3482,17 +4095,21 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2666112005000",
     "barcodeMjValide": "2666112005000"
   },
   {
     "id": 305,
-    "code": "XXXX",
+    "code": "-",
     "name": "Abricot petit kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2666721005000"
   },
   {
@@ -3503,6 +4120,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624265000018",
     "barcodeMjValide": "2624265000018",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1760003973/product/2edbaa21f81fe6fac9fe546b3109bad6.webp"
@@ -3515,6 +4134,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624094005000",
     "barcodeMjValide": "2624094005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789743642/product/a9d11d0275814cf69a59a4646bdebd8f.webp"
@@ -3527,26 +4148,32 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789743687/product/0940fb91b2e3e24aa5d211ea008e6ab1.webp"
   },
   {
     "id": 309,
-    "code": "XXXX",
+    "code": "-",
     "name": "Avocat filière au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2621099010000"
   },
   {
     "id": 310,
-    "code": "1171",
+    "code": "1717",
     "name": "Avocat Hass 500g",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600303005000",
     "barcodeMjValide": "2600303005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1698916413/product/7509efb91b22fc7ea1182c6b1fbab528.webp"
@@ -3559,6 +4186,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014400313",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671183467/product_optimized/2379347ca632dfed8843f95b1b3adb9e.webp"
   },
@@ -3570,6 +4199,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2690020015000",
     "barcodeMjValide": "2690020015000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1625821436/product_optimized/311f1f28a5f10f56973515a17f9ef57b.webp"
@@ -3582,6 +4213,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624507010000",
     "barcodeMjValide": "2624507010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587300488/product_optimized/86199d6fb1d0ee856ae27fb67edb795d.webp"
@@ -3594,6 +4227,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671184958/product_optimized/c5f533a81995324c7f57d930781b1997.webp"
   },
   {
@@ -3604,17 +4239,21 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2607761005000",
     "barcodeMjValide": "2607761005000"
   },
   {
     "id": 316,
-    "code": "XXXX",
+    "code": "-",
     "name": "Cerise locale au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624600005000"
   },
   {
@@ -3625,6 +4264,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624805005000",
     "barcodeMjValide": "2624805005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587300561/product_optimized/29e5fb4b89dd884f9ee032e3729d00a0.webp"
@@ -3637,6 +4278,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781165114/product/a231f340bd80e2b2bf2e6a6b58794f22.webp"
   },
   {
@@ -3647,6 +4290,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624288010000",
     "barcodeMjValide": "2624288010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789468998/product/40112d003b8bfdb2333f4d6aaff89f50.webp"
@@ -3659,18 +4304,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624125005000",
     "barcodeMjValide": "2624125005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1631865179/product_optimized/bbefb892fffcce20ad39079bae65a1b2.webp"
   },
   {
     "id": 321,
-    "code": "XXXX",
+    "code": "-",
     "name": "Citron vert le kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1631865179/product_optimized/bbefb892fffcce20ad39079bae65a1b2.webp"
   },
   {
@@ -3681,6 +4330,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2657651010000",
     "barcodeMjValide": "2657651010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761217557/product/2a5d30f533cf6df6b707581a42800e01.webp"
@@ -3693,6 +4344,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2657651010000",
     "barcodeMjValide": "2657651010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1791811320/product/563ec1ccb4cbeb39556a4c15c9fbea32.webp"
@@ -3700,21 +4353,26 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     "id": 324,
     "code": "-",
-    "name": "Coing 1Kg - FILIERE M",
+    "name": "Coing 1Kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
+    "barcodeInterne": "2000014124509",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751385264/product/ca22f45dd80a7d9d44fa8363c1148273.webp"
   },
   {
     "id": 325,
-    "code": "XXXX",
+    "code": "-",
     "name": "Courge orange au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2605054005000"
   },
   {
@@ -3725,6 +4383,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMiniSecours": "8717496041647",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1758897353/product/3a24d1897a8b8a35870ed90392cb120a.webp"
   },
@@ -3736,6 +4396,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626328001000",
     "barcodeMjValide": "2626328001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1765291362/product/382865592e1d94dcbb04adec1f79ad13.webp"
@@ -3748,6 +4410,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626340001000",
     "barcodeMjValide": "2626340001000"
   },
@@ -3758,7 +4422,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "g",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none"
   },
   {
     "id": 330,
@@ -3767,7 +4433,9 @@ export const INITIAL_PRODUCTS: Product[] = [
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "g",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none"
   },
   {
     "id": 331,
@@ -3777,6 +4445,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626286010000",
     "barcodeMjValide": "2626286010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789030145/product/34c83b10df07ddeda9afd71d549375f1.webp"
@@ -3789,9 +4459,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2675410010000",
-    "barcodeMjValide": "2675410010000",
     "barcodeMiniSecours": "41230206",
+    "barcodeMjValide": "2675410010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1792152052/product/a8d4322b82ddb9a388ec56630d8a0651.webp"
   },
   {
@@ -3802,18 +4474,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2640036001000",
     "barcodeMjValide": "2640036001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761217228/product/49144c4f14dd90d0c21075f9778fdc2f.webp"
   },
   {
     "id": 334,
-    "code": "XXXX",
+    "code": "-",
     "name": "Kiwi long au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624828005000"
   },
   {
@@ -3824,6 +4500,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624935005000",
     "barcodeMjValide": "2624935005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783091444/product/69bd4d91333a22eb7c130fb2b43a19d6.webp"
@@ -3836,6 +4514,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2670010001000",
     "barcodeMjValide": "2670010001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785233203/product/fe643842c97479f0bcda627a622d9aef.webp"
@@ -3848,6 +4528,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2605441001000",
     "barcodeMjValide": "2605441001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671183027/product_optimized/a387232e90330eeed168ac4f9549b21a.webp"
@@ -3860,6 +4542,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2678651010000",
     "barcodeMjValide": "2678651010000"
   },
@@ -3871,6 +4555,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2699787009993"
   },
   {
@@ -3881,10 +4567,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654829005000",
-    "barcodeMjValide": "2654829005000",
     "barcodeP2": "2605847010000",
     "barcodeMiniSecours": "41204030",
+    "barcodeMjValide": "2654829005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783504871/product/3b0884c980d01a366e7f8506f05abd51.webp"
   },
   {
@@ -3895,6 +4583,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600210005000",
     "barcodeMjValide": "2600210005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783504871/product/3b0884c980d01a366e7f8506f05abd51.webp"
@@ -3907,6 +4597,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMiniSecours": "30136724",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1676968599/product_optimized/6571423d8b4496dbe2c44dd5afa33082.webp"
   },
@@ -3918,6 +4610,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785250991/product/45342ba4e13e00569e6a1b7f6daca6c4.webp"
   },
   {
@@ -3928,16 +4622,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1765291028/product/bbd58df609b2b31672ed69f99e005f49.webp"
   },
   {
     "id": 345,
-    "code": "XXXX",
+    "code": "-",
     "name": "Melon ananas au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624437015000"
   },
   {
@@ -3948,6 +4646,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1625821213/product_optimized/5d93eec25caf54120baf66d2795726cb.webp"
   },
   {
@@ -3958,20 +4658,25 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624887015000",
     "barcodeMjValide": "2624887015000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756198879/product/f4a55ebe436b70f7e69ce488ce6846a8.webp"
   },
   {
     "id": 348,
-    "code": "-",
+    "code": "8523",
     "name": "Melon jaune environ 1,5Kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624885015000",
-    "barcodeMjValide": "2624885015000"
+    "barcodeMjValide": "2624885015000",
+    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756198879/product/f4a55ebe436b70f7e69ce488ce6846a8.webp"
   },
   {
     "id": 349,
@@ -3981,18 +4686,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2626677015000",
-    "barcodeMjValide": "2626677015000",
-    "barcodeInterne": "2688714015000"
+    "barcodeInterne": "2688714015000",
+    "barcodeMjValide": "2626677015000"
   },
   {
     "id": 350,
-    "code": "XXXX",
+    "code": "-",
     "name": "Melon souhila au",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2606060015000"
   },
   {
@@ -4003,6 +4712,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2606060015000",
     "barcodeMjValide": "2606060015000"
   },
@@ -4014,29 +4725,35 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600037000011",
-    "barcodeMjValide": "2600037000011",
     "barcodeMiniSecours": "40870090",
+    "barcodeMjValide": "2600037000011",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588264185/product_optimized/14900bdc1764521807da5b7fea70f3be.webp"
   },
   {
     "id": 353,
-    "code": "XXXX",
+    "code": "-",
     "name": "Nectarine blanche kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2627749005000"
   },
   {
     "id": 354,
-    "code": "XXXX",
+    "code": "-",
     "name": "Nectarine en barqyette",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeInterne": "2000014446410"
   },
   {
@@ -4047,6 +4764,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2677781005000",
     "barcodeMjValide": "2677781005000"
   },
@@ -4058,18 +4777,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2677749005000",
     "barcodeMjValide": "2677749005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1644598218/product_optimized/5d6504767182eafed69b67443a29dad3.webp"
   },
   {
     "id": 357,
-    "code": "XXXX",
+    "code": "-",
     "name": "Nèfle en vrac le kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeInterne": "2624921005000"
   },
   {
@@ -4080,6 +4803,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "20283537",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1593425586/product_optimized/9ca8953df74330fe2997429efef4efc9.webp"
   },
@@ -4091,6 +4816,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624898010000",
     "barcodeMjValide": "2624898010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756137252/product/e01df6c775efa93872f2fabbe040e362.webp"
@@ -4103,27 +4830,33 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "23282100",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1738953631/product/e142ad29e89e743764191e490e67f4f0.webp"
   },
   {
     "id": 361,
-    "code": "XXXX",
+    "code": "-",
     "name": "Orange Cara Cara filière",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2604765010000"
   },
   {
     "id": 362,
-    "code": "XXXX",
+    "code": "-",
     "name": "Orange navel à feuil",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2624390010000"
   },
   {
@@ -4134,50 +4867,63 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600649005000",
+    "barcodeP2": "2628684005000",
     "barcodeMjValide": "2600649005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587303039/product_optimized/a2e85cc730915ff1859de62abd18411f.webp"
   },
   {
     "id": 364,
-    "code": "-",
+    "code": "3746",
     "name": "Pamplemousse 500g",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600649005000",
     "barcodeP2": "2628684005000",
+    "barcodeMjValide": "2600649005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587303039/product_optimized/a2e85cc730915ff1859de62abd18411f.webp"
   },
   {
     "id": 365,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pamplemousse rose au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2600649010000"
   },
   {
     "id": 366,
-    "code": "XXXX",
+    "code": "-",
     "name": "Papaye 1Kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2624099010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1644598218/product_optimized/5d6504767182eafed69b67443a29dad3.webp"
   },
   {
     "id": 367,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pastèque",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none"
   },
   {
     "id": 368,
@@ -4187,19 +4933,25 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624513010000",
-    "barcodeMjValide": "2624513010000",
-    "barcodeP2": "2624126010000"
+    "barcodeP2": "2624126010000",
+    "barcodeMjValide": "2624513010000"
   },
   {
     "id": 369,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pastèque 8kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
-    "barcodeP2": "2624513008000"
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624512008000",
+    "barcodeP2": "2624513008000",
+    "barcodeMjValide": "2624512008000"
   },
   {
     "id": 370,
@@ -4209,6 +4961,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2676543010000"
   },
   {
@@ -4219,16 +4973,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2608589010000"
   },
   {
     "id": 372,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pêche CALIBRE 20-25",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2627782005000",
     "barcodeInterne": "2624100005000"
   },
@@ -4240,6 +4998,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677782005000",
     "barcodeMjValide": "2677782005000"
   },
@@ -4251,6 +5011,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "22847683",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1786357094/product/6ae665caafd21d6dceebbf344a85ab0d.webp"
   },
@@ -4262,6 +5024,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671184652/product_optimized/dfbc7eb8c8a804b06ec8fda4ae455637.webp"
   },
   {
@@ -4272,6 +5036,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2608938002000",
     "barcodeMjValide": "2608938002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785232215/product/d041796b12902e658ca9a3969b7f34c7.webp"
@@ -4284,6 +5050,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2624034005000",
     "barcodeMjValide": "2624034005000"
   },
@@ -4295,18 +5063,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2651325010000",
     "barcodeMjValide": "2651325010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789469663/product/bc8709043c3b1dac27032917e88ea0cf.webp"
   },
   {
     "id": 379,
-    "code": "XXXX",
+    "code": "-",
     "name": "Poire au kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none"
   },
   {
     "id": 380,
@@ -4316,39 +5088,34 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624854010000",
     "barcodeMjValide": "2624854010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756199018/product/6eaea067d4bc367447724bb7bbe535da.webp"
   },
   {
     "id": 381,
-    "code": "XXXX",
+    "code": "-",
     "name": "Poire double couche",
     "department": "Fruits et légumes",
     "category": "Fruits",
-    "quantite": "pièce",
+    "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2671714010000"
   },
   {
-    "id": 382,
-    "code": "7715",
-    "name": "Poire Flor 1Kg",
-    "department": "Fruits et légumes",
-    "category": "Fruits",
-    "quantite": "kg",
-    "isEnabled": true,
-    "barcodeMarjane": "2671714005000",
-    "barcodeMjValide": "2671714005000"
-  },
-  {
     "id": 383,
-    "code": "XXXX",
+    "code": "-",
     "name": "Poire le kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624129010000"
   },
   {
@@ -4359,6 +5126,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "3671714005000",
     "barcodeMjValide": "3671714005000"
   },
@@ -4370,10 +5139,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2671714010000",
-    "barcodeMjValide": "2671714010000",
     "barcodeP2": "2624129010000",
     "barcodeInterne": "2000014450820",
+    "barcodeMjValide": "2671714010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756198925/product/4d3b06d55b774f4b5d8d44cf2f359bcf.webp"
   },
   {
@@ -4384,6 +5155,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2627788005000"
   },
   {
@@ -4394,6 +5167,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600526010000",
     "barcodeMjValide": "2600526010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756198975/product/46ee46d1a24c0c22f5b506d43400fe9b.webp"
@@ -4406,6 +5181,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1762267116/product/3e61d3e5173088e2cf5ea39714e1b8fb.webp"
   },
   {
@@ -4416,39 +5193,48 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2604465010000",
     "barcodeMjValide": "2604465010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751383743/product/905548a528121c71ddc0069415c12a60.webp"
   },
   {
     "id": 390,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme gala moyen calibre 14-22 1Kg - FILIERE M",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
-    "barcodeP2": "2604444010000"
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeP2": "2604444010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5b64b4b305a6ffcd5a9830a49c5672ca.webp"
   },
   {
     "id": 391,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme gala moyen calibre 24-28 1Kg - FILIERE M",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2604443010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761216618/product/5b64b4b305a6ffcd5a9830a49c5672ca.webp"
   },
   {
     "id": 392,
-    "code": "----",
+    "code": "-",
     "name": "Pomme gala Sachet 1Kg - FILIERE M",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014033580",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381332/product/b7ffe3c80c3a3b93824dfc559106f637.webp"
   },
@@ -4460,6 +5246,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624497010000",
     "barcodeMjValide": "2624497010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1623227248/product_optimized/1462752b54985823ec791b82cf633a47.webp"
@@ -4472,6 +5260,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2604446010000",
     "barcodeMjValide": "2604446010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1704724326/product/f24cf3c327f7ac29a54e88bb5a1d3c9f.webp"
@@ -4484,6 +5274,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2604453010000",
     "barcodeMjValide": "2604453010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1704724326/product/f24cf3c327f7ac29a54e88bb5a1d3c9f.webp"
@@ -4495,45 +5287,60 @@ export const INITIAL_PRODUCTS: Product[] = [
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "2604446010000",
+    "barcodeMjValide": "2604446010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/d0c22c627fed61e4b5b1b8e257177f53.webp"
   },
   {
     "id": 397,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme golden simple",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none"
   },
   {
     "id": 398,
-    "code": "XXXX",
+    "code": "4111",
     "name": "Pomme granny calibre 18-20 1Kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
-    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761217938/product/f7f20d8be4cb1441e0fa8d3caa23a668.webp"
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "260558101OOOO0",
+    "barcodeMjValide": "260558101OOOO0",
+    "imageUrl": "https://res.cloudinarycom/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761217938/product/f7f20d8be4cb1441e0fa8d3caa23a668.webp"
   },
   {
     "id": 399,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme rouge 24-28 f — moyen",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2605570010000"
   },
   {
     "id": 400,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme rouge calibre 18-20 1Kg",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2604465010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1698916506/product/6fb3debc9328873be88b590488e86f59.webp"
   },
@@ -4544,16 +5351,23 @@ export const INITIAL_PRODUCTS: Product[] = [
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "2605570010000",
+    "barcodeMjValide": "2605570010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/0a09589f5f509c56a52da420ce3ff3ce.webp"
   },
   {
     "id": 402,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme rouge simple c extra",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624994010000"
   },
   {
@@ -4564,6 +5378,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761216727/product/4dd487506a8794052810bb41efd9bc10.webp"
   },
   {
@@ -4574,6 +5390,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014276376"
   },
   {
@@ -4584,16 +5402,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2607071005000"
   },
   {
     "id": 406,
-    "code": "XXXX",
+    "code": "-",
     "name": "Prune jaune mi-fille",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2677705005004"
   },
   {
@@ -4604,6 +5426,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2607775005000",
     "barcodeMjValide": "2607775005000"
   },
@@ -4615,6 +5439,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "41159682"
   },
   {
@@ -4625,6 +5451,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677787005000",
     "barcodeMjValide": "2677787005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756217545/product/8effe6baf6c0d4686765e4f0c7fe3cfd.webp"
@@ -4637,6 +5465,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756198698/product/33e06c04f538f2bf68f1e91f7a842dd2.webp"
   },
   {
@@ -4647,6 +5477,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624120010000",
     "barcodeMjValide": "2624120010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1727807765/product/c241afeda9957a6171ec78dac4485c23.webp"
@@ -4659,6 +5491,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624602010000",
     "barcodeMjValide": "2624602010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1727807765/product/c241afeda9957a6171ec78dac4485c23.webp"
@@ -4671,19 +5505,23 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624120010000",
-    "barcodeMjValide": "2624120010000",
     "barcodeMiniSecours": "41239094",
+    "barcodeMjValide": "2624120010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1727807765/product/c241afeda9957a6171ec78dac4485c23.webp"
   },
   {
     "id": 414,
-    "code": "XXXX",
+    "code": "-",
     "name": "Raisin blanc sans pépins 1Kg - FILIERE M",
     "department": "Fruits et légumes",
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2685219010000"
   },
   {
@@ -4694,6 +5532,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626906005000",
     "barcodeMjValide": "2626906005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785234177/product/afbf64bac8ef6da99f642131a247626d.webp"
@@ -4706,6 +5546,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641369010000",
     "barcodeMjValide": "2641369010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1786007947/product/c1a18f06798716a87b5e5123595983c7.webp"
@@ -4718,9 +5560,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641369010000",
-    "barcodeMjValide": "2641369010000",
     "barcodeP2": "2624602010000",
+    "barcodeMjValide": "2641369010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1786007947/product/c1a18f06798716a87b5e5123595983c7.webp"
   },
   {
@@ -4731,9 +5575,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2641618010000",
-    "barcodeMjValide": "2641618010000",
     "barcodeInterne": "2000014695726",
+    "barcodeMjValide": "2641618010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751384984/product/272f7b00cff864172be5b20be6543344.webp"
   },
   {
@@ -4744,6 +5590,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671183167/product_optimized/91100934a32f4faf2ae5b53fff9687fc.webp"
   },
   {
@@ -4754,6 +5602,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626285001000",
     "barcodeMjValide": "2626285001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785232681/product/0e025b363102aaf9c47e3a675be4c769.webp"
@@ -4766,6 +5616,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1765291678/product/eacb62ae08fec969d0a1b28bc2741720.webp"
   },
   {
@@ -4776,6 +5628,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Fruits",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2658910001000",
     "barcodeMjValide": "2658910001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785250564/product/992af406298a87ca243e3f20cdb844e8.webp"
@@ -4788,6 +5642,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014488199",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747929324/product/6d0b1739b702a7404bd421fb8c8652d5.webp"
   },
@@ -4799,6 +5655,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626291001000",
     "barcodeMjValide": "2626291001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671186894/product_optimized/94a308d1a9b90386df05246313464ae6.webp"
@@ -4811,6 +5669,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747827232/product/518dba49296f5785fa11b7ce7f68b9a5.webp"
   },
   {
@@ -4821,6 +5681,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1783424654/product/80b99db72dee5efbd46202e75b0a2b19.webp"
   },
   {
@@ -4831,6 +5693,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671185240/product_optimized/34476948422b8293f1510b88123f14f7.webp"
   },
   {
@@ -4841,6 +5705,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671184814/product_optimized/130cf69bf1c9aca3debc0f26476b492a.webp"
   },
   {
@@ -4851,6 +5717,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756132290/product/21969dfa9031ae2760afc7dc52ddb3d5.webp"
   },
   {
@@ -4861,6 +5729,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014033573",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747929242/product/6e9b2007af0b7d17436f702576ba6e0e.webp"
   },
@@ -4872,6 +5742,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624896005000",
     "barcodeMjValide": "2624896005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1620743146/product_optimized/c9f27627dace517b54f0bc621042d704.webp"
@@ -4884,6 +5756,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747753895/product/5f2d5c711dac1ebab1ca8459bc2221fa.webp"
   },
   {
@@ -4894,6 +5768,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624567000010",
     "barcodeMjValide": "2624567000010",
     "imageUrl": "https://biotop.ma/cdn/shop/products/batavia-rouge-bio-piece.jpg?v=1653585320"
@@ -4906,9 +5782,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2678965000010",
-    "barcodeMjValide": "2678965000010",
     "barcodeInterne": "2000014624375",
+    "barcodeMjValide": "2678965000010",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1758038593/product/eef269862ad22f4160902c841175fb72.webp"
   },
   {
@@ -4919,6 +5797,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2611557000018",
     "barcodeMjValide": "2611557000018",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1728999090/product/1e8255b9c1bbe9ea2493799169ca8f57.webp"
@@ -4931,6 +5811,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2687715000010",
     "barcodeMjValide": "2687715000010",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1786094745/product/fe19cfbad319ab0ff6fec9dbf9ca402e.webp"
@@ -4943,6 +5825,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2569827600010",
     "barcodeMjValide": "2569827600010",
     "imageUrl": "https://atlaseeds.com/wp-content/uploads/2025/05/maroc-atlaseeds-graines-laitue-vert.webp"
@@ -4955,6 +5839,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2669006000018",
     "barcodeMjValide": "2669006000018",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1729082783/product/18f9d4d0d8ae9e8041449acee9f92d63.webp"
@@ -4967,9 +5853,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2669003000018",
-    "barcodeMjValide": "2669003000018",
     "barcodeInterne": "2000014624429",
+    "barcodeMjValide": "2669003000018",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751452720/product/c9655b2ab314a5077d96d21bd2836b04.webp"
   },
   {
@@ -4980,9 +5868,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2669002000018",
-    "barcodeMjValide": "2669002000018",
     "barcodeInterne": "2000014624436",
+    "barcodeMjValide": "2669002000018",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1762526529/product/5c8036490b1b19b8c7e44a041a6b9e4a.webp"
   },
   {
@@ -4993,9 +5883,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2698274000014",
-    "barcodeMjValide": "2698274000014",
     "barcodeInterne": "2000014624443",
+    "barcodeMjValide": "2698274000014",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751384691/product/13fbc028197c8139809545238822cd73.webp"
   },
   {
@@ -5006,6 +5898,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2686415000016",
     "barcodeMjValide": "2686415000016",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756112301/product/cd566e4400f29d1a47475d1ae0069ab3.webp"
@@ -5018,6 +5912,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2647851000018",
     "barcodeMjValide": "2647851000018",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751449234/product/a6400bf0c8e03c1b88eb9cff913ad9ab.webp"
@@ -5030,6 +5926,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014488137",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1741693771/product/3f49a03f59a6579c0a5a072e4ea58490.webp"
   },
@@ -5041,6 +5939,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014033559",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747928884/product/717a329fd5fd594d74ff7380ecbc1eb3.webp"
   },
@@ -5052,6 +5952,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014033566",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747929206/product/55b53ebf2675c93c2ac2050b46a03b7b.webp"
   },
@@ -5063,6 +5965,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014488311",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756133903/product/96151d39c2de6f4073c6fe95ddc923fc.webp"
   },
@@ -5074,6 +5978,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014488151",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1741693961/product/96cb55ff7fef154a1187b0b1eac45f24.webp"
   },
@@ -5085,6 +5991,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1747753450/product/96e437ecfcf9213dc5b11b838b1eb18e.webp"
   },
   {
@@ -5095,9 +6003,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624603000014",
-    "barcodeMjValide": "2624603000014",
     "barcodeInterne": "2000014562219",
+    "barcodeMjValide": "2624603000014",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789476051/product/8c2fba40b65150de3d836794385da990.webp"
   },
   {
@@ -5108,6 +6018,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1746545309/product/39f3ad23769e124e935cc0d45609af7e.webp"
   },
   {
@@ -5118,6 +6030,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Herbes et salades",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeP2": "2000014488359",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756133828/product/fa29fa74ba14c1f7e342dcac709b69f4.webp"
   },
@@ -5129,6 +6043,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014764354",
     "barcodeMiniSecours": "22389701",
     "barcodeP3": "2000014758117",
@@ -5142,6 +6058,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014245372",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751383153/product/6029da71cefdc0f9d6b57a7082a1c898.webp"
   },
@@ -5153,6 +6071,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014245389",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1730105129/product/94347566c43729e5c5b040ee407f660a.webp"
   },
@@ -5164,39 +6084,49 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2624867010000",
     "barcodeMjValide": "2624867010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588267594/product_optimized/d10691fd9239028c52bd1c9216f1da2a.webp"
   },
   {
     "id": 457,
-    "code": "XXXX",
+    "code": "525",
     "name": "Artichaut vert 1Kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624867010000",
     "barcodeP2": "2624487010000",
+    "barcodeMjValide": "2624867010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_240/v1588267594/product_optimized/d10691fd9239028c52bd1c9216f1da2a.webp"
   },
   {
     "id": 458,
-    "code": "XXXX",
+    "code": "-",
     "name": "Artichauts verts / kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624867010000"
   },
   {
     "id": 459,
-    "code": "XXXX",
+    "code": "-",
     "name": "Artichauts violets / kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624444010000"
   },
   {
@@ -5207,6 +6137,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624851000010",
     "barcodeMjValide": "2624851000010",
     "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlOCgw02ihEueULrtHtQs0Zechs7nGFxgouy0S2-pQUg&s=10"
@@ -5219,18 +6151,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677703005000",
     "barcodeMjValide": "2677703005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381518/product/bfd2e025dba74f0ffadcbce8bcb7b0d6.webp"
   },
   {
     "id": 462,
-    "code": "XXXX",
+    "code": "-",
     "name": "Aubergine rouge le kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624523005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381518/product/bfd2e025dba74f0ffadcbce8bcb7b0d6.webp"
   },
@@ -5242,6 +6178,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2600010005000",
     "barcodeMjValide": "2600010005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1781260887/product/7ec986b9598aae9a5d716d04290dba68.webp"
@@ -5254,18 +6192,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2624698005000",
     "barcodeMjValide": "2624698005000",
     "imageUrl": "https://www.savibio.fr/187-large_default/brocolis-500-gr.jpg"
   },
   {
     "id": 465,
-    "code": "XXXX",
+    "code": "-",
     "name": "Brocolis le kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://www.savibio.fr/187-large_default/brocolis-500-gr.jpg"
   },
   {
@@ -5276,6 +6218,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
     "barcodeMarjane": "2604124010000",
     "barcodeMjValide": "2604124010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751384253/product/b28ff07f7228de6c76050425bf4ebef9.webp"
@@ -5288,6 +6232,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624594001000",
     "barcodeMjValide": "2624594001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671186084/product_optimized/9b7e000eab9dd35d6002fee040b66bc3.webp"
@@ -5300,6 +6246,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014400344",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1671183860/product_optimized/d79327924f9dd9468f35d16000cd9c53.webp"
   },
@@ -5311,28 +6259,34 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624889010000",
     "barcodeMjValide": "2624889010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1765290659/product/6d5c4f8c3b7c23234d87606b5a5d0568.webp"
   },
   {
     "id": 470,
-    "code": "XXXX",
+    "code": "-",
     "name": "Chou blanc / kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624811010000"
   },
   {
     "id": 471,
-    "code": "XXXX",
+    "code": "-",
     "name": "Chou-fleur / kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624800010000"
   },
   {
@@ -5343,6 +6297,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2666884010000",
     "barcodeMjValide": "2666884010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381582/product/9e8c0be84252039eb6c72018676c75c8.webp"
@@ -5355,18 +6311,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2666890010000",
     "barcodeMjValide": "2666890010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381630/product/5fa1c27f3757ebbecdb9a42561a0f84f.webp"
   },
   {
     "id": 474,
-    "code": "XXXX",
+    "code": "-",
     "name": "Concombre court / kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624589010000"
   },
   {
@@ -5377,6 +6337,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677702010000",
     "barcodeMjValide": "2677702010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381669/product/19ff0e3435d88d9be6e244715a7710a5.webp"
@@ -5389,6 +6351,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2658497010000",
     "barcodeMjValide": "2658497010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1784124168/product/76fdd400242f66f32d9f9fc3b57decac.webp"
@@ -5401,6 +6365,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624869005000",
     "barcodeMjValide": "2624869005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587309358/product_optimized/dc585873a77cff5e776e9158b073126e.webp"
@@ -5413,6 +6379,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626267005000",
     "barcodeMjValide": "2626267005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751448109/product/9ab9f50e0502890f0370cfe84bd7a7c2.webp"
@@ -5425,6 +6393,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2670006005000",
     "barcodeMjValide": "2670006005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1620743036/product_optimized/6b2864cad56139e1bf04ae1bcdba9768.webp"
@@ -5437,6 +6407,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "41238134",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587309651/product_optimized/89925bd049a850b0f5cac8da90e4eba4.webp"
   },
@@ -5448,6 +6420,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1765290830/product/bcb06b7f184911fd5caf65cb648b4747.webp"
   },
   {
@@ -5458,6 +6432,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600625002000",
     "barcodeMjValide": "2600625002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1790941180/product/7fa47c0a29d056cbdf35bb93c6798a84.webp"
@@ -5470,9 +6446,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626169010000",
-    "barcodeMjValide": "2626169010000",
     "barcodeInterne": "2000014319226",
+    "barcodeMjValide": "2626169010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_828/v1779699231/product/9c267c391adfe70fd6273b93d447e3a9.webp"
   },
   {
@@ -5483,6 +6461,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624548005000",
     "barcodeMjValide": "2624548005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1698917549/product/1744db3ed8beb6b7f749abf36042f8bd.webp"
@@ -5495,28 +6475,37 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "50",
     "barcodeMarjane": "2624871005000",
     "barcodeMjValide": "2624871005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587309744/product_optimized/72229cc790fc67790248073243c7eb1e.webp"
   },
   {
     "id": 486,
-    "code": "XXXX",
-    "name": "Fenouil le kg",
+    "code": "2724",
+    "name": "Fenouil 500g - FILIERE ( a scannez 5 fois 100g X 5 )",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
-    "barcodeP2": "2624871005000"
+    "isVerified100": false,
+    "verificationStatus": "50",
+    "barcodeMarjane": "2654187001000",
+    "barcodeP2": "2624871005000",
+    "barcodeMjValide": "2654187001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/dec8a32182a11f9ebbd0efd07e2482ee.webp"
   },
   {
     "id": 487,
-    "code": "XXXX",
+    "code": "-",
     "name": "Fèves le kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624872005000"
   },
   {
@@ -5527,6 +6516,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624409002000",
     "barcodeMjValide": "2624409002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588286406/product_optimized/417ea82e19bdf8f495c6d394ad9c90eb.webp"
@@ -5539,18 +6530,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626377001000",
     "barcodeMjValide": "2626377001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1785233527/product/ea6774606e9132bd538ee49add3f02c9.webp"
   },
   {
     "id": 490,
-    "code": "XXXX",
+    "code": "-",
     "name": "Gombos en barquette 500g",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624812005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789565588/product/f0d93eb932335b59aaebd7859c01f90a.webp"
   },
@@ -5562,20 +6557,24 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2625438005000",
-    "barcodeMjValide": "2625438005000",
     "barcodeP2": "2626254005000",
     "barcodeInterne": "2000014695818",
+    "barcodeMjValide": "2625438005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1745504596/product/935d2f9b443ab43783bd87821159d9ee.webp"
   },
   {
     "id": 492,
-    "code": "XXXX",
+    "code": "-",
     "name": "Haricots vert le kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1745504596/product/935d2f9b443ab43783bd87821159d9ee.webp"
   },
   {
@@ -5586,17 +6585,21 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624897005000",
     "barcodeMjValide": "2624897005000"
   },
   {
     "id": 494,
-    "code": "XXXX",
+    "code": "-",
     "name": "Navet jaunes le kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624897005000"
   },
   {
@@ -5607,6 +6610,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624238005000",
     "barcodeMjValide": "2624238005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587311314/product_optimized/611fb8847188e92cc231a4fcab4692e4.webp"
@@ -5619,26 +6624,32 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587311386/product_optimized/7a00e51a1bdcf8e516f1a1e035e245f0.webp"
   },
   {
     "id": 497,
-    "code": "XXXX",
+    "code": "-",
     "name": "Navets ronds le kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624886005000"
   },
   {
     "id": 498,
-    "code": "XXXX",
+    "code": "-",
     "name": "Oignon blanc 1Kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624587010000"
   },
   {
@@ -5649,6 +6660,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2676540010000",
     "barcodeMjValide": "2676540010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381719/product/a30cf71eefabcda499953593adc0ba6f.webp"
@@ -5661,6 +6674,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624242010000",
     "barcodeMjValide": "2624242010000"
   },
@@ -5672,6 +6687,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2688721010000",
     "barcodeMjValide": "2688721010000"
   },
@@ -5683,6 +6700,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624243010000",
     "barcodeMjValide": "2624243010000"
   },
@@ -5694,17 +6713,21 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677876010000",
     "barcodeMjValide": "2677876010000"
   },
   {
     "id": 504,
-    "code": "XXXX",
+    "code": "-",
     "name": "Oignon rouge 1Kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624588010000"
   },
   {
@@ -5715,18 +6738,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654670010000",
     "barcodeMjValide": "2654670010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381758/product/dc01c7aad0273204a36db9193559b5eb.webp"
   },
   {
     "id": 506,
-    "code": "XXXX",
+    "code": "-",
     "name": "Oingurge kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624819010000"
   },
   {
@@ -5737,40 +6764,35 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2650001010000",
     "barcodeMjValide": "2650001010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789734488/product/fe085bfdb98db5bc3f207af80ac5ca96.webp"
   },
   {
     "id": 508,
-    "code": "XXXX",
+    "code": "-",
     "name": "PDT blanche au kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624431010000"
   },
   {
     "id": 509,
-    "code": "XXXX",
+    "code": "-",
     "name": "PDT rouge au kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624430010000"
-  },
-  {
-    "id": 510,
-    "code": "XXXX",
-    "name": "Petits pois le kg",
-    "department": "Fruits et légumes",
-    "category": "Legumes",
-    "quantite": "kg",
-    "isEnabled": true,
-    "barcodeP2": "2606807005000",
-    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587313418/product_optimized/f25ae241c1ce8e0b8c25df27e0428126.webp"
   },
   {
     "id": 511,
@@ -5780,6 +6802,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2606807005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587313418/product_optimized/f25ae241c1ce8e0b8c25df27e0428126.webp"
   },
@@ -5791,18 +6815,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624558005000",
     "barcodeMjValide": "2624558005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381883/product/36c834d5413a28afaa549f536e9bab9a.webp"
   },
   {
     "id": 513,
-    "code": "XXXX",
+    "code": "-",
     "name": "Piments fort rouge",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2619300005000"
   },
   {
@@ -5813,6 +6841,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624803005000",
     "barcodeMjValide": "2624803005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587314870/product_optimized/8d094e68ec73cb43d2299367b69b78df.webp"
@@ -5825,9 +6855,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677701005000",
-    "barcodeMjValide": "2677701005000",
     "barcodeInterne": "2000014716872",
+    "barcodeMjValide": "2677701005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1754403639/product/09db75f9336d3d41629d94df895aa614.webp"
   },
   {
@@ -5838,9 +6870,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677710005000",
-    "barcodeMjValide": "2677710005000",
     "barcodeInterne": "2000014716865",
+    "barcodeMjValide": "2677710005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1754403734/product/063c62cbad2c08b4bc44975df8195dab.webp"
   },
   {
@@ -5851,9 +6885,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2626266005000",
-    "barcodeMjValide": "2626266005000",
     "barcodeInterne": "2000014097629",
+    "barcodeMjValide": "2626266005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381916/product/f324f5d30a8bcbd6b1d161c06ce34e66.webp"
   },
   {
@@ -5864,6 +6900,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2699785010000",
     "barcodeMjValide": "2699785010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381798/product/4dc44d401677177ec5a2d0c2a23a3115.webp"
@@ -5876,6 +6914,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600046010000",
     "barcodeMjValide": "2600046010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1790162871/product/89d11902044d18341d684c4802e0a7a8.webp"
@@ -5888,6 +6928,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1790163143/product/444767d6cee7c7bc529eedfd8312e654.webp"
   },
   {
@@ -5898,6 +6940,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624829010000",
     "barcodeMjValide": "2624829010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789734488/product/fe085bfdb98db5bc3f207af80ac5ca96.webp"
@@ -5910,6 +6954,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2650001010000",
     "barcodeMjValide": "2650001010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789734488/product/fe085bfdb98db5bc3f207af80ac5ca96.webp"
@@ -5922,6 +6968,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2677881010000",
     "barcodeMjValide": "2677881010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751447201/product/0fd42a9d258ae1a1a7191d18635c6a9e.webp"
@@ -5934,6 +6982,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2608762005000",
     "barcodeMjValide": "2608762005000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789743857/product/b5f5f94a3a9bd789adbbf3dccd3b1d10.webp"
@@ -5946,6 +6996,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1790164324/product/44d418e9a4f3297846abaced995bf9e2.webp"
   },
   {
@@ -5956,18 +7008,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2699789010000",
     "barcodeMjValide": "2699789010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751381844/product/94d4abaa987e256950ef7f71340e7996.webp"
   },
   {
     "id": 527,
-    "code": "XXXX",
+    "code": "-",
     "name": "Pomme de terre rouge 1kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
-    "isEnabled": true
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none"
   },
   {
     "id": 528,
@@ -5977,41 +7033,23 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600578010000",
     "barcodeMjValide": "2600578010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1789398648/product/01561bc57d62fc512967b113da3004c7.webp"
   },
   {
-    "id": 529,
-    "code": "754",
-    "name": "Portobello 100g",
-    "department": "Fruits et légumes",
-    "category": "Legumes",
-    "quantite": "g",
-    "isEnabled": true,
-    "barcodeMarjane": "2624107001000",
-    "barcodeMjValide": "2624107001000"
-  },
-  {
     "id": 530,
-    "code": "XXXX",
+    "code": "-",
     "name": "Portobello locale au kg",
     "department": "Fruits et légumes",
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2633890004001"
-  },
-  {
-    "id": 531,
-    "code": "3688",
-    "name": "Radis rouge 500g",
-    "department": "Fruits et légumes",
-    "category": "Legumes",
-    "quantite": "g",
-    "isEnabled": true,
-    "barcodeP2": "2626677015000",
-    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1698917090/product/1462032e007aecaf4a8b6a02780acd51.webp"
   },
   {
     "id": 532,
@@ -6021,6 +7059,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2631404001000",
     "barcodeMjValide": "2631404001000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1765290920/product/53510586c4a4b47900e6f25e4ddcaaf0.webp"
@@ -6033,6 +7073,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014576742",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1649776905/product_optimized/940b6927b8e74fd3a1c69e9b6db20f26.webp"
   },
@@ -6044,6 +7086,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "3504181020019",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1588268179/product_optimized/85f86fdeff39a9f581a132e2f3651bcf.webp"
   },
@@ -6055,9 +7099,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Legumes",
     "quantite": "kg",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2659879010000",
-    "barcodeMjValide": "2659879010000",
     "barcodeInterne": "2000014097759",
+    "barcodeMjValide": "2659879010000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751382220/product/a820bb11f69fe199bdf9fd131b9ca362.webp"
   },
   {
@@ -6068,9 +7114,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2607891001000",
     "barcodeMjValide": "2607891001000",
-    "imageUrl": "https://shopcdnalpha.grainajz.com/category/29374/2333/f15ab15b0680a0df9eb0e68beda0c216/无logo白底图_画板%201%20副本%2028.png"
+    "imageUrl": "https://shopcdnalpha.grainajz.com/category/29374/2333/f15ab15b0680a0df9eb0e68beda0c216/%E6%97%A0logo%E7%99%BD%E5%BA%95%E5%9B%BE_%E7%94%BB%E6%9D%BF%201%20%E5%89%AF%E6%9C%AC%2028.png"
   },
   {
     "id": 537,
@@ -6080,18 +7128,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2687871002000",
     "barcodeMjValide": "2687871002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1690029284/product/6020186f3cabc8832435c094098dc0f1.webp"
   },
   {
     "id": 538,
-    "code": "XXXX",
+    "code": "-",
     "name": "Champignon frais 200g",
     "department": "Fruits et légumes",
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2624916002000"
   },
   {
@@ -6102,6 +7154,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2654127001000",
     "barcodeMjValide": "2654127001000"
   },
@@ -6113,6 +7167,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2681238001000",
     "barcodeMjValide": "2681238001000"
   },
@@ -6124,6 +7180,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624107001000",
     "barcodeMjValide": "2624107001000"
   },
@@ -6135,9 +7193,11 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Champignon",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2624716001000",
     "barcodeMjValide": "2624716001000",
-    "imageUrl": "https://shopcdnalpha.grainajz.com/category/29374/2333/97aa70c9b925cba0ed72e10501740243/无logo_画板%201%20副本%2041.png"
+    "imageUrl": "https://shopcdnalpha.grainajz.com/category/29374/2333/97aa70c9b925cba0ed72e10501740243/%E6%97%A0logo_%E7%94%BB%E6%9D%BF%201%20%E5%89%AF%E6%9C%AC%2041.png"
   },
   {
     "id": 543,
@@ -6147,6 +7207,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744051680/product/4bf7a0bfdb1ed0c2653d26603e326012.webp"
   },
   {
@@ -6157,6 +7219,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1745596633/product/e277e88241c7be2c2259fcacbd2b721a.webp"
   },
   {
@@ -6167,16 +7231,22 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1742900744/product/08ae3bb3ee86c9080d5d7fe928cb4386.webp"
   },
   {
     "id": 546,
-    "code": "-",
+    "code": "8011",
     "name": "Briouates aux amandes 200g",
     "department": "Boulangerie et pâtisserie",
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "2624071002000",
+    "barcodeMjValide": "2624071002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1770910559/product/1cfe37d4ad90185096f5d9b546df228d.webp"
   },
   {
@@ -6187,6 +7257,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1770909728/product/39bf2276735bb4856bdd1b18b6da7f10.webp"
   },
   {
@@ -6197,6 +7269,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600450575/product_optimized/9231203b2a7557c531e30ef1f6023466.webp"
   },
   {
@@ -6207,6 +7281,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600450834/product_optimized/73d1c204b501622121d68785ac2c823d.webp"
   },
   {
@@ -6217,6 +7293,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1743187212/product/5a93192ec9bced075b698985645dbad5.webp"
   },
   {
@@ -6227,6 +7305,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1745596451/product/8f81ed429b99fd6f1362f20c3eccfad6.webp"
   },
   {
@@ -6237,6 +7317,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744051605/product/f63d7b9eca5eaeb7f624628d6388028d.webp"
   },
   {
@@ -6247,6 +7329,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995275/product/87531cfe828f794cbd6421bcd0b5b568.webp"
   },
   {
@@ -6257,6 +7341,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995167/product/b7e947ec193bffd55a7115ac09d1584f.webp"
   },
   {
@@ -6267,6 +7353,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995038/product/5ac19f6b721976605308a112be34258e.webp"
   },
   {
@@ -6277,6 +7365,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711994924/product/531496eef58d4844b8e97011f7fbb768.webp"
   },
   {
@@ -6287,6 +7377,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711994803/product/5f47adee99e7aff54903806a12d99aa6.webp"
   },
   {
@@ -6297,6 +7389,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711996012/product/9dfcc085d58429af160a4d59893d6f00.webp"
   },
   {
@@ -6307,6 +7401,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995671/product/c311cdbee43c1557541d33a819f82be8.webp"
   },
   {
@@ -6317,6 +7413,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995897/product/108487ce545fd818db201996138e630b.webp"
   },
   {
@@ -6327,6 +7425,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995786/product/18a9534a65cc16b3f89691bde6e241ac.webp"
   },
   {
@@ -6337,6 +7437,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711995539/product/372e222395de9f2b87cfc0b906cb1683.webp"
   },
   {
@@ -6347,6 +7449,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1728068174/product/efe5c2c0499abb5acb4cccce3980e379.webp"
   },
   {
@@ -6357,89 +7461,107 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Gâteaux traditionnels",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1773834654/product/4096af9fdc5212bb995ac2889cbadd23.webp"
   },
   {
     "id": 565,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette à l'ancienne 200g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1635760601/product_optimized/3b61de264cae49a53ed3fe83b7d75f34.webp"
   },
   {
     "id": 566,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette aux céréales 250g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1750946127/product/c6bbb94f0557722d631b0eb2833e8ec3.webp"
   },
   {
     "id": 567,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette aux graines de pavot 250g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22173492",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1583089597/marjane_assets/april_prod_reduced/217349_1.webp"
   },
   {
     "id": 568,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette aux olives 250g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "40925349",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1583089597/marjane_assets/april_prod_reduced/1096265_1.webp"
   },
   {
     "id": 569,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette aux sésames 250g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22173515",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1583089597/marjane_assets/april_prod_reduced/217351_1.webp"
   },
   {
     "id": 570,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette beldi 200g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1587310813/product_optimized/9b1ad56abe296e1b83319dd26daaff6c.webp"
   },
   {
     "id": 571,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette beldi 250g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1750946757/product/8a2d2ace9c7d8fde9c5b51360dac5bea.webp"
   },
   {
     "id": 572,
-    "code": "0000",
+    "code": "-",
     "name": "Baguette semoule 250g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22778533",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1583089597/marjane_assets/april_prod_reduced/277953_1.webp"
   },
@@ -6451,134 +7573,161 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1663753735/product_optimized/6de2b30b5bc43a58ad9afddfd68f35d4.webp"
   },
   {
     "id": 574,
-    "code": "0000",
+    "code": "-",
     "name": "Mini galette 100% complet x6 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "40965888",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751541582/product/1485e590c8f4007e9a992e272d9898b0.webp"
   },
   {
     "id": 575,
-    "code": "0000",
+    "code": "-",
     "name": "Mini galette beldi x5 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22175502",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751538508/product/3ed821d077383b7c089960dbba086771.webp"
   },
   {
     "id": 576,
-    "code": "0000",
+    "code": "-",
     "name": "Mini galette de campagne x5 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1618238415/product_optimized/fed0961f8e58817339c28e62e2b37cea.webp"
   },
   {
     "id": 577,
-    "code": "0000",
+    "code": "-",
     "name": "Mini galette nature x5 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751538631/product/5cc0fccacff635338867c11d228ccfc5.webp"
   },
   {
     "id": 578,
-    "code": "0000",
+    "code": "-",
     "name": "Mini galette semoule x5 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22175502",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751544602/product/f2b2c1ddfc60e08f0555e80ec0df7a22.webp"
   },
   {
     "id": 579,
-    "code": "0000",
+    "code": "-",
     "name": "Pain de campagne 400g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751365122/product/9557530c4625e6410a32b3efefd77fbb.webp"
   },
   {
     "id": 580,
-    "code": "0000",
+    "code": "-",
     "name": "Pain de seigle 400g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22173331",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1674815334/product_optimized/9f041576118f588728023e437c097b88.webp"
   },
   {
     "id": 581,
-    "code": "0000",
+    "code": "-",
     "name": "Pain rond aux graines de sésame 180g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751538706/product/3af8024165d377a8c5ac25630831c702.webp"
   },
   {
     "id": 582,
-    "code": "0000",
+    "code": "-",
     "name": "Pain rond beldi sans sel 180g",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22847782",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751544328/product/a8e914edbee3d1632d1b5bbe0cd0a450.webp"
   },
   {
     "id": 583,
-    "code": "0000",
+    "code": "-",
     "name": "Pain rond beldi x5 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22173881",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751541237/product/4ca46d0cf5e3be6eb555e68c815d9868.webp"
   },
   {
     "id": 584,
-    "code": "0000",
+    "code": "-",
     "name": "Pain rond normal x5 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMiniSecours": "22178022",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751541710/product/1a11e7cef14cb4a3fb90421f7ea1d7b3.webp"
   },
   {
     "id": 585,
-    "code": "0000",
+    "code": "-",
     "name": "Pain sandwich beldi x4 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
-    "barcodeMiniSecours": "22779649"
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMiniSecours": "22779649",
+    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751366100/product/22ac403fad055b4b7449a261f6c57c55.webp"
   },
   {
     "id": 586,
@@ -6588,6 +7737,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751447704/product/37a17ed759271d47e59b57e31b062687.webp"
   },
   {
@@ -6598,6 +7749,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751379714/product/93f537bfd1d5a1913f2b87affb389781.webp"
   },
   {
@@ -6608,6 +7761,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pains et baguettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751447258/product/5e8b0b5c25de8b3a5654d59ca9e1c258.webp"
   },
   {
@@ -6618,6 +7773,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600451543/product_optimized/878a45493a3ed36cf8130886735ce9a6.webp"
   },
   {
@@ -6628,6 +7785,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1639749138/product_optimized/353c8a78f4e2fb82f078f8a8419b140c.webp"
   },
   {
@@ -6638,6 +7797,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744645482/product/068815db337d593393beea0c49e68393.webp"
   },
   {
@@ -6648,6 +7809,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1732732659/product/039cc49147e1090959780e1bb8494cab.webp"
   },
   {
@@ -6658,6 +7821,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600451364/product_optimized/1b82bda476c179c9c84146e0439859af.webp"
   },
   {
@@ -6668,6 +7833,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600451296/product_optimized/0c02704e877c224c3a78892705e140bd.webp"
   },
   {
@@ -6678,6 +7845,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1735030671/product/0113813ec2b37f133bdd0e84b0bb087d.webp"
   },
   {
@@ -6688,6 +7857,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744716463/product/b339876ccc1218b9e5f6fe57b8acc053.webp"
   },
   {
@@ -6698,6 +7869,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1679045867/product_optimized/496d35e6abb9660e6cbb99dbc135f131.webp"
   },
   {
@@ -6708,6 +7881,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744794474/product/2c223daccb1436390a4a8850f4e9e2cd.webp"
   },
   {
@@ -6718,6 +7893,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1679046081/product_optimized/db5f5fba2b424a03057ffd2588e6624a.webp"
   },
   {
@@ -6728,6 +7905,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744645595/product/82687bb05e64cac456b51b4ba4720aa0.webp"
   },
   {
@@ -6738,6 +7917,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744716424/product/6d549c643feb6768a6c05c0239861c26.webp"
   },
   {
@@ -6748,6 +7929,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744714062/product/12c5b110189e8fbe742f188abb83b255.webp"
   },
   {
@@ -6758,6 +7941,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1734984092/product/d3220fe25141bd51ac769c32cca62358.webp"
   },
   {
@@ -6768,6 +7953,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744791249/product/be37dfd5ca550fceca7b884ee99816e5.webp"
   },
   {
@@ -6778,6 +7965,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1734984240/product/fb7a1e6ed0eb5bf6515c074f5d4cd958.webp"
   },
   {
@@ -6788,6 +7977,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1618581631/product_optimized/b6df84e84466d6deb632d8d3e21e6c29.webp"
   },
   {
@@ -6798,6 +7989,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1679045133/product_optimized/7fbb20c926d8dace59cb2163162cb435.webp"
   },
   {
@@ -6808,6 +8001,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1679045694/product_optimized/b738c750924f2cdab567a30829383746.webp"
   },
   {
@@ -6818,6 +8013,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1711365346/product/301cdd0e3fa52c72c2f4a17c7a2f94da.webp"
   },
   {
@@ -6828,6 +8025,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744705105/product/e711481fa6a19059b5773e386f5e9055.webp"
   },
   {
@@ -6838,6 +8037,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744713910/product/7afd85899824fb5b436a92926e38baf3.webp"
   },
   {
@@ -6848,6 +8049,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744713950/product/9204985fd4fe82e181162e3871bb33d2.webp"
   },
   {
@@ -6858,6 +8061,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744716390/product/75ebbb573090226945f1ad36ab49f18c.webp"
   },
   {
@@ -6868,6 +8073,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Pâtisseries et galettes",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1619015539/product_optimized/c37c9bb0d2cde4e872f6324669f469b3.webp"
   },
   {
@@ -6878,6 +8085,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1701197460/product/a57edbe768c9ec3781ba4529c0d88a33.webp"
   },
   {
@@ -6888,6 +8097,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744621606/product/10a69a9948c5f88ed0b4e4af6da723c7.webp"
   },
   {
@@ -6898,6 +8109,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751281364/product/f9cc6d2396f803405f85575bc7528191.webp"
   },
   {
@@ -6908,6 +8121,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1749561672/product/37d87606426a48e631e75faddc984090.webp"
   },
   {
@@ -6918,6 +8133,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1635771995/product_optimized/9be73937ec3f54043e857b2ba9cba130.webp"
   },
   {
@@ -6928,6 +8145,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744621998/product/a2c3c2ee0f15fcf359ea774b4f154a78.webp"
   },
   {
@@ -6938,6 +8157,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733150126/product/618d6653c4afa2471c2c77cc51cbb996.webp"
   },
   {
@@ -6948,6 +8169,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733149846/product/be4bb1b11a9ed14331ed035526b9444d.webp"
   },
   {
@@ -6958,6 +8181,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733149978/product/a6295850406b7b9024f41915d91b95f0.webp"
   },
   {
@@ -6968,6 +8193,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733149739/product/abe90f79871dab83d8b98942c6316b4e.webp"
   },
   {
@@ -6978,6 +8205,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733732444/product/eba082890cdc26d020eb278348af4504.webp"
   },
   {
@@ -6988,6 +8217,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744795917/product/76a2a2a7aef3a951c16171506bee3f4e.webp"
   },
   {
@@ -6998,6 +8229,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1743187351/product/135923e4d70ebcd3c58abb8a6c4bd5f9.webp"
   },
   {
@@ -7008,6 +8241,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1700752335/product/5a804da7a440997eda74c2628ea6f9c7.webp"
   },
   {
@@ -7018,6 +8253,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744644889/product/13ae1d9c3d434689e4967207324fe95a.webp"
   },
   {
@@ -7028,6 +8265,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1743622857/product/36775df283d04a36d4f26aceb6a6d58f.webp"
   },
   {
@@ -7038,6 +8277,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733150677/product/d67a20accf169547e0348535ab4a0530.webp"
   },
   {
@@ -7048,6 +8289,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1700752279/product/36ce1b755c18d7b9664766a3bf12d448.webp"
   },
   {
@@ -7058,6 +8301,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1700752206/product/6652a99a53d7b0b3fbca009901707074.webp"
   },
   {
@@ -7068,6 +8313,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733732879/product/a6122b307c72d8c55f17ba824c19c12e.webp"
   },
   {
@@ -7078,6 +8325,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744795891/product/15b377ee22b93c133cbf75cde0fed6b6.webp"
   },
   {
@@ -7088,6 +8337,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744644751/product/fab5ed36ac90a9abe9438eaec8eeee0b.webp"
   },
   {
@@ -7098,6 +8349,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2601244002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600450960/product_optimized/6f719e54cb9c684e2788aaf025a85b5c.webp"
   },
@@ -7109,6 +8362,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2601245002500",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1600451239/product_optimized/d5d4d2f5e019f3caf9e7fc9d983750b6.webp"
   },
@@ -7120,6 +8375,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751281570/product/142dd1d6fc397b249258fff02ece8d86.webp"
   },
   {
@@ -7130,16 +8387,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744621305/product/32e6fd446851fdb9b2a194363e618d59.webp"
   },
   {
     "id": 641,
-    "code": "-",
+    "code": "5126",
     "name": "Mini croissant 200g",
     "department": "Boulangerie et pâtisserie",
     "category": "Viennoiseries",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeP2": "2600349002200",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1635847886/product_optimized/c514d5d65169ed0351d4ff0168f86db1.webp"
   },
@@ -7151,6 +8412,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733731511/product/f3f38390bcac2a6765faad015d273715.webp"
   },
   {
@@ -7161,6 +8424,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744646361/product/511a75f9d528e993421e313c00849fb6.webp"
   },
   {
@@ -7171,29 +8436,35 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeMarjane": "2600351002000",
     "barcodeMjValide": "2600351002000",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751377795/product/16c2a2960357a718b1efa0a020db51e3.webp"
   },
   {
     "id": 645,
-    "code": "0000",
+    "code": "-",
     "name": "Pain au chocolat pur beurre x4 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014140851",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751366396/product/62c30b1f4f0ba450d7161b69fb22b24f.webp"
   },
   {
     "id": 646,
-    "code": "0000",
+    "code": "-",
     "name": "Pain au chocolat pur beurre x6 unités",
     "department": "Boulangerie et pâtisserie",
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "barcodeInterne": "2000014178465",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1751366100/product/22ac403fad055b4b7449a261f6c57c55.webp"
   },
@@ -7205,6 +8476,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1733941298/product/7b9e39a649681c0473da1f00c58eb84a.webp"
   },
   {
@@ -7215,6 +8488,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744630786/product/786a519fe01a8360fe84ee8583d87767.webp"
   },
   {
@@ -7225,6 +8500,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1635778730/product_optimized/884052a2c2197359ef84b962ae89fc1f.webp"
   },
   {
@@ -7235,6 +8512,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1635772031/product_optimized/9e4ecfc6ad78d362424f455f74967c88.webp"
   },
   {
@@ -7245,6 +8524,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1743187947/product/e5838d7a3f4dfc2c53f3fd27af8c24ba.webp"
   },
   {
@@ -7255,6 +8536,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1743591065/product/fb7d4581c33678eea16305909d621b76.webp"
   },
   {
@@ -7265,6 +8548,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1744707632/product/5bc2e49129c89bbda4b817e1e10b6e4e.webp"
   },
   {
@@ -7275,6 +8560,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Viennoiseries",
     "quantite": "pièce",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_384/v1743187483/product/7a96843c7e8a78d83f60df2037b96522.webp"
   },
   {
@@ -7285,6 +8572,1965 @@ export const INITIAL_PRODUCTS: Product[] = [
     "category": "Volaille",
     "quantite": "g",
     "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
     "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587296392/product_optimized/77ca3c2c976b183dab0d545b56bba057.webp"
+  },
+  {
+    "id": 657,
+    "code": "8465",
+    "name": "Orange navel 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624390010000",
+    "barcodeMjValide": "2624390010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9d15bf912c6dc596f89b939144c9f473.webp"
+  },
+  {
+    "id": 658,
+    "code": "-",
+    "name": "Clémentines sans feuilles 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/1deaca2953a53915b05c51648a0595b5.webp"
+  },
+  {
+    "id": 659,
+    "code": "-",
+    "name": "Clémentines avec feuilles 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/23e1c1fd479db8b7c9d3f4b78a2ccb54.webp"
+  },
+  {
+    "id": 660,
+    "code": "-",
+    "name": "Clementine en filet 2kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4426bd8965acdec86991e6307f4c0570.webp"
+  },
+  {
+    "id": 661,
+    "code": "-",
+    "name": "Pamplemousses roses en filet 1,5 kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/e80f030ec68c547274b649981836ebb2.webp"
+  },
+  {
+    "id": 662,
+    "code": "3746",
+    "name": "Pamplemousse 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600649005000",
+    "barcodeMjValide": "2600649005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a2e85cc730915ff1859de62abd18411f.webp"
+  },
+  {
+    "id": 663,
+    "code": "8076",
+    "name": "Avocat fuerte 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2641520005000",
+    "barcodeMjValide": "2641520005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/8c455394ef970e87666fc2e3508495d0.webp"
+  },
+  {
+    "id": 665,
+    "code": "6675",
+    "name": "Avocat fuerte 500g",
+    "department": "Fruits et légumes",
+    "category": "Fruits",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2621099005000",
+    "barcodeMjValide": "2621099005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/8c455394ef970e87666fc2e3508495d0.webp"
+  },
+  {
+    "id": 667,
+    "code": "-",
+    "name": "Baby mangue 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014400313",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/7a2b94f70652fbb82a2d7177a6faec0e.webp"
+  },
+  {
+    "id": 672,
+    "code": "6365",
+    "name": "Raisin blanc 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624120010000",
+    "barcodeMiniSecours": "41239094",
+    "barcodeMjValide": "2624120010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/c241afeda9957a6171ec78dac4485c23.webp"
+  },
+  {
+    "id": 673,
+    "code": "-",
+    "name": "Prune rouge gros calibre 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/33e06c04f538f2bf68f1e91f7a842dd2.webp"
+  },
+  {
+    "id": 674,
+    "code": "-",
+    "name": "Prune rouge moyen calibre 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/8effe6baf6c0d4686765e4f0c7fe3cfd.webp"
+  },
+  {
+    "id": 675,
+    "code": "-",
+    "name": "Prune rouge en barquette 1 kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/020442c41376cb302b231f285b632461.webp"
+  },
+  {
+    "id": 676,
+    "code": "6300",
+    "name": "Grenade à jus 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2608412010000",
+    "barcodeMjValide": "2608412010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/443c0d8c337d3024c15e4eb160d200aa.webp"
+  },
+  {
+    "id": 677,
+    "code": "-",
+    "name": "Grenadine en filet 2kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/de6894656377de64a1570b04b00a518e.webp"
+  },
+  {
+    "id": 680,
+    "code": "-",
+    "name": "Fraise en barquette de 300g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/ed1b88d7798214afbe215e568589925d.webp"
+  },
+  {
+    "id": 681,
+    "code": "-",
+    "name": "Citron jaune 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/2752b203f0f350a48b8fc36322ed9b07.webp"
+  },
+  {
+    "id": 689,
+    "code": "-",
+    "name": "Poire rocha en barquette",
+    "department": "Fruits et légumes",
+    "category": "Fruits",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/257142b5a6441d9bc085ce5a34a6b6fe.webp"
+  },
+  {
+    "id": 690,
+    "code": "9287",
+    "name": "Poire rocha extra 1kg",
+    "department": "Fruits et légumes",
+    "category": "Fruits",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2671711010000",
+    "barcodeMjValide": "2671711010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/e8017ab00e2f0995d2b3e21a1d688a9f.webp"
+  },
+  {
+    "id": 693,
+    "code": "2371",
+    "name": "Kiwi en barquette 1Kg ( PIECE )",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "264900000010",
+    "barcodeMjValide": "264900000010",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/836629d180066960ac3d9cd3c0a6f8dc.webp"
+  },
+  {
+    "id": 696,
+    "code": "4111",
+    "name": "Pomme granny calibre 18-20 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Fruits",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "26055810100000",
+    "barcodeMjValide": "26055810100000",
+    "imageUrl": "https://res.cloudinarycom/dcphm6bor/image/upload/q_75,f_auto,w_640/v1761217938/product/f7f20d8be4cb1441e0fa8d3caa23a668.webp"
+  },
+  {
+    "id": 701,
+    "code": "-",
+    "name": "Pomme rouge gros calibre 18-20 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/1392dba88593b7e5d7595ed87b1f04ac.webp"
+  },
+  {
+    "id": 703,
+    "code": "-",
+    "name": "pomme rouge moyen calibre 24-28 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/0a09589f5f509c56a52da420ce3ff3ce.webp"
+  },
+  {
+    "id": 704,
+    "code": "-",
+    "name": "Pomme rouge calibre 18-20 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeP2": "2604465010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6fb3debc9328873be88b590488e86f59.webp"
+  },
+  {
+    "id": 705,
+    "code": "8457",
+    "name": "Pomme golden calibre 18-20 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624497010000",
+    "barcodeMjValide": "2624497010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/1462752b54985823ec791b82cf633a47.webp"
+  },
+  {
+    "id": 706,
+    "code": "-",
+    "name": "Pomme rouge en barquette 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/f59cf2bdb07857b31551a2e5a7981159.webp"
+  },
+  {
+    "id": 707,
+    "code": "-",
+    "name": "Pomme Golden en barquette 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014892699",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a46c8e2194fa43bfd83b029d4fc94c01.webp"
+  },
+  {
+    "id": 708,
+    "code": "-",
+    "name": "Pomme Gala en barquette 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/c89ee7aad7037590e8b083db957de035.webp"
+  },
+  {
+    "id": 709,
+    "code": "-",
+    "name": "Framboise en barquette de 125g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMiniSecours": "8717496041647",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/3a24d1897a8b8a35870ed90392cb120a.webp"
+  },
+  {
+    "id": 710,
+    "code": "-",
+    "name": "Framboise en barquette 125g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5d775b3c3d7e76b8e7364e97648bc135.webp"
+  },
+  {
+    "id": 711,
+    "code": "3005",
+    "name": "Mûres, la barquette",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600037000011",
+    "barcodeMiniSecours": "40870090",
+    "barcodeMjValide": "2600037000011",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/14900bdc1764521807da5b7fea70f3be.webp"
+  },
+  {
+    "id": 712,
+    "code": "5169",
+    "name": "Ananas à la pièce",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624265000018",
+    "barcodeMjValide": "2624265000018",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/2edbaa21f81fe6fac9fe546b3109bad6.webp"
+  },
+  {
+    "id": 713,
+    "code": "-",
+    "name": "Noix de coco à la pièce",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMiniSecours": "20283537",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9ca8953df74330fe2997429efef4efc9.webp"
+  },
+  {
+    "id": 714,
+    "code": "-",
+    "name": "Papaye 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeP2": "2624099010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5d6504767182eafed69b67443a29dad3.webp"
+  },
+  {
+    "id": 716,
+    "code": "9256",
+    "name": "Fruit de la passion 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626328001000",
+    "barcodeMjValide": "2626328001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/382865592e1d94dcbb04adec1f79ad13.webp"
+  },
+  {
+    "id": 718,
+    "code": "-",
+    "name": "Carombole 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/c5f533a81995324c7f57d930781b1997.webp"
+  },
+  {
+    "id": 721,
+    "code": "5820",
+    "name": "Lulo 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2605441001000",
+    "barcodeMjValide": "2605441001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a387232e90330eeed168ac4f9549b21a.webp"
+  },
+  {
+    "id": 722,
+    "code": "596",
+    "name": "Marrons d'Espagne 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/3c8cb21abdfe7a4c5c6edbc2551fef5d.webp"
+  },
+  {
+    "id": 723,
+    "code": "-",
+    "name": "Kiwano à la pièce",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/ac415f39dfeac669d173e0a79d8feba3.webp"
+  },
+  {
+    "id": 724,
+    "code": "2845",
+    "name": "Tamarin 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2658910001000",
+    "barcodeMjValide": "2658910001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/992af406298a87ca243e3f20cdb844e8.webp"
+  },
+  {
+    "id": 725,
+    "code": "3671",
+    "name": "Salak 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626285001000",
+    "barcodeMjValide": "2626285001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/0e025b363102aaf9c47e3a675be4c769.webp"
+  },
+  {
+    "id": 727,
+    "code": "1540",
+    "name": "Pitaya rouge 200g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2608938002000",
+    "barcodeMjValide": "2608938002000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/d041796b12902e658ca9a3969b7f34c7.webp"
+  },
+  {
+    "id": 728,
+    "code": "7280",
+    "name": "Tomate ronde 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2659879010000",
+    "barcodeInterne": "2000014097759",
+    "barcodeMjValide": "2659879010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a820bb11f69fe199bdf9fd131b9ca362.webp"
+  },
+  {
+    "id": 729,
+    "code": "6188",
+    "name": "Carotte 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2604124010000",
+    "barcodeMjValide": "2604124010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/b28ff07f7228de6c76050425bf4ebef9.webp"
+  },
+  {
+    "id": 730,
+    "code": "2994",
+    "name": "Courgette blanche 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626267005000",
+    "barcodeMjValide": "2626267005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9ab9f50e0502890f0370cfe84bd7a7c2.webp"
+  },
+  {
+    "id": 731,
+    "code": "9576",
+    "name": "Oignon blanc 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2676540010000",
+    "barcodeMjValide": "2676540010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a30cf71eefabcda499953593adc0ba6f.webp"
+  },
+  {
+    "id": 732,
+    "code": "-",
+    "name": "Oignon blanc en filet 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/018679146995f600e63f81b389c3b195.webp"
+  },
+  {
+    "id": 733,
+    "code": "-",
+    "name": "Oignon blanc en filet x4 pièces - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/71411725e4de40abe2151572160d4bf0.webp"
+  },
+  {
+    "id": 734,
+    "code": "-",
+    "name": "Oignon blanc en filet 3Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/47152455e321ecb8e663d4f80aedb704.webp"
+  },
+  {
+    "id": 735,
+    "code": "9539",
+    "name": "Oignon rouge 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2654670010000",
+    "barcodeMjValide": "2654670010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/dc01c7aad0273204a36db9193559b5eb.webp"
+  },
+  {
+    "id": 736,
+    "code": "-",
+    "name": "Oignon mixte en filet x4 pieces - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/346fd76fe29615bbfdf24885b91a0563.webp"
+  },
+  {
+    "id": 737,
+    "code": "-",
+    "name": "Oignon rouge en filet 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/758b9aaa2c59d0305c98f92fc6ce1fd4.webp"
+  },
+  {
+    "id": 738,
+    "code": "-",
+    "name": "Oignon rouge en filet x4 pièces - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/822d16f21cb53d1fbdef9873b6044be5.webp"
+  },
+  {
+    "id": 739,
+    "code": "-",
+    "name": "Oignon rouge en filet 3Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/7fb431b2ccf438f15910e70ce43911e3.webp"
+  },
+  {
+    "id": 740,
+    "code": "2425",
+    "name": "Aubergine ronde 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2677703005000",
+    "barcodeMjValide": "2677703005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/bfd2e025dba74f0ffadcbce8bcb7b0d6.webp"
+  },
+  {
+    "id": 741,
+    "code": "-",
+    "name": "Pomme de terre blanche non lavée 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4edaf08dc8cd826d83362e544c63c60f.webp"
+  },
+  {
+    "id": 742,
+    "code": "-",
+    "name": "Pomme de terre blanche non lavée en filet 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/89d11902044d18341d684c4802e0a7a8.webp"
+  },
+  {
+    "id": 743,
+    "code": "7741",
+    "name": "Pomme de terre blanche lavée 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2699785010000",
+    "barcodeMjValide": "2699785010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4dc44d401677177ec5a2d0c2a23a3115.webp"
+  },
+  {
+    "id": 745,
+    "code": "-",
+    "name": "Pomme de terre rouge non lavée 1 kg - FILIÈRE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/673a437509ee62dbb3277a06ff2fc0be.webp"
+  },
+  {
+    "id": 746,
+    "code": "-",
+    "name": "Pomme de terre rouge non lavée en filet 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/01561bc57d62fc512967b113da3004c7.webp"
+  },
+  {
+    "id": 747,
+    "code": "-",
+    "name": "Pomme de terre rouge non lavée en filet 2Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4e8e06ae79d64360149ce7a1724eb12e.webp"
+  },
+  {
+    "id": 748,
+    "code": "7740",
+    "name": "Pomme de terre lavée 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2699789010000",
+    "barcodeMjValide": "2699789010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/94d4abaa987e256950ef7f71340e7996.webp"
+  },
+  {
+    "id": 749,
+    "code": "5805",
+    "name": "Pomme de terre frite 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2677881010000",
+    "barcodeMjValide": "2677881010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/0fd42a9d258ae1a1a7191d18635c6a9e.webp"
+  },
+  {
+    "id": 750,
+    "code": "9540",
+    "name": "Pomme de terre douce 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2650001010000",
+    "barcodeMjValide": "2650001010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/fe085bfdb98db5bc3f207af80ac5ca96.webp"
+  },
+  {
+    "id": 751,
+    "code": "-",
+    "name": "Pomme de terre kasbia en barquette 900g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/46ff32e63ae0443f03dd40799e7ef376.webp"
+  },
+  {
+    "id": 752,
+    "code": "9071",
+    "name": "Pomme de terre douce orange 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2608762005000",
+    "barcodeMjValide": "2608762005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/b5f5f94a3a9bd789adbbf3dccd3b1d10.webp"
+  },
+  {
+    "id": 753,
+    "code": "2422",
+    "name": "Poivron jaune 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2677701005000",
+    "barcodeInterne": "2000014716872",
+    "barcodeMjValide": "2677701005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/09db75f9336d3d41629d94df895aa614.webp"
+  },
+  {
+    "id": 754,
+    "code": "2421",
+    "name": "Poivron rouge 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2677710005000",
+    "barcodeInterne": "2000014716865",
+    "barcodeMjValide": "2677710005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/063c62cbad2c08b4bc44975df8195dab.webp"
+  },
+  {
+    "id": 755,
+    "code": "2995",
+    "name": "Poivron vert 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626266005000",
+    "barcodeInterne": "2000014097629",
+    "barcodeMjValide": "2626266005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/f324f5d30a8bcbd6b1d161c06ce34e66.webp"
+  },
+  {
+    "id": 756,
+    "code": "597",
+    "name": "Champignon de paris 200g",
+    "department": "Fruits et légumes",
+    "category": "Champignon",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2687871002000",
+    "barcodeMjValide": "2687871002000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6020186f3cabc8832435c094098dc0f1.webp"
+  },
+  {
+    "id": 757,
+    "code": "2423",
+    "name": "Concombre court 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2677702010000",
+    "barcodeMjValide": "2677702010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/19ff0e3435d88d9be6e244715a7710a5.webp"
+  },
+  {
+    "id": 758,
+    "code": "-",
+    "name": "Bettrave 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/7ec986b9598aae9a5d716d04290dba68.webp"
+  },
+  {
+    "id": 759,
+    "code": "-",
+    "name": "Tomates cerises allongées en barquette 250 g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/940b6927b8e74fd3a1c69e9b6db20f26.webp"
+  },
+  {
+    "id": 760,
+    "code": "-",
+    "name": "Tomates cerises rondes en barquette 250 g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/85f86fdeff39a9f581a132e2f3651bcf.webp"
+  },
+  {
+    "id": 761,
+    "code": "-",
+    "name": "Tomate cerise allongée chocolat 250g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/52c6addd159bcd2d0dec65614759ec42.webp"
+  },
+  {
+    "id": 762,
+    "code": "-",
+    "name": "Tomate cerise allongée orange 250g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/0e72a07a11b1e5aebfb66ee12a992817.webp"
+  },
+  {
+    "id": 763,
+    "code": "-",
+    "name": "Tomate cerise allongée 250g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6b2dea7f6d39737d887860e6a8991d75.webp"
+  },
+  {
+    "id": 764,
+    "code": "-",
+    "name": "Tomate cerise chocolat en pot 250g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/dc0299398b73e2222167c09c3b3a5227.webp"
+  },
+  {
+    "id": 765,
+    "code": "-",
+    "name": "Tomate cerise rouge 250g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/aff98a4eb456315da74fbec9c9b50d79.webp"
+  },
+  {
+    "id": 766,
+    "code": "-",
+    "name": "Tomate cerise jaune 250g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a6b33a8e0301e74cd65d2aaf30734dcd.webp"
+  },
+  {
+    "id": 767,
+    "code": "-",
+    "name": "Poireaux 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9820a616e0ade78318de222f2a24fb89.webp"
+  },
+  {
+    "id": 768,
+    "code": "-",
+    "name": "Ail 250g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014764354",
+    "barcodeMiniSecours": "22389701",
+    "barcodeP3": "2000014758117",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/1559e82f6865c11ace9198c172bf7182.webp"
+  },
+  {
+    "id": 769,
+    "code": "-",
+    "name": "Ail en filet gros calibre x 3 bulbes - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014245372",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6029da71cefdc0f9d6b57a7082a1c898.webp"
+  },
+  {
+    "id": 770,
+    "code": "-",
+    "name": "Ail en filet gros calibre x 6 bulbes - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014245389",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/94347566c43729e5c5b040ee407f660a.webp"
+  },
+  {
+    "id": 773,
+    "code": "6081",
+    "name": "Gingembre frais 200g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624409002000",
+    "barcodeMjValide": "2624409002000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/417ea82e19bdf8f495c6d394ad9c90eb.webp"
+  },
+  {
+    "id": 775,
+    "code": "579",
+    "name": "Haricot vert 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2625438005000",
+    "barcodeP2": "2626254005000",
+    "barcodeInterne": "2000014695818",
+    "barcodeMjValide": "2625438005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/935d2f9b443ab43783bd87821159d9ee.webp"
+  },
+  {
+    "id": 776,
+    "code": "4986",
+    "name": "Shiitake 100g",
+    "department": "Fruits et légumes",
+    "category": "Champignon",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2631404001000",
+    "barcodeMjValide": "2631404001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/53510586c4a4b47900e6f25e4ddcaaf0.webp"
+  },
+  {
+    "id": 777,
+    "code": "1876",
+    "name": "Choux blanc 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2666884010000",
+    "barcodeMjValide": "2666884010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9e8c0be84252039eb6c72018676c75c8.webp"
+  },
+  {
+    "id": 778,
+    "code": "1888",
+    "name": "Choux rouge 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2666890010000",
+    "barcodeMjValide": "2666890010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5fa1c27f3757ebbecdb9a42561a0f84f.webp"
+  },
+  {
+    "id": 779,
+    "code": "525",
+    "name": "Artichaut vert 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624867010000",
+    "barcodeMjValide": "2624867010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/d10691fd9239028c52bd1c9216f1da2a.webp"
+  },
+  {
+    "id": 780,
+    "code": "-",
+    "name": "Choux fleur 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6fd9a6aba6fe382373758b0011055512.webp"
+  },
+  {
+    "id": 782,
+    "code": "8307",
+    "name": "Courge butternut environ 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2658497010000",
+    "barcodeMjValide": "2658497010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/76fdd400242f66f32d9f9fc3b57decac.webp"
+  },
+  {
+    "id": 783,
+    "code": "523",
+    "name": "Courge rouge 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624869005000",
+    "barcodeMjValide": "2624869005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/dc585873a77cff5e776e9158b073126e.webp"
+  },
+  {
+    "id": 784,
+    "code": "-",
+    "name": "Navet mahfour 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/d2f724cc8484b8a36afe779aaea0926d.webp"
+  },
+  {
+    "id": 785,
+    "code": "1410",
+    "name": "Echalotes en filet 200g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600625002000",
+    "barcodeMjValide": "2600625002000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/7fa47c0a29d056cbdf35bb93c6798a84.webp"
+  },
+  {
+    "id": 786,
+    "code": "2788",
+    "name": "Brocoli 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624698005000",
+    "barcodeMjValide": "2624698005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/cd0d1b60564b4b5d8e683040725620fb.webp"
+  },
+  {
+    "id": 787,
+    "code": "-",
+    "name": "Piment fort 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5c171ce55f16d8564da3f5293fb117b6.webp"
+  },
+  {
+    "id": 788,
+    "code": "3688",
+    "name": "Radis rouge 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626677015000",
+    "barcodeP2": "2606807005000",
+    "barcodeMjValide": "2626677015000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/1462032e007aecaf4a8b6a02780acd51.webp"
+  },
+  {
+    "id": 790,
+    "code": "-",
+    "name": "Célerie-rave 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6d5c4f8c3b7c23234d87606b5a5d0568.webp"
+  },
+  {
+    "id": 791,
+    "code": "566",
+    "name": "Carotte jaune 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624594001000",
+    "barcodeMjValide": "2624594001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9b7e000eab9dd35d6002fee040b66bc3.webp"
+  },
+  {
+    "id": 792,
+    "code": "2724",
+    "name": "Fenouil 500g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": true,
+    "verificationStatus": "100",
+    "barcodeMarjane": "2654187005000",
+    "barcodeMjValide": "2654187005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/dec8a32182a11f9ebbd0efd07e2482ee.webp"
+  },
+  {
+    "id": 793,
+    "code": "2931",
+    "name": "Girolle 100g",
+    "department": "Fruits et légumes",
+    "category": "Champignon",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626377001000",
+    "barcodeMjValide": "2626377001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/ea6774606e9132bd538ee49add3f02c9.webp"
+  },
+  {
+    "id": 797,
+    "code": "-",
+    "name": "Coriandre en sachet 110g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4e3939d02c1f518e329364157c663bd2.webp"
+  },
+  {
+    "id": 798,
+    "code": "-",
+    "name": "Persil en sachet 110g - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a5c795ff9ead7a1942807b9ea5a8c327.webp"
+  },
+  {
+    "id": 799,
+    "code": "-",
+    "name": "Menthe en sachet - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014033559",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/717a329fd5fd594d74ff7380ecbc1eb3.webp"
+  },
+  {
+    "id": 802,
+    "code": "-",
+    "name": "Laitue lolo verte à la pièce - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2669002000018",
+    "barcodeInterne": "2000014624436",
+    "barcodeMjValide": "2669002000018",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5c8036490b1b19b8c7e44a041a6b9e4a.webp"
+  },
+  {
+    "id": 803,
+    "code": "6955",
+    "name": "Laitue verte, la pièce - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2647851000018",
+    "barcodeMjValide": "2647851000018",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a6400bf0c8e03c1b88eb9cff913ad9ab.webp"
+  },
+  {
+    "id": 804,
+    "code": "9894",
+    "name": "Laitue feuille de chêne rouge à la pièce - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2611557000018",
+    "barcodeMjValide": "2611557000018",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/1e8255b9c1bbe9ea2493799169ca8f57.webp"
+  },
+  {
+    "id": 805,
+    "code": "1755",
+    "name": "Laitue lolo rouge à la pièce - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2669003000018",
+    "barcodeInterne": "2000014624429",
+    "barcodeMjValide": "2669003000018",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/c9655b2ab314a5077d96d21bd2836b04.webp"
+  },
+  {
+    "id": 806,
+    "code": "6966",
+    "name": "Laitue rouge à la pièce - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2686415000016",
+    "barcodeMjValide": "2686415000016",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/cd566e4400f29d1a47475d1ae0069ab3.webp"
+  },
+  {
+    "id": 809,
+    "code": "-",
+    "name": "Jeunes pousses d'épinard en barquette 100g",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5994f0c394adc244b54c9f29570839b2.webp"
+  },
+  {
+    "id": 811,
+    "code": "3325",
+    "name": "Asperges en botte",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624851000010",
+    "barcodeMjValide": "2624851000010",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/0f77dd1aed6a0a3b443300fa65c525b7.webp"
+  },
+  {
+    "id": 812,
+    "code": "557",
+    "name": "salade sucrine à la pièce",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624603000014",
+    "barcodeInterne": "2000014562219",
+    "barcodeMjValide": "2624603000014",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/8c2fba40b65150de3d836794385da990.webp"
+  },
+  {
+    "id": 813,
+    "code": "-",
+    "name": "Endive 500g",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/9c267c391adfe70fd6273b93d447e3a9.webp"
+  },
+  {
+    "id": 814,
+    "code": "-",
+    "name": "Romarin en barquette de 25g",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014488311",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/96151d39c2de6f4073c6fe95ddc923fc.webp"
+  },
+  {
+    "id": 816,
+    "code": "-",
+    "name": "Thym en barquette 25g",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeP2": "2000014488359",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/fa29fa74ba14c1f7e342dcac709b69f4.webp"
+  },
+  {
+    "id": 818,
+    "code": "-",
+    "name": "Basilic en barquette 25g",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014488199",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6d0b1739b702a7404bd421fb8c8652d5.webp"
+  },
+  {
+    "id": 820,
+    "code": "6965",
+    "name": "Laitue feuille de chêne verte à la pièce - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2687715000010",
+    "barcodeMjValide": "2687715000010",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/fe19cfbad319ab0ff6fec9dbf9ca402e.webp"
+  },
+  {
+    "id": 822,
+    "code": "6576",
+    "name": "Bok choy 100g",
+    "department": "Fruits et légumes",
+    "category": "Herbes et salades",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626291001000",
+    "barcodeMjValide": "2626291001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/94a308d1a9b90386df05246313464ae6.webp"
+  },
+  {
+    "id": 824,
+    "code": "-",
+    "name": "Choux romanesco 1kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/130cf69bf1c9aca3debc0f26476b492a.webp"
+  },
+  {
+    "id": 825,
+    "code": "-",
+    "name": "Coing 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Fruits",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1751385264/product/ca22f45dd80a7d9d44fa8363c1148273.webp"
+  },
+  {
+    "id": 826,
+    "code": "7715",
+    "name": "Poire Flor 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Fruits",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2671714005000",
+    "barcodeInterne": "2671714005000",
+    "barcodeMjValide": "2671714005000",
+    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1756198925/product/4d3b06d55b774f4b5d8d44cf2f359bcf.webp"
+  },
+  {
+    "id": 827,
+    "code": "-",
+    "name": "Fenouil le kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624871005000",
+    "barcodeP2": "2624871005000",
+    "barcodeMjValide": "2624871005000"
+  },
+  {
+    "id": 828,
+    "code": "-",
+    "name": "Petits pois le kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2606807005000",
+    "barcodeP2": "2606807005000",
+    "barcodeMjValide": "2606807005000",
+    "imageUrl": "https://res.cloudinary.com/dcphm6bor/image/upload/q_75,f_auto,w_640/v1587313418/product_optimized/f25ae241c1ce8e0b8c25df27e0428126.webp"
+  },
+  {
+    "id": 829,
+    "code": "754",
+    "name": "Portobello 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624107001000",
+    "barcodeInterne": "2624107001000",
+    "barcodeMjValide": "2624107001000"
+  },
+  {
+    "id": 830,
+    "code": "1240",
+    "name": "Banane 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624507010000",
+    "barcodeMjValide": "2624507010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/86199d6fb1d0ee856ae27fb67edb795d.webp"
+  },
+  {
+    "id": 831,
+    "code": "8047",
+    "name": "Avocat 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624094005000",
+    "barcodeMjValide": "2624094005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a9d11d0275814cf69a59a4646bdebd8f.webp"
+  },
+  {
+    "id": 832,
+    "code": "1171",
+    "name": "Avocat Hass 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600303005000",
+    "barcodeMjValide": "2600303005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/3905c87c52b1072058b1bdbbd78246b1.webp"
+  },
+  {
+    "id": 833,
+    "code": "-",
+    "name": "Mangue à la pièce",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "pièce",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMiniSecours": "30136724",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6571423d8b4496dbe2c44dd5afa33082.webp"
+  },
+  {
+    "id": 834,
+    "code": "3821",
+    "name": "Mangue 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600210005000",
+    "barcodeMjValide": "2600210005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/3b0884c980d01a366e7f8506f05abd51.webp"
+  },
+  {
+    "id": 836,
+    "code": "4994",
+    "name": "Raisin noir 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2641369010000",
+    "barcodeP2": "2624602010000",
+    "barcodeMjValide": "2641369010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/c1a18f06798716a87b5e5123595983c7.webp"
+  },
+  {
+    "id": 837,
+    "code": "8095",
+    "name": "Raisin red globe 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2641618010000",
+    "barcodeInterne": "2000014695726",
+    "barcodeMjValide": "2641618010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/272f7b00cff864172be5b20be6543344.webp"
+  },
+  {
+    "id": 838,
+    "code": "2780",
+    "name": "Grenade 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2626286010000",
+    "barcodeMjValide": "2626286010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4659e6761ddfe66c34bbb6f50c21ce8f.webp"
+  },
+  {
+    "id": 839,
+    "code": "2383",
+    "name": "Kaki 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2675410010000",
+    "barcodeMiniSecours": "41230206",
+    "barcodeMjValide": "2675410010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/a8d4322b82ddb9a388ec56630d8a0651.webp"
+  },
+  {
+    "id": 840,
+    "code": "547",
+    "name": "Citron jaune 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624805005000",
+    "barcodeMjValide": "2624805005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/29e5fb4b89dd884f9ee032e3729d00a0.webp"
+  },
+  {
+    "id": 841,
+    "code": "1437",
+    "name": "Citron vert 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624125005000",
+    "barcodeMjValide": "2624125005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/bbefb892fffcce20ad39079bae65a1b2.webp"
+  },
+  {
+    "id": 842,
+    "code": "7887",
+    "name": "Citron lime 1kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624288010000",
+    "barcodeMjValide": "2624288010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/40112d003b8bfdb2333f4d6aaff89f50.webp"
+  },
+  {
+    "id": 844,
+    "code": "-",
+    "name": "Poire conférence 1kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624854010000",
+    "barcodeMjValide": "2624854010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/6eaea067d4bc367447724bb7bbe535da.webp"
+  },
+  {
+    "id": 845,
+    "code": "7715",
+    "name": "Poire rocha 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2671714010000",
+    "barcodeP2": "2624129010000",
+    "barcodeInterne": "2000014450820",
+    "barcodeMjValide": "2671714010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/4d3b06d55b774f4b5d8d44cf2f359bcf.webp"
+  },
+  {
+    "id": 846,
+    "code": "5744",
+    "name": "Poire Williams 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2600526010000",
+    "barcodeMjValide": "2600526010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/46ee46d1a24c0c22f5b506d43400fe9b.webp"
+  },
+  {
+    "id": 847,
+    "code": "888",
+    "name": "Kiwi moyen calibre 500g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2624935005000",
+    "barcodeMjValide": "2624935005000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/69bd4d91333a22eb7c130fb2b43a19d6.webp"
+  },
+  {
+    "id": 848,
+    "code": "4915",
+    "name": "Kiwi gold 100g",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "g",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2640036001000",
+    "barcodeMjValide": "2640036001000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/49144c4f14dd90d0c21075f9778fdc2f.webp"
+  },
+  {
+    "id": 849,
+    "code": "-",
+    "name": "Kiwi en barquette 1Kg",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/836629d180066960ac3d9cd3c0a6f8dc.webp"
+  },
+  {
+    "id": 850,
+    "code": "8541",
+    "name": "Pomme golden moyen calibre 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2604453010000",
+    "barcodeMjValide": "2604453010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/f24cf3c327f7ac29a54e88bb5a1d3c9f.webp"
+  },
+  {
+    "id": 851,
+    "code": "-",
+    "name": "Pomme gala Sachet 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeInterne": "2000014033580",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/b7ffe3c80c3a3b93824dfc559106f637.webp"
+  },
+  {
+    "id": 852,
+    "code": "-",
+    "name": "Pomme gala moyen calibre 24-28 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeP2": "2604443010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/5b64b4b305a6ffcd5a9830a49c5672ca.webp"
+  },
+  {
+    "id": 853,
+    "code": "4105",
+    "name": "Pomme gala gros calibre 18-20 1Kg - FILIERE M",
+    "department": "Fruits et légumes",
+    "category": "Legumes",
+    "quantite": "kg",
+    "isEnabled": true,
+    "isVerified100": false,
+    "verificationStatus": "none",
+    "barcodeMarjane": "2604465010000",
+    "barcodeMjValide": "2604465010000",
+    "imageUrl": "https://cdnblob.marjane.ma/images/pim/products/905548a528121c71ddc0069415c12a60.webp"
   }
 ];

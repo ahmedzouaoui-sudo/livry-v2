@@ -24,6 +24,7 @@ import {
   USER_DEVICES_SETUP_SQL,
 } from '../services/deviceTrackerService';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 interface UserDevicesModalProps {
   isOpen: boolean;
@@ -51,12 +52,16 @@ export const UserDevicesModal: React.FC<UserDevicesModalProps> = ({ isOpen, onCl
   }, [isOpen, refreshUserDevices]);
 
   // Copy IP helper
-  const handleCopyIp = (ip: string) => {
+  const handleCopyIp = async (ip: string) => {
     triggerHaptic('light');
-    navigator.clipboard.writeText(ip);
-    setCopiedIp(ip);
-    showToast(`Adresse IP ${ip} copiée !`);
-    setTimeout(() => setCopiedIp(null), 2000);
+    const ok = await copyTextToClipboard(ip);
+    if (ok) {
+      setCopiedIp(ip);
+      showToast(`Adresse IP ${ip} copiée !`);
+      setTimeout(() => setCopiedIp(null), 2000);
+    } else {
+      showToast('❌ Impossible de copier automatiquement');
+    }
   };
 
   // Filtered devices list
@@ -421,12 +426,14 @@ ORDER BY last_active_at DESC;`;
 
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   triggerHaptic('light');
-                  navigator.clipboard.writeText(USER_DEVICES_SETUP_SQL);
-                  setCopiedSetupSql(true);
-                  showToast('✅ Script SQL de création copié ! Collez-le dans Supabase SQL Editor.');
-                  setTimeout(() => setCopiedSetupSql(false), 2000);
+                  const ok = await copyTextToClipboard(USER_DEVICES_SETUP_SQL);
+                  if (ok) {
+                    setCopiedSetupSql(true);
+                    showToast('✅ Script SQL de création copié ! Collez-le dans Supabase SQL Editor.');
+                    setTimeout(() => setCopiedSetupSql(false), 2000);
+                  }
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition active:scale-95 cursor-pointer shadow-xs"
               >
@@ -445,11 +452,13 @@ ORDER BY last_active_at DESC;`;
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         triggerHaptic('light');
-                        navigator.clipboard.writeText(USER_DEVICES_SETUP_SQL);
-                        setCopiedSetupSql(true);
-                        setTimeout(() => setCopiedSetupSql(false), 2000);
+                        const ok = await copyTextToClipboard(USER_DEVICES_SETUP_SQL);
+                        if (ok) {
+                          setCopiedSetupSql(true);
+                          setTimeout(() => setCopiedSetupSql(false), 2000);
+                        }
                       }}
                       className="flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-sans"
                     >
@@ -470,11 +479,13 @@ ORDER BY last_active_at DESC;`;
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         triggerHaptic('light');
-                        navigator.clipboard.writeText(sqlQueryExample);
-                        setCopiedSql(true);
-                        setTimeout(() => setCopiedSql(false), 2000);
+                        const ok = await copyTextToClipboard(sqlQueryExample);
+                        if (ok) {
+                          setCopiedSql(true);
+                          setTimeout(() => setCopiedSql(false), 2000);
+                        }
                       }}
                       className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 cursor-pointer font-sans"
                     >

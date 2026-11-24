@@ -37,14 +37,37 @@ function appVersionManifestPlugin(buildId: string, buildTime: number): Plugin {
   };
 }
 
+function isServerOnlySupabaseKey(rawKey?: string): boolean {
+  const key = (rawKey || '').trim();
+  if (!key) return false;
+  if (/^sb_secret_/i.test(key) || key.toLowerCase().includes('service_role')) {
+    return true;
+  }
+  if (key.startsWith('eyJ') && key.split('.').length === 3) {
+    try {
+      const payload = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8'));
+      if (payload?.role === 'service_role') return true;
+    } catch {}
+  }
+  return false;
+}
+
 export default defineConfig(() => {
   const buildTime = Date.now();
   const buildId = `v-${buildTime}`;
+  const rawAdminHash = (process.env.VITE_ADMIN_PASSCODE_HASH || '').trim();
+  const isValidPbkdf2EnvHash = /^[0-9a-f]{16,}:[0-9a-f]{32,}$/i.test(rawAdminHash);
 
   return {
     define: {
       __APP_BUILD_ID__: JSON.stringify(buildId),
       __APP_BUILD_TIME__: JSON.stringify(buildTime),
+      ...(isServerOnlySupabaseKey(process.env.VITE_SUPABASE_ANON_KEY)
+        ? { 'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify('') }
+        : {}),
+      ...(rawAdminHash && !isValidPbkdf2EnvHash
+        ? { 'import.meta.env.VITE_ADMIN_PASSCODE_HASH': JSON.stringify('') }
+        : {}),
     },
     plugins: [
       react(),

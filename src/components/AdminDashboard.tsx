@@ -1,17 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-  Shield,
   Plus,
   Search,
   Upload,
   Download,
   RotateCcw,
-  Cloud,
   FileSpreadsheet,
   X,
-  Save,
-  ToggleLeft,
-  ToggleRight,
   Edit2,
   Trash2,
   Check,
@@ -19,7 +14,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Filter,
   Copy,
   Database,
   RefreshCw,
@@ -32,16 +26,14 @@ import {
   Smartphone,
   Layers,
   Sparkles,
-  ExternalLink,
-  SlidersHorizontal,
-  FileCode,
   Tag,
-  Scale,
   ShoppingBag,
   HardDrive,
   FileText,
   KeyRound,
   BookOpen,
+  CloudUpload,
+  CloudDownload,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Department, Product } from '../types';
@@ -53,21 +45,21 @@ import {
   getCategoryColorTheme,
 } from '../utils/productUtils';
 import {
-  getSupabaseProjectId,
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  setCustomSupabaseCredentials,
-  resetSupabaseCredentialsToDefault,
-} from '../services/supabaseClient';
-import { SUPABASE_SETUP_SQL } from '../services/supabaseService';
+  SUPABASE_SETUP_SQL,
+  SUPABASE_RESET_RECREATE_SQL,
+  SUPABASE_ASTUCES_TABLE_SQL,
+} from '../services/supabaseService';
 import {
   parseProductsFromCsv,
   extractProductsFromHtmlOrScript,
   mergeExtractedProductsWithExisting,
+  exportProductsToCsv,
   MergeResult,
 } from '../utils/csvImporter';
+import { triggerCsvDownload } from '../utils/fileDownload';
 import { extractPureUnit } from '../utils/productWeight';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 import { UserDevicesModal } from './UserDevicesModal';
 import { DailyBackupsModal } from './DailyBackupsModal';
 import { ActivityLogModal } from './ActivityLogModal';
@@ -112,20 +104,18 @@ export const AdminDashboard: React.FC = () => {
     updateProduct,
     addProduct,
     deleteProduct,
-    clearAllProducts,
+    restoreLatestBackupNow,
     seedInitialCatalogueToSupabase,
+    seedSupabase,
     syncWithSupabase,
     exportCatalogueCsv,
     supabaseHealth,
-    checkSupabaseStatus,
     syncStatus,
-    lastSyncTimestamp,
     setActiveTab,
     showToast,
     userDevices,
     deviceStats,
     refreshUserDevices,
-    isDarkMode,
   } = useApp();
 
   // Redirect if not Admin
@@ -168,13 +158,13 @@ export const AdminDashboard: React.FC = () => {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [guideInitialEditMode, setGuideInitialEditMode] = useState(true);
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+  const [sqlTab, setSqlTab] = useState<'reset' | 'safe' | 'astuces'>('reset');
   const [copiedSql, setCopiedSql] = useState(false);
   const [conflictModalData, setConflictModalData] = useState<DuplicateConflict | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExtractorModalOpen, setIsExtractorModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   // Universal Inline Table Cell Editing
@@ -190,6 +180,7 @@ export const AdminDashboard: React.FC = () => {
   const [mergeResult, setMergeResult] = useState<MergeResult | null>(null);
   const [extractorMode, setExtractorMode] = useState<'html' | 'csv'>('html');
   const [copiedAlterSql, setCopiedAlterSql] = useState(false);
+  const [cloudAction, setCloudAction] = useState<'idle' | 'push' | 'pull'>('idle');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -547,8 +538,41 @@ export const AdminDashboard: React.FC = () => {
   // -------------------------------------------------------------------------
   const handleExportCsv = () => {
     triggerHaptic('success');
-    exportCatalogueCsv();
-    showToast(`✅ Export CSV généré (${products.length} articles, 12 colonnes)`);
+    const csv = exportCatalogueCsv();
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    triggerCsvDownload(csv, `livry_catalogue_marjane_${dateStamp}.csv`);
+    showToast(`✅ Fichier CSV téléchargé (${products.length} articles, 12 colonnes)`);
+  };
+
+  const handleExportFilteredCsv = () => {
+    triggerHaptic('success');
+    const csv = exportProductsToCsv(filteredProducts);
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    triggerCsvDownload(
+      csv,
+      `livry_selection_${filteredProducts.length}articles_${dateStamp}.csv`
+    );
+    showToast(`✅ Export sélection téléchargé (${filteredProducts.length} articles)`);
+  };
+
+  const updateExtractedMergeItem = (
+    kind: 'add' | 'upd',
+    index: number,
+    patch: Partial<Product>
+  ) => {
+    setMergeResult((prev) => {
+      if (!prev) return prev;
+      if (kind === 'add') {
+        const nextAdded = prev.addedProducts.map((item, i) =>
+          i === index ? { ...item, ...patch } : item
+        );
+        return { ...prev, addedProducts: nextAdded };
+      }
+      const nextUpdated = prev.updatedProducts.map((item, i) =>
+        i === index ? { ...item, ...patch } : item
+      );
+      return { ...prev, updatedProducts: nextUpdated };
+    });
   };
 
   const handleProcessExtractor = () => {
@@ -751,6 +775,18 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               <span>Exporter CSV (12 col)</span>
             </button>
 
+            {filteredProducts.length > 0 && filteredProducts.length < products.length && (
+              <button
+                type="button"
+                onClick={handleExportFilteredCsv}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 text-xs font-bold shadow-2xs active:scale-95 transition cursor-pointer"
+                title="Exporter uniquement les articles filtrés actuels"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Filtré ({filteredProducts.length})</span>
+              </button>
+            )}
+
             {/* User Devices button */}
             <button
               type="button"
@@ -826,19 +862,52 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               <span>Sécurité &amp; MDP</span>
             </button>
 
-            {/* Supabase Sync Button */}
+            {/* Push local data TO Supabase */}
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
+                triggerHaptic('medium');
+                setCloudAction('push');
+                try {
+                  await seedSupabase();
+                } finally {
+                  setCloudAction('idle');
+                }
+              }}
+              disabled={syncStatus === 'syncing' || products.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#0759A4] to-sky-600 hover:brightness-110 text-white text-xs font-black shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50 select-none"
+              title="Envoyer tout le catalogue local vers Supabase"
+            >
+              {cloudAction === 'push' ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-sky-100" />
+              ) : (
+                <CloudUpload className="w-3.5 h-3.5 text-sky-100" />
+              )}
+              <span>{cloudAction === 'push' ? 'Envoi...' : 'Envoyer → Supabase'}</span>
+            </button>
+
+            {/* Pull cloud data FROM Supabase */}
+            <button
+              type="button"
+              onClick={async () => {
                 triggerHaptic('light');
-                syncWithSupabase(true);
+                setCloudAction('pull');
+                try {
+                  await syncWithSupabase(true);
+                } finally {
+                  setCloudAction('idle');
+                }
               }}
               disabled={syncStatus === 'syncing'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700 text-xs font-bold transition active:scale-95 cursor-pointer disabled:opacity-50"
-              title="Synchroniser avec Supabase"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 hover:bg-cyan-100 dark:hover:bg-cyan-900/70 text-cyan-800 dark:text-cyan-200 border border-cyan-200 dark:border-cyan-800 text-xs font-black shadow-2xs transition active:scale-95 cursor-pointer disabled:opacity-50 select-none"
+              title="Récupérer les dernières données depuis Supabase"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncStatus === 'syncing' ? 'animate-spin text-[#0759A4] dark:text-blue-400' : ''}`} />
-              <span>Sync DB</span>
+              {cloudAction === 'pull' ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-600 dark:text-cyan-300" />
+              ) : (
+                <CloudDownload className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-300" />
+              )}
+              <span>{cloudAction === 'pull' ? 'Chargement...' : 'Récupérer ← Supabase'}</span>
             </button>
 
             {/* SQL Modal button */}
@@ -1190,9 +1259,9 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           borderColor: catTheme.solid,
                         }
                       : {
-                          backgroundColor: isDarkMode ? catTheme.pillBgDark : catTheme.pillBgLight,
-                          color: isDarkMode ? catTheme.pillTextDark : catTheme.pillTextLight,
-                          borderColor: isDarkMode ? catTheme.pillBorderDark : catTheme.pillBorderLight,
+                          backgroundColor: catTheme.pillBgLight,
+                          color: catTheme.pillTextLight,
+                          borderColor: catTheme.pillBorderLight,
                         }
                   }
                   className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer select-none shrink-0 flex items-center gap-1.5 ${
@@ -1210,6 +1279,45 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
             })}
           </div>
         </div>
+
+        {/* ------------------------------------------------------------------- */}
+        {/* ALERTE CATALOGUE VIDE (0 ARTICLE) + RESTAURATION EN 1 CLIC          */}
+        {/* ------------------------------------------------------------------- */}
+        {products.length === 0 && (
+          <div className="p-4 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-amber-950 dark:text-amber-100">
+                  Catalogue vide (0 article détecté)
+                </h3>
+                <p className="text-xs text-amber-800 dark:text-amber-200/90">
+                  Restaurez automatiquement la dernière sauvegarde ou rechargez le catalogue Marjane de base.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => restoreLatestBackupNow()}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Restaurer Dernière Sauvegarde</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => seedInitialCatalogueToSupabase()}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>Catalogue Initial</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ------------------------------------------------------------------- */}
         {/* TABLEAU DES 12 COLONNES + ÉDITION DIRECTE EN 1 CLIC & BADGE 100%    */}
@@ -1351,7 +1459,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                       <tr
                         key={product.id}
                         style={{
-                          backgroundColor: isDarkMode ? catTheme.rowBgDark : catTheme.rowBgLight,
+                          backgroundColor: catTheme.rowBgLight,
                           borderLeft: `4px solid ${catTheme.solid}`,
                         }}
                         className={`hover:brightness-[0.98] dark:hover:brightness-110 transition-all ${
@@ -1481,7 +1589,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                         <td
                           className="py-2 px-3"
                           style={{
-                            backgroundColor: isDarkMode ? catTheme.productBgDark : catTheme.productBgLight,
+                            backgroundColor: catTheme.productBgLight,
                           }}
                         >
                           {isEditingField('name') ? (
@@ -1716,9 +1824,9 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                               onClick={() => startInlineEdit(product, 'category')}
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-black border cursor-text hover:ring-2 hover:ring-[#0759A4]/40 transition"
                               style={{
-                                backgroundColor: isDarkMode ? catTheme.pillBgDark : catTheme.pillBgLight,
-                                color: isDarkMode ? catTheme.pillTextDark : catTheme.pillTextLight,
-                                borderColor: isDarkMode ? catTheme.pillBorderDark : catTheme.pillBorderLight,
+                                backgroundColor: catTheme.pillBgLight,
+                                color: catTheme.pillTextLight,
+                                borderColor: catTheme.pillBorderLight,
                               }}
                               title="Cliquer pour modifier la catégorie"
                             >
@@ -1822,19 +1930,45 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                   <tr>
                     <td colSpan={15} className="py-12 text-center text-gray-400 dark:text-slate-500">
                       <Layers className="w-10 h-10 mx-auto text-gray-300 dark:text-slate-700 mb-2" />
-                      <p className="text-sm font-bold">Aucun produit ne correspond aux filtres sélectionnés</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAdminSearch('');
-                          setSelectedUnit('ALL');
-                          setFilterSpecial('ALL');
-                          setSelectedCategory('ALL');
-                        }}
-                        className="mt-2 px-3 py-1 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer"
-                      >
-                        Réinitialiser tous les filtres
-                      </button>
+                      {products.length === 0 ? (
+                        <>
+                          <p className="text-sm font-black text-amber-700 dark:text-amber-300">
+                            Le catalogue contient actuellement 0 article
+                          </p>
+                          <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => restoreLatestBackupNow()}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black cursor-pointer"
+                            >
+                              Restaurer la dernière sauvegarde
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => seedInitialCatalogueToSupabase()}
+                              className="px-3.5 py-1.5 bg-[#0759A4] hover:bg-blue-700 text-white rounded-xl text-xs font-black cursor-pointer"
+                            >
+                              Charger Catalogue Initial
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-bold">Aucun produit ne correspond aux filtres sélectionnés</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAdminSearch('');
+                              setSelectedUnit('ALL');
+                              setFilterSpecial('ALL');
+                              setSelectedCategory('ALL');
+                            }}
+                            className="mt-2 px-3 py-1 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer"
+                          >
+                            Réinitialiser tous les filtres
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -1847,11 +1981,17 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
             <div>
               Affichage de{' '}
               <span className="font-bold text-gray-900 dark:text-white">
-                {paginatedList.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+                {paginatedList.length > 0
+                  ? pageSize === 0
+                    ? 1
+                    : (currentPage - 1) * pageSize + 1
+                  : 0}
               </span>{' '}
               à{' '}
               <span className="font-bold text-gray-900 dark:text-white">
-                {Math.min(currentPage * pageSize, filteredProducts.length)}
+                {pageSize === 0
+                  ? filteredProducts.length
+                  : Math.min(currentPage * pageSize, filteredProducts.length)}
               </span>{' '}
               sur{' '}
               <span className="font-bold text-gray-900 dark:text-white">{filteredProducts.length}</span>{' '}
@@ -2255,6 +2395,7 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                           <th className="p-2 whitespace-nowrap">Image</th>
                           <th className="p-2 whitespace-nowrap">Code</th>
                           <th className="p-2">Nom Produit</th>
+                          <th className="p-2 whitespace-nowrap">Rayon</th>
                           <th className="p-2 whitespace-nowrap">Catégorie</th>
                           <th className="p-2 whitespace-nowrap text-center">Unité Pure</th>
                           <th className="p-2 whitespace-nowrap text-center">Statut</th>
@@ -2282,7 +2423,32 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                             </td>
                             <td className="p-2 font-mono font-bold">{p.code || '-'}</td>
                             <td className="p-2 font-bold text-gray-900 dark:text-white">{p.name}</td>
-                            <td className="p-2 text-gray-500">{p.category || 'Général'}</td>
+                            <td className="p-2">
+                              <select
+                                value={p.department}
+                                onChange={(e) =>
+                                  updateExtractedMergeItem('add', idx, {
+                                    department: e.target.value as Department,
+                                  })
+                                }
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[11px] font-bold text-gray-800 dark:text-slate-100"
+                              >
+                                <option value="Fruits et légumes">Fruits et légumes</option>
+                                <option value="Boucherie et volaille">Boucherie et volaille</option>
+                                <option value="Fromage et charcuterie">Fromage et charcuterie</option>
+                                <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie</option>
+                              </select>
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={p.category || 'Fruits'}
+                                onChange={(e) =>
+                                  updateExtractedMergeItem('add', idx, { category: e.target.value })
+                                }
+                                className="w-32 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[11px] font-bold text-gray-800 dark:text-slate-100"
+                              />
+                            </td>
                             <td className="p-2 text-center font-mono font-black text-[#0759A4] dark:text-blue-400">
                               {p.quantite || extractPureUnit(p.name)}
                             </td>
@@ -2315,7 +2481,32 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                             </td>
                             <td className="p-2 font-mono font-bold">{p.code || '-'}</td>
                             <td className="p-2 font-bold text-gray-900 dark:text-white">{p.name}</td>
-                            <td className="p-2 text-gray-500">{p.category || 'Général'}</td>
+                            <td className="p-2">
+                              <select
+                                value={p.department}
+                                onChange={(e) =>
+                                  updateExtractedMergeItem('upd', idx, {
+                                    department: e.target.value as Department,
+                                  })
+                                }
+                                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[11px] font-bold text-gray-800 dark:text-slate-100"
+                              >
+                                <option value="Fruits et légumes">Fruits et légumes</option>
+                                <option value="Boucherie et volaille">Boucherie et volaille</option>
+                                <option value="Fromage et charcuterie">Fromage et charcuterie</option>
+                                <option value="Boulangerie et pâtisserie">Boulangerie et pâtisserie</option>
+                              </select>
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={p.category || 'Fruits'}
+                                onChange={(e) =>
+                                  updateExtractedMergeItem('upd', idx, { category: e.target.value })
+                                }
+                                className="w-32 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[11px] font-bold text-gray-800 dark:text-slate-100"
+                              />
+                            </td>
                             <td className="p-2 text-center font-mono font-black text-[#0759A4] dark:text-blue-400">
                               {p.quantite || extractPureUnit(p.name)}
                             </td>
@@ -2372,10 +2563,10 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
                 <Code2 className="w-5 h-5 text-[#0759A4] dark:text-blue-400" />
                 <div>
                   <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
-                    Script SQL Supabase (12 Colonnes &amp; user_devices)
+                    SQL Supabase — Réinitialiser &amp; Synchroniser Toutes les Tables
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-slate-400">
-                    Copiez et exécutez ce script dans Supabase Dashboard -&gt; SQL Editor -&gt; Run
+                    Exécutez dans Supabase Dashboard -&gt; SQL Editor -&gt; Run, puis cliquez sur Envoyer le Catalogue
                   </p>
                 </div>
               </div>
@@ -2390,45 +2581,143 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
             </div>
 
             <div className="p-4 sm:p-5 space-y-3 flex-1 overflow-y-auto">
-              {/* Quick ALTER TABLE notice */}
-              <div className="p-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between gap-2">
-                <div>
-                  <div className="text-xs font-bold text-[#0759A4] dark:text-blue-300">
-                    Mise à jour rapide pour la colonne <code>quantite</code> :
-                  </div>
-                  <pre className="text-[11px] font-mono text-blue-800 dark:text-blue-200 mt-0.5">
-                    {alterTableSql}
-                  </pre>
+              {/* Mode Tabs: Clean DROP+CREATE vs Soft Update */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSqlTab('reset');
+                      setCopiedSql(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                      sqlTab === 'reset'
+                        ? 'bg-red-600 text-white shadow-xs'
+                        : 'text-gray-600 dark:text-slate-300 hover:text-gray-900'
+                    }`}
+                  >
+                    1. Supprimer &amp; Recréer Tables (DROP + CREATE)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSqlTab('safe');
+                      setCopiedSql(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                      sqlTab === 'safe'
+                        ? 'bg-[#0759A4] text-white shadow-xs'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    2. Mise à jour sans effacer (ALTER / CREATE)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSqlTab('astuces');
+                      setCopiedSql(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                      sqlTab === 'astuces'
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    3. Table Astuces (astuces)
+                  </button>
                 </div>
+
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(alterTableSql);
-                    setCopiedAlterSql(true);
-                    setTimeout(() => setCopiedAlterSql(false), 2000);
+                    seedSupabase();
                   }}
-                  className="px-3 py-1 bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition shrink-0 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-xs transition cursor-pointer"
                 >
-                  {copiedAlterSql ? 'Copié !' : 'Copier ALTER TABLE'}
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Envoyer Catalogue ({products.length}) vers Supabase</span>
                 </button>
               </div>
+
+              {sqlTab === 'reset' ? (
+                <div className="p-3 bg-red-50/80 border border-red-200 rounded-xl text-xs space-y-1 text-red-900">
+                  <div className="font-black flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>Ordre recommandé si vos tables Supabase sont cassées :</span>
+                  </div>
+                  <p className="text-[11px] font-medium">
+                    1) Copiez le script rouge ci-dessous et exécutez-le dans <strong>Supabase → SQL Editor → Run</strong> (supprime les anciennes tables désordonnées dans <code>public</code> et <code>api</code> et recrée 100% proprement : <code>products</code>, <code>tips</code>, <code>astuces</code>, <code>barcode_votes</code>, <code>user_devices</code>, <code>app_activity_logs</code>, bucket <code>backups</code> et Realtime).<br />
+                    2) Revenez ici et cliquez sur <strong>Envoyer Catalogue ({products.length}) vers Supabase</strong> !
+                  </p>
+                </div>
+              ) : sqlTab === 'astuces' ? (
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs space-y-1 text-amber-950">
+                  <div className="font-black">
+                    Script dédié uniquement à la table <code>astuces</code> (sans toucher aux produits) :
+                  </div>
+                  <p className="text-[11px] font-medium">
+                    Exécutez ce script dans <strong>Supabase → SQL Editor → Run</strong> pour créer <code>public.astuces</code> et <code>api.astuces</code> avec <code>blocks_json</code>, RLS et Realtime.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-bold text-[#0759A4]">
+                      Ajout rapide de colonne <code>quantite</code> uniquement :
+                    </div>
+                    <pre className="text-[11px] font-mono text-blue-800 mt-0.5">
+                      {alterTableSql}
+                    </pre>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await copyTextToClipboard(alterTableSql);
+                      if (ok) {
+                        setCopiedAlterSql(true);
+                        setTimeout(() => setCopiedAlterSql(false), 2000);
+                      }
+                    }}
+                    className="px-3 py-1 bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition shrink-0 cursor-pointer"
+                  >
+                    {copiedAlterSql ? 'Copié !' : 'Copier ALTER TABLE'}
+                  </button>
+                </div>
+              )}
 
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
-                    setCopiedSql(true);
-                    setTimeout(() => setCopiedSql(false), 2000);
+                  onClick={async () => {
+                    const targetSql =
+                      sqlTab === 'reset'
+                        ? SUPABASE_RESET_RECREATE_SQL
+                        : sqlTab === 'astuces'
+                          ? SUPABASE_ASTUCES_TABLE_SQL
+                          : SUPABASE_SETUP_SQL;
+                    const ok = await copyTextToClipboard(targetSql);
+                    if (ok) {
+                      setCopiedSql(true);
+                      triggerHaptic('success');
+                      showToast('📋 Script SQL copié dans le presse-papier !');
+                      setTimeout(() => setCopiedSql(false), 2500);
+                    } else {
+                      showToast('❌ Impossible de copier automatiquement');
+                    }
                   }}
-                  className="absolute right-3 top-3 z-10 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  className="absolute right-3 top-3 z-10 px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-black flex items-center gap-1.5 transition cursor-pointer"
                 >
                   {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedSql ? 'Copié !' : 'Copier tout le SQL'}</span>
+                  <span>{copiedSql ? 'Copié !' : 'Copier ce SQL'}</span>
                 </button>
 
                 <pre className="p-4 bg-slate-950 text-emerald-400 rounded-2xl text-xs font-mono overflow-x-auto max-h-[380px] leading-relaxed border border-slate-800">
-                  {SUPABASE_SETUP_SQL}
+                  {sqlTab === 'reset'
+                    ? SUPABASE_RESET_RECREATE_SQL
+                    : sqlTab === 'astuces'
+                      ? SUPABASE_ASTUCES_TABLE_SQL
+                      : SUPABASE_SETUP_SQL}
                 </pre>
               </div>
             </div>

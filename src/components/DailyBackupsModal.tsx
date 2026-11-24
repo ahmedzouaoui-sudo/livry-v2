@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X,
   HardDrive,
@@ -33,9 +33,12 @@ import {
   restoreBackupProductsToSupabase,
   deleteBackupById,
   ensureDailyBackup,
+  downloadStorageBackupText,
 } from '../services/dailyBackupService';
 import { exportProductsToCsv } from '../utils/csvImporter';
+import { triggerCsvDownload, triggerFileDownload } from '../utils/fileDownload';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 import { logAppEvent } from '../services/activityLogService';
 
 interface DailyBackupsModalProps {
@@ -66,6 +69,11 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const productsRef = useRef(products);
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
+
   const loadBackups = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -82,23 +90,23 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
   useEffect(() => {
     if (!isOpen) return;
     setConfirmRestoreId(null);
-    ensureDailyBackup(products)
+    ensureDailyBackup(productsRef.current)
       .catch(() => {})
       .finally(() => {
         loadBackups();
       });
-  }, [isOpen, products, loadBackups]);
+  }, [isOpen, loadBackups]);
 
   if (!isOpen) return null;
 
   const handleCopySql = async () => {
-    try {
-      await navigator.clipboard.writeText(SUPABASE_STORAGE_BACKUP_SQL);
+    const ok = await copyTextToClipboard(SUPABASE_STORAGE_BACKUP_SQL);
+    if (ok) {
       setCopiedSql(true);
       triggerHaptic('success');
       showToast('📋 Script SQL Storage copié ! Collez-le dans Supabase → SQL Editor');
       setTimeout(() => setCopiedSql(false), 3000);
-    } catch {
+    } else {
       showToast('❌ Impossible de copier automatiquement');
     }
   };
@@ -161,20 +169,15 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
     triggerHaptic('light');
     setDownloadingId(`${backup.id}_csv`);
     try {
-      if (backup.csvPublicUrl) {
-        const res = await fetch(backup.csvPublicUrl);
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `backup_livry_${backup.dateKey}.csv`;
-          link.click();
-          URL.revokeObjectURL(url);
-          triggerHaptic('success');
-          showToast(`📥 Fichier CSV téléchargé depuis Supabase Storage`);
-          return;
-        }
+      const storageText = await downloadStorageBackupText(
+        backup.csvStoragePath,
+        backup.csvPublicUrl
+      );
+      if (storageText) {
+        triggerCsvDownload(storageText, `backup_livry_${backup.dateKey}.csv`);
+        triggerHaptic('success');
+        showToast(`📥 Fichier CSV téléchargé depuis Supabase Storage`);
+        return;
       }
 
       const res = await fetchBackupProductsById(backup.id, backup);
@@ -182,14 +185,11 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
         showToast(`❌ ${res.error || 'Erreur chargement backup'}`);
         return;
       }
-      const csvContent = '\uFEFF' + exportProductsToCsv(res.products);
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `backup_livry_${backup.dateKey}_${res.products.length}articles.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      const csvContent = exportProductsToCsv(res.products);
+      triggerCsvDownload(
+        csvContent,
+        `backup_livry_${backup.dateKey}_${res.products.length}articles.csv`
+      );
       triggerHaptic('success');
       showToast(`📥 CSV téléchargé (${res.products.length} articles)`);
     } finally {
@@ -201,20 +201,19 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
     triggerHaptic('light');
     setDownloadingId(`${backup.id}_json`);
     try {
-      if (backup.jsonPublicUrl) {
-        const res = await fetch(backup.jsonPublicUrl);
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `backup_livry_${backup.dateKey}.json`;
-          link.click();
-          URL.revokeObjectURL(url);
-          triggerHaptic('success');
-          showToast(`📥 Fichier JSON téléchargé depuis Supabase Storage`);
-          return;
-        }
+      const storageText = await downloadStorageBackupText(
+        backup.jsonStoragePath,
+        backup.jsonPublicUrl
+      );
+      if (storageText) {
+        triggerFileDownload(
+          storageText,
+          `backup_livry_${backup.dateKey}.json`,
+          'application/json;charset=utf-8'
+        );
+        triggerHaptic('success');
+        showToast(`📥 Fichier JSON téléchargé depuis Supabase Storage`);
+        return;
       }
 
       const res = await fetchBackupProductsById(backup.id, backup);
@@ -227,13 +226,11 @@ export const DailyBackupsModal: React.FC<DailyBackupsModalProps> = ({ isOpen, on
         null,
         2
       );
-      const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `backup_livry_${backup.dateKey}_${res.products.length}articles.json`;
-      link.click();
-      URL.revokeObjectURL(url);
+      triggerFileDownload(
+        jsonContent,
+        `backup_livry_${backup.dateKey}_${res.products.length}articles.json`,
+        'application/json;charset=utf-8'
+      );
       triggerHaptic('success');
       showToast(`📥 JSON téléchargé (${res.products.length} articles)`);
     } finally {

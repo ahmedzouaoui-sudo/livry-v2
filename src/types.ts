@@ -91,6 +91,15 @@ export type TipCategory =
   | 'Fromage'
   | 'Boulangerie';
 
+export interface TipArticleBlock {
+  id: string;
+  type: 'text' | 'image' | 'image_text';
+  heading?: string;
+  text?: string;
+  imageUrl?: string;
+  caption?: string;
+}
+
 export interface TipPost {
   id: string;
   title: string;
@@ -102,6 +111,7 @@ export interface TipPost {
   likes: number;
   imageUrl?: string;
   targetAudience?: 'Tous' | 'Pickeur' | 'Livreur' | 'Référent';
+  blocks?: TipArticleBlock[];
 }
 
 export type DataUpdateStatus = 'up-to-date' | 'update-available' | 'updating';
@@ -165,20 +175,50 @@ export interface GuideStepConfig {
   description: string;
   primaryCtaLabel: string;
   secondaryCtaLabel: string;
+  layoutKind?: 'comparison' | 'showcase' | 'actions' | 'free';
+  accentColor?: 'rose' | 'sky' | 'amber' | 'emerald';
+  customImageUrl?: string;
+  customImageCaption?: string;
+  customBlocks?: TipArticleBlock[];
+}
+
+export interface AstucesPageConfig {
+  pageTitle: string;
+  backLabel: string;
+  topNotice?: string;
+  searchPlaceholder: string;
+  audienceAllLabel: string;
+  audiencePickeurLabel: string;
+  audienceLivreurLabel: string;
+  audienceReferentLabel: string;
+  allCategoriesLabel: string;
+  emptyTitle: string;
+  emptySubtitle: string;
+  heroBgImageUrl?: string;
 }
 
 export interface GuideConfig {
   version: number;
   updatedAt: string;
   topBrandTitle: string;
+  summaryTitle?: string;
   footerHint: string;
-  steps: [GuideStepConfig, GuideStepConfig, GuideStepConfig];
+  themePreset?: 'rose-blue' | 'ocean' | 'emerald' | 'amber' | 'midnight';
+  heroBanner?: {
+    badge: string;
+    headline: string;
+    subtitle: string;
+    ctaLabel: string;
+  };
+  astucesPage?: AstucesPageConfig;
+  steps: GuideStepConfig[];
   slide1: {
     beforeBadge: string;
     beforeImageUrl: string;
     beforeCaption: string;
     afterBadge: string;
     afterBarcodeSample: string;
+    afterImageUrl?: string;
     afterCaption: string;
     floatingPillText: string;
   };
@@ -195,5 +235,7 @@ export interface GuideConfig {
     card2Title: string;
     card2Subtitle: string;
     card2PhoneDisplay: string;
+    card2WhatsappNumber?: string;
+    card2WhatsappMessage?: string;
   };
 }

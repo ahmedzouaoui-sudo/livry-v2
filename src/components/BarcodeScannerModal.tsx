@@ -23,11 +23,24 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerId = 'interactive-barcode-scanner-viewport';
   const hasScannedRef = useRef(false);
+  const onScanSuccessRef = useRef(onScanSuccess);
+  const onCloseRef = useRef(onClose);
+  const transitionChainRef = useRef<Promise<void>>(Promise.resolve());
 
-  // Play a pleasant supermarket scanner beep
+  useEffect(() => {
+    onScanSuccessRef.current = onScanSuccess;
+  }, [onScanSuccess]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Play a pleasant supermarket scanner beep and close AudioContext afterwards
   const playBeep = useCallback(() => {
     try {
-      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (AudioCtxClass) {
         const audioCtx = new AudioCtxClass();
         const osc = audioCtx.createOscillator();
@@ -40,6 +53,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.12);
+        window.setTimeout(() => {
+          audioCtx.close().catch(() => {});
+        }, 250);
       }
     } catch {
       // AudioContext unavailable or blocked
@@ -47,106 +63,135 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   }, []);
 
   const stopScanner = useCallback(async () => {
-    if (scannerRef.current) {
-      try {
-        if (scannerRef.current.isScanning) {
-          await scannerRef.current.stop();
-        }
-        await scannerRef.current.clear();
-      } catch (err) {
-        console.warn('Error stopping scanner:', err);
-      } finally {
-        scannerRef.current = null;
+    const instance = scannerRef.current;
+    if (!instance) return;
+    scannerRef.current = null;
+    try {
+      if (instance.isScanning) {
+        await instance.stop();
       }
+      await instance.clear();
+    } catch (err) {
+      console.warn('Error stopping scanner:', err);
     }
   }, []);
 
-  const startScanner = useCallback(async () => {
-    setIsInitializing(true);
-    setErrorMessage(null);
-    hasScannedRef.current = false;
+  const startScanner = useCallback(
+    async (isCancelled: () => boolean) => {
+      setIsInitializing(true);
+      setErrorMessage(null);
+      hasScannedRef.current = false;
 
-    await stopScanner();
+      await stopScanner();
+      if (isCancelled()) return;
 
-    try {
-      const formatsToSupport = [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODE_39,
-      ];
-
-      const html5QrCode = new Html5Qrcode(containerId, {
-        formatsToSupport,
-        verbose: false,
-      });
-      scannerRef.current = html5QrCode;
-
-      const config = {
-        fps: 15,
-        qrbox: { width: 280, height: 160 },
-        aspectRatio: 1.0,
-      };
-
-      await html5QrCode.start(
-        { facingMode },
-        config,
-        (decodedText: string) => {
-          if (hasScannedRef.current) return;
-          hasScannedRef.current = true;
-
-          triggerHaptic('success');
-          playBeep();
-
-          // Extract digits if applicable or keep raw barcode text
-          const cleanCode = decodedText.trim();
-          onScanSuccess(cleanCode);
-          onClose();
-        },
-        () => {
-          // Ignore per-frame non-detection
-        }
-      );
-
-      // Check torch capability
-      try {
-        const capabilities = html5QrCode.getRunningTrackCapabilities();
-        if (capabilities && (capabilities as any).torch) {
-          setHasTorch(true);
-        } else {
-          setHasTorch(false);
-        }
-      } catch {
-        setHasTorch(false);
+      const containerEl = document.getElementById(containerId);
+      if (!containerEl) {
+        setIsInitializing(false);
+        return;
       }
 
-      setIsInitializing(false);
-    } catch (err: any) {
-      console.error('Camera init error:', err);
-      setIsInitializing(false);
-      setErrorMessage(
-        err?.message?.includes('Permission')
-          ? 'Autorisation caméra refusée. Veuillez autoriser la caméra dans les paramètres.'
-          : 'Impossible de démarrer la caméra. Vous pouvez saisir le code-barres manuellement.'
-      );
-    }
-  }, [facingMode, onScanSuccess, onClose, playBeep, stopScanner]);
+      try {
+        const formatsToSupport = [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_39,
+        ];
+
+        const html5QrCode = new Html5Qrcode(containerId, {
+          formatsToSupport,
+          verbose: false,
+        });
+        scannerRef.current = html5QrCode;
+
+        const config = {
+          fps: 15,
+          qrbox: { width: 280, height: 160 },
+          aspectRatio: 1.0,
+        };
+
+        await html5QrCode.start(
+          { facingMode },
+          config,
+          (decodedText: string) => {
+            if (hasScannedRef.current) return;
+            hasScannedRef.current = true;
+
+            triggerHaptic('success');
+            playBeep();
+
+            const cleanCode = decodedText.trim();
+            onScanSuccessRef.current(cleanCode);
+            onCloseRef.current();
+          },
+          () => {
+            // Ignore per-frame non-detection
+          }
+        );
+
+        if (isCancelled()) {
+          await stopScanner();
+          return;
+        }
+
+        // Check torch capability
+        try {
+          const capabilities = html5QrCode.getRunningTrackCapabilities();
+          if (capabilities && (capabilities as unknown as { torch?: boolean }).torch) {
+            setHasTorch(true);
+          } else {
+            setHasTorch(false);
+          }
+        } catch {
+          setHasTorch(false);
+        }
+
+        setIsInitializing(false);
+      } catch (err: unknown) {
+        if (isCancelled()) return;
+        console.error('Camera init error:', err);
+        setIsInitializing(false);
+        const msg = err instanceof Error ? err.message : '';
+        setErrorMessage(
+          msg.includes('Permission')
+            ? 'Autorisation caméra refusée. Veuillez autoriser la caméra dans les paramètres.'
+            : 'Impossible de démarrer la caméra. Vous pouvez saisir le code-barres manuellement.'
+        );
+      }
+    },
+    [facingMode, playBeep, stopScanner]
+  );
 
   useEffect(() => {
+    let cancelled = false;
+
     if (isOpen) {
-      // Delay slightly for container element to mount in DOM
-      const timer = setTimeout(() => {
-        startScanner();
+      const timer = window.setTimeout(() => {
+        if (cancelled) return;
+        transitionChainRef.current = transitionChainRef.current
+          .catch(() => {})
+          .then(() => startScanner(() => cancelled));
       }, 150);
+
       return () => {
+        cancelled = true;
         clearTimeout(timer);
-        stopScanner();
+        transitionChainRef.current = transitionChainRef.current
+          .catch(() => {})
+          .then(() => stopScanner());
       };
-    } else {
-      stopScanner();
     }
+
+    transitionChainRef.current = transitionChainRef.current
+      .catch(() => {})
+      .then(() => stopScanner());
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, startScanner, stopScanner]);
 
   const toggleTorch = async () => {

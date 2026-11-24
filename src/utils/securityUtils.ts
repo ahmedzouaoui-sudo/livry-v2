@@ -7,6 +7,24 @@
 const SAFE_RASTER_DATA_URI_RE =
   /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/i;
 
+const BLOCKED_INTERNAL_HOSTS = new Set([
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  '::1',
+  '169.254.169.254',
+  'metadata.google.internal',
+]);
+
+function isBlockedHost(hostname: string): boolean {
+  const h = hostname.toLowerCase().trim();
+  if (!h || BLOCKED_INTERNAL_HOSTS.has(h)) return true;
+  if (h.startsWith('127.') || h.startsWith('169.254.') || h.startsWith('10.')) return true;
+  if (/^192\.168\./.test(h)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
+  return false;
+}
+
 /**
  * Validates and cleans image URLs to permit only:
  * - http:// / https:// URLs
@@ -61,7 +79,7 @@ export function sanitizeImageUrl(urlRaw: unknown): string | undefined {
 
   try {
     const parsed = new URL(s);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+    if ((parsed.protocol === 'https:' || parsed.protocol === 'http:') && !isBlockedHost(parsed.hostname)) {
       return parsed.href;
     }
   } catch {
@@ -72,7 +90,7 @@ export function sanitizeImageUrl(urlRaw: unknown): string | undefined {
 }
 
 /**
- * Validates custom Supabase endpoint URLs (HTTPS only, valid host, no path injection).
+ * Validates custom Supabase endpoint URLs (HTTPS only, valid non-internal host).
  */
 export function sanitizeSupabaseEndpointUrl(rawUrl: string): string | null {
   try {
@@ -82,7 +100,7 @@ export function sanitizeSupabaseEndpointUrl(rawUrl: string): string | null {
       .replace(/\/+$/, '');
     const parsed = new URL(cleaned);
     if (parsed.protocol !== 'https:') return null;
-    if (!parsed.hostname || parsed.hostname.length < 4) return null;
+    if (!parsed.hostname || parsed.hostname.length < 4 || isBlockedHost(parsed.hostname)) return null;
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
     return null;

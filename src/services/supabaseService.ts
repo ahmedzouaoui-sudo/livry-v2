@@ -6,7 +6,7 @@ import {
   setActiveSchema,
   SUPABASE_URL,
 } from './supabaseClient';
-import { Product, TipPost, Department } from '../types';
+import { Product, TipPost, TipArticleBlock, Department } from '../types';
 import { extractPureUnit } from '../utils/productWeight';
 import { sanitizeImageUrl } from '../utils/securityUtils';
 
@@ -18,217 +18,83 @@ export interface SupabaseHealthCheckResult {
   schema: 'api' | 'public';
 }
 
-export const SUPABASE_SETUP_SQL = `-- =========================================================================
--- SCRIPT DE RÉPARATION SUPABASE (COMPATIBILITÉ SCHÉMAS API ET PUBLIC)
--- À copier et exécuter dans : Supabase Dashboard -> SQL Editor -> New query
--- =========================================================================
-
--- 1. Exposer à la fois 'public' et 'api' pour l'API REST PostgREST
+const CORE_TABLES_SQL_BODY = `
+-- 1. Exposer 'public' et 'api' dans PostgREST
+CREATE SCHEMA IF NOT EXISTS api;
 ALTER ROLE authenticator SET pgrst.db_schemas = 'public, api, graphql_public';
 NOTIFY pgrst, 'reload config';
-NOTIFY pgrst, 'reload schema';
 
 -- -------------------------------------------------------------------------
--- 2. TABLE DES PRODUITS DANS LE SCHÉMA PUBLIC
+-- 2. TABLE PRODUITS (PUBLIC + API) — 12 COLONNES + STATUT + UNITÉ
 -- -------------------------------------------------------------------------
 CREATE SEQUENCE IF NOT EXISTS public.products_id_seq;
-
 CREATE TABLE IF NOT EXISTS public.products (
   id BIGINT PRIMARY KEY DEFAULT nextval('public.products_id_seq'),
-  code TEXT,
+  code TEXT DEFAULT '-',
   produit TEXT NOT NULL,
-  marjane TEXT,
-  "marjane 2" TEXT,
-  "marjane Interne" TEXT,
-  "marjane mini" TEXT,
-  "marjane sec" TEXT,
-  "marjane sec 2" TEXT,
-  image_html TEXT,
-  "département" TEXT NOT NULL,
-  "catégorie" TEXT,
+  marjane TEXT DEFAULT '0',
+  "marjane 2" TEXT DEFAULT '0',
+  "marjane Interne" TEXT DEFAULT '0',
+  "marjane mini" TEXT DEFAULT '0',
+  "marjane sec" TEXT DEFAULT '0',
+  "marjane sec 2" TEXT DEFAULT '0',
+  image_html TEXT DEFAULT '',
+  "département" TEXT NOT NULL DEFAULT 'Fruits et légumes',
+  "catégorie" TEXT DEFAULT 'Fruits',
   quantite TEXT DEFAULT 'pièce',
   is_enabled BOOLEAN DEFAULT true,
+  is_verified_100 BOOLEAN DEFAULT false,
+  verification_status TEXT DEFAULT 'none',
   worker_number TEXT DEFAULT 'SHARED',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq');
 ALTER SEQUENCE public.products_id_seq OWNED BY public.products.id;
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS worker_number TEXT DEFAULT 'SHARED';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS worker_number TEXT DEFAULT 'SHARED';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_verified_100 BOOLEAN DEFAULT false;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'none';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "products_all_access" ON public.products;
 CREATE POLICY "products_all_access" ON public.products FOR ALL USING (true) WITH CHECK (true);
 
--- Table des Villes (Modon)
-CREATE TABLE IF NOT EXISTS public.villes (
-  id SERIAL PRIMARY KEY,
-  nom TEXT UNIQUE NOT NULL
-);
-ALTER TABLE public.villes ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "villes_all_access" ON public.villes;
-CREATE POLICY "villes_all_access" ON public.villes FOR ALL USING (true) WITH CHECK (true);
-
--- Table des Entrepôts / Magasins
-CREATE TABLE IF NOT EXISTS public.entrepots (
-  id SERIAL PRIMARY KEY,
-  nom TEXT UNIQUE NOT NULL,
-  ville_nom TEXT NOT NULL
-);
-ALTER TABLE public.entrepots ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "entrepots_all_access" ON public.entrepots;
-CREATE POLICY "entrepots_all_access" ON public.entrepots FOR ALL USING (true) WITH CHECK (true);
-
--- Insertion initiale des villes et entrepôts
-INSERT INTO public.villes (nom) VALUES
-  ('Casablanca'), ('Rabat'), ('Salé'), ('Marrakech'), ('Tanger'),
-  ('Fès'), ('Agadir'), ('Kénitra'), ('Meknès'), ('Oujda'),
-  ('Tétouan'), ('Mohammedia'), ('El Jadida')
-ON CONFLICT (nom) DO NOTHING;
-
-INSERT INTO public.entrepots (nom, ville_nom) VALUES
-  ('Marjane Market Emile Zola', 'Casablanca'),
-  ('Marjane Californie', 'Casablanca'),
-  ('Marjane Morocco Mall', 'Casablanca'),
-  ('Marjane Ain Sebaa', 'Casablanca'),
-  ('Marjane Derb Sultan', 'Casablanca'),
-  ('Marjane Sidi Maarouf', 'Casablanca'),
-  ('Marjane Market Gauthier', 'Casablanca'),
-  ('Marjane Hay Riad', 'Rabat'),
-  ('Marjane Bouregreg', 'Rabat'),
-  ('Marjane Market Agdal', 'Rabat'),
-  ('Marjane Menara', 'Marrakech'),
-  ('Marjane Market Gueliz', 'Marrakech'),
-  ('Marjane Tanger Madina', 'Tanger'),
-  ('Marjane Market Malabata', 'Tanger'),
-  ('Marjane Agadir Founty', 'Agadir'),
-  ('Marjane Market Dakhla', 'Agadir')
-ON CONFLICT (nom) DO NOTHING;
-
--- Table des comptes de travail (Workers - Nouvelle logique : id, name, numero, entropot, ville, mote_de_passe, role)
-CREATE TABLE IF NOT EXISTS public.workers (
-  id TEXT PRIMARY KEY,
-  work_number TEXT UNIQUE NOT NULL,
-  phone_number TEXT,
-  full_name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'Pickeur',
-  password TEXT NOT NULL,
-  terminal_id TEXT,
-  ip_address TEXT,
-  is_quick_access BOOLEAN DEFAULT false,
-  quick_uses_count INT DEFAULT 1,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS name TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS numero TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS entropot TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS ville TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS mote_de_passe TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS phone_number TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS terminal_id TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS ip_address TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS is_quick_access BOOLEAN DEFAULT false;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS quick_uses_count INT DEFAULT 1;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS city TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS store_name TEXT;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ;
-ALTER TABLE public.workers ADD COLUMN IF NOT EXISTS is_trial_blocked BOOLEAN DEFAULT false;
-ALTER TABLE public.workers ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "workers_all_access" ON public.workers;
-CREATE POLICY "workers_all_access" ON public.workers FOR ALL USING (true) WITH CHECK (true);
-
--- Table des plannings hebdomadaires des équipes (Pickeurs & Livreurs)
-CREATE TABLE IF NOT EXISTS public.weekly_schedules (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'Pickeur',
-  days JSONB NOT NULL,
-  shift_hours TEXT DEFAULT '09:00 - 21:00',
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.weekly_schedules ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "weekly_schedules_all_access" ON public.weekly_schedules;
-CREATE POLICY "weekly_schedules_all_access" ON public.weekly_schedules FOR ALL USING (true) WITH CHECK (true);
-
--- Table des planifications Livry (par date et ID pickeur)
-CREATE TABLE IF NOT EXISTS public.planification_rows (
-  row_id TEXT PRIMARY KEY,
-  date DATE NOT NULL,
-  worker_id TEXT NOT NULL,
-  worker_name TEXT,
-  s1a TEXT DEFAULT '09:00',
-  s1b TEXT DEFAULT '22:00',
-  s2a TEXT DEFAULT '22:01',
-  s2b TEXT DEFAULT '22:03',
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.planification_rows ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "planification_rows_all_access" ON public.planification_rows;
-CREATE POLICY "planification_rows_all_access" ON public.planification_rows FOR ALL USING (true) WITH CHECK (true);
-
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-
--- -------------------------------------------------------------------------
--- 3. TABLE DES PRODUITS DANS LE SCHÉMA API (Si le projet utilise le schéma api)
--- -------------------------------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS api;
 CREATE SEQUENCE IF NOT EXISTS api.products_id_seq;
-
 CREATE TABLE IF NOT EXISTS api.products (
   id BIGINT PRIMARY KEY DEFAULT nextval('api.products_id_seq'),
-  code TEXT,
+  code TEXT DEFAULT '-',
   produit TEXT NOT NULL,
-  marjane TEXT,
-  "marjane 2" TEXT,
-  "marjane Interne" TEXT,
-  "marjane mini" TEXT,
-  "marjane sec" TEXT,
-  "marjane sec 2" TEXT,
-  image_html TEXT,
-  "département" TEXT NOT NULL,
-  "catégorie" TEXT,
+  marjane TEXT DEFAULT '0',
+  "marjane 2" TEXT DEFAULT '0',
+  "marjane Interne" TEXT DEFAULT '0',
+  "marjane mini" TEXT DEFAULT '0',
+  "marjane sec" TEXT DEFAULT '0',
+  "marjane sec 2" TEXT DEFAULT '0',
+  image_html TEXT DEFAULT '',
+  "département" TEXT NOT NULL DEFAULT 'Fruits et légumes',
+  "catégorie" TEXT DEFAULT 'Fruits',
+  quantite TEXT DEFAULT 'pièce',
   is_enabled BOOLEAN DEFAULT true,
+  is_verified_100 BOOLEAN DEFAULT false,
+  verification_status TEXT DEFAULT 'none',
+  worker_number TEXT DEFAULT 'SHARED',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE api.products ALTER COLUMN id SET DEFAULT nextval('api.products_id_seq');
 ALTER SEQUENCE api.products_id_seq OWNED BY api.products.id;
+ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce';
+ALTER TABLE api.products ADD COLUMN IF NOT EXISTS worker_number TEXT DEFAULT 'SHARED';
+ALTER TABLE api.products ADD COLUMN IF NOT EXISTS is_verified_100 BOOLEAN DEFAULT false;
+ALTER TABLE api.products ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'none';
+ALTER TABLE api.products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 ALTER TABLE api.products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "api_products_all_access" ON api.products;
 CREATE POLICY "api_products_all_access" ON api.products FOR ALL USING (true) WITH CHECK (true);
 
-GRANT USAGE ON SCHEMA api TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA api TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA api TO anon, authenticated, service_role;
-
--- Table des workers dans le schéma api
-CREATE TABLE IF NOT EXISTS api.workers (
-  id TEXT PRIMARY KEY,
-  work_number TEXT UNIQUE NOT NULL,
-  phone_number TEXT,
-  full_name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'Pickeur',
-  password TEXT NOT NULL,
-  name TEXT,
-  numero TEXT,
-  entropot TEXT,
-  ville TEXT,
-  mote_de_passe TEXT,
-  city TEXT,
-  store_name TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE api.workers ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "api_workers_all_access" ON api.workers;
-CREATE POLICY "api_workers_all_access" ON api.workers FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE api.workers TO anon, authenticated, service_role;
-
 -- -------------------------------------------------------------------------
--- 4. TABLE DES TUTORIELS & ASTUCES (TIPS) DANS LES DEUX SCHÉMAS
+-- 3. TIPS, GUIDE, CONFIG SÉCURITÉ & BACKUPS CLOUD DB (PUBLIC + API)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.tips (
   id TEXT PRIMARY KEY,
@@ -236,17 +102,15 @@ CREATE TABLE IF NOT EXISTS public.tips (
   content TEXT NOT NULL,
   category TEXT NOT NULL,
   author_role TEXT DEFAULT 'Pickeur',
-  author_name TEXT,
-  created_at TEXT,
+  author_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT '',
   likes INT DEFAULT 0,
-  image_url TEXT,
+  image_url TEXT DEFAULT '',
   target_audience TEXT DEFAULT 'Tous'
 );
-
 ALTER TABLE public.tips ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "tips_all_access" ON public.tips;
 CREATE POLICY "tips_all_access" ON public.tips FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE public.tips TO anon, authenticated, service_role;
 
 CREATE TABLE IF NOT EXISTS api.tips (
   id TEXT PRIMARY KEY,
@@ -254,36 +118,82 @@ CREATE TABLE IF NOT EXISTS api.tips (
   content TEXT NOT NULL,
   category TEXT NOT NULL,
   author_role TEXT DEFAULT 'Pickeur',
-  author_name TEXT,
-  created_at TEXT,
+  author_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT '',
   likes INT DEFAULT 0,
-  image_url TEXT,
+  image_url TEXT DEFAULT '',
   target_audience TEXT DEFAULT 'Tous'
 );
-
 ALTER TABLE api.tips ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "api_tips_all_access" ON api.tips;
 CREATE POLICY "api_tips_all_access" ON api.tips FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE api.tips TO anon, authenticated, service_role;
 
 -- -------------------------------------------------------------------------
--- 5. TABLE DES VOTES DE CODES-BARRES (LIKES & DISLIKES PAR COMPTE)
+-- 3B. TABLE DÉDIÉE AUX ASTUCES & ARTICLES (PUBLIC + API)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.astuces (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  blocks_json JSONB DEFAULT '[]'::jsonb,
+  category TEXT NOT NULL DEFAULT 'Général',
+  author_role TEXT DEFAULT 'Pickeur',
+  author_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT '',
+  likes INT DEFAULT 0,
+  image_url TEXT DEFAULT '',
+  target_audience TEXT DEFAULT 'Tous',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.astuces ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "astuces_all_access" ON public.astuces;
+CREATE POLICY "astuces_all_access" ON public.astuces FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS api.astuces (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  blocks_json JSONB DEFAULT '[]'::jsonb,
+  category TEXT NOT NULL DEFAULT 'Général',
+  author_role TEXT DEFAULT 'Pickeur',
+  author_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT '',
+  likes INT DEFAULT 0,
+  image_url TEXT DEFAULT '',
+  target_audience TEXT DEFAULT 'Tous',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE api.astuces ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "api_astuces_all_access" ON api.astuces;
+CREATE POLICY "api_astuces_all_access" ON api.astuces FOR ALL USING (true) WITH CHECK (true);
+
+-- -------------------------------------------------------------------------
+-- 4. VOTES DE CODES-BARRES (PUBLIC + API)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.barcode_votes (
   barcode TEXT NOT NULL,
   worker_number TEXT NOT NULL,
-  vote_type TEXT NOT NULL, -- 'like' ou 'dislike'
+  vote_type TEXT NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (barcode, worker_number)
 );
-
 ALTER TABLE public.barcode_votes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "barcode_votes_all_access" ON public.barcode_votes;
 CREATE POLICY "barcode_votes_all_access" ON public.barcode_votes FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE public.barcode_votes TO anon, authenticated, service_role;
+
+CREATE TABLE IF NOT EXISTS api.barcode_votes (
+  barcode TEXT NOT NULL,
+  worker_number TEXT NOT NULL,
+  vote_type TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (barcode, worker_number)
+);
+ALTER TABLE api.barcode_votes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "api_barcode_votes_all_access" ON api.barcode_votes;
+CREATE POLICY "api_barcode_votes_all_access" ON api.barcode_votes FOR ALL USING (true) WITH CHECK (true);
 
 -- -------------------------------------------------------------------------
--- 6. TABLE DES TÉLÉPHONES / APPAREILS CONNECTÉS ET TEMPS D'UTILISATION
+-- 5. TÉLÉPHONES / APPAREILS CONNECTÉS (PUBLIC + API)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.user_devices (
   device_id TEXT PRIMARY KEY,
@@ -302,11 +212,9 @@ CREATE TABLE IF NOT EXISTS public.user_devices (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.user_devices ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "user_devices_all_access" ON public.user_devices;
 CREATE POLICY "user_devices_all_access" ON public.user_devices FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE public.user_devices TO anon, authenticated, service_role;
 
 CREATE TABLE IF NOT EXISTS api.user_devices (
   device_id TEXT PRIMARY KEY,
@@ -325,14 +233,12 @@ CREATE TABLE IF NOT EXISTS api.user_devices (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE api.user_devices ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "api_user_devices_all_access" ON api.user_devices;
 CREATE POLICY "api_user_devices_all_access" ON api.user_devices FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE api.user_devices TO anon, authenticated, service_role;
 
 -- -------------------------------------------------------------------------
--- 7. JOURNAL COMPLET D'ACTIVITÉ (AUDIT LOGS)
+-- 6. JOURNAL COMPLET D'ACTIVITÉ (AUDIT LOGS - PUBLIC + API)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.app_activity_logs (
   id TEXT PRIMARY KEY,
@@ -346,51 +252,172 @@ CREATE TABLE IF NOT EXISTS public.app_activity_logs (
   target TEXT,
   details TEXT
 );
-
 ALTER TABLE public.app_activity_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "app_activity_logs_all_access" ON public.app_activity_logs;
 CREATE POLICY "app_activity_logs_all_access" ON public.app_activity_logs FOR ALL USING (true) WITH CHECK (true);
-GRANT ALL ON TABLE public.app_activity_logs TO anon, authenticated, service_role;
+
+CREATE TABLE IF NOT EXISTS api.app_activity_logs (
+  id TEXT PRIMARY KEY,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  local_date_time TEXT,
+  category TEXT NOT NULL,
+  action TEXT NOT NULL,
+  actor_role TEXT DEFAULT 'Pickeur',
+  device_id TEXT,
+  ip_address TEXT,
+  target TEXT,
+  details TEXT
+);
+ALTER TABLE api.app_activity_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "api_app_activity_logs_all_access" ON api.app_activity_logs;
+CREATE POLICY "api_app_activity_logs_all_access" ON api.app_activity_logs FOR ALL USING (true) WITH CHECK (true);
 
 -- -------------------------------------------------------------------------
--- 8. REALTIME (Synchronisation instantanée)
+-- 7. DROITS D'ACCÈS (GRANTS) PUBLIC & API
+-- -------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+
+GRANT USAGE ON SCHEMA api TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA api TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA api TO anon, authenticated, service_role;
+
+-- -------------------------------------------------------------------------
+-- 8. SUPABASE STORAGE BUCKET 'backups' (.CSV & .JSON AUTOMATIQUES)
+-- -------------------------------------------------------------------------
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('backups', 'backups', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "backups_public_select" ON storage.objects;
+DROP POLICY IF EXISTS "backups_public_insert" ON storage.objects;
+DROP POLICY IF EXISTS "backups_public_update" ON storage.objects;
+DROP POLICY IF EXISTS "backups_public_delete" ON storage.objects;
+
+CREATE POLICY "backups_public_select" ON storage.objects FOR SELECT USING (bucket_id = 'backups');
+CREATE POLICY "backups_public_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'backups');
+CREATE POLICY "backups_public_update" ON storage.objects FOR UPDATE USING (bucket_id = 'backups') WITH CHECK (bucket_id = 'backups');
+CREATE POLICY "backups_public_delete" ON storage.objects FOR DELETE USING (bucket_id = 'backups');
+
+-- -------------------------------------------------------------------------
+-- 9. SYNCHRONISATION REALTIME & RECHARGEMENT SCHÉMA POSTGREST
 -- -------------------------------------------------------------------------
 DO $$
 BEGIN
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.products;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE api.products;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.tips;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE api.tips;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.barcode_votes;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.user_devices;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE api.user_devices;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.app_activity_logs;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.products; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.products; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.tips; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.tips; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.astuces; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.astuces; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.barcode_votes; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.barcode_votes; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.user_devices; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.user_devices; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.app_activity_logs; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.app_activity_logs; EXCEPTION WHEN OTHERS THEN NULL; END;
 END $$;
+
+NOTIFY pgrst, 'reload schema';
 `;
+
+export const SUPABASE_SETUP_SQL = `-- =========================================================================
+-- MISE À JOUR DOUCE SUPABASE (NE SUPPRIME AUCUNE DONNÉE EXISTANTE)
+-- À copier dans : Supabase Dashboard -> SQL Editor -> Run
+-- =========================================================================
+${CORE_TABLES_SQL_BODY}`;
+
+export const SUPABASE_RESET_RECREATE_SQL = `-- =========================================================================
+-- RÉINITIALISATION PROPRE DES TABLES SUPABASE (DROP + RECREATE COMPLET)
+-- ⚠️ Supprime les anciennes tables cassées dans 'public' et 'api' puis recrée
+--    toutes les tables propres (products, tips, votes, devices, logs, storage)
+-- ⚠️ Astuce : Faites d'abord "Exporter CSV" ou vérifiez vos Backups avant Run !
+-- =========================================================================
+
+DROP TABLE IF EXISTS public.products CASCADE;
+DROP TABLE IF EXISTS public.tips CASCADE;
+DROP TABLE IF EXISTS public.astuces CASCADE;
+DROP TABLE IF EXISTS public.barcode_votes CASCADE;
+DROP TABLE IF EXISTS public.user_devices CASCADE;
+DROP TABLE IF EXISTS public.app_activity_logs CASCADE;
+DROP TABLE IF EXISTS public.villes CASCADE;
+DROP TABLE IF EXISTS public.entrepots CASCADE;
+DROP TABLE IF EXISTS public.workers CASCADE;
+DROP TABLE IF EXISTS public.weekly_schedules CASCADE;
+DROP TABLE IF EXISTS public.planification_rows CASCADE;
+DROP SEQUENCE IF EXISTS public.products_id_seq CASCADE;
+
+DROP TABLE IF EXISTS api.products CASCADE;
+DROP TABLE IF EXISTS api.tips CASCADE;
+DROP TABLE IF EXISTS api.astuces CASCADE;
+DROP TABLE IF EXISTS api.barcode_votes CASCADE;
+DROP TABLE IF EXISTS api.user_devices CASCADE;
+DROP TABLE IF EXISTS api.app_activity_logs CASCADE;
+DROP TABLE IF EXISTS api.workers CASCADE;
+DROP SEQUENCE IF EXISTS api.products_id_seq CASCADE;
+
+${CORE_TABLES_SQL_BODY}`;
+
+export const SUPABASE_ASTUCES_TABLE_SQL = `-- =========================================================================
+-- TABLE DÉDIÉE AUX ASTUCES & ARTICLES (public.astuces + api.astuces)
+-- Exécutez ce script dans : Supabase Dashboard -> SQL Editor -> Run
+-- =========================================================================
+
+CREATE TABLE IF NOT EXISTS public.astuces (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  blocks_json JSONB DEFAULT '[]'::jsonb,
+  category TEXT NOT NULL DEFAULT 'Général',
+  author_role TEXT DEFAULT 'Pickeur',
+  author_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT '',
+  likes INT DEFAULT 0,
+  image_url TEXT DEFAULT '',
+  target_audience TEXT DEFAULT 'Tous',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.astuces ADD COLUMN IF NOT EXISTS blocks_json JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.astuces ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.astuces ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "astuces_all_access" ON public.astuces;
+CREATE POLICY "astuces_all_access" ON public.astuces FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS api.astuces (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  blocks_json JSONB DEFAULT '[]'::jsonb,
+  category TEXT NOT NULL DEFAULT 'Général',
+  author_role TEXT DEFAULT 'Pickeur',
+  author_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT '',
+  likes INT DEFAULT 0,
+  image_url TEXT DEFAULT '',
+  target_audience TEXT DEFAULT 'Tous',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE api.astuces ADD COLUMN IF NOT EXISTS blocks_json JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE api.astuces ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE api.astuces ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "api_astuces_all_access" ON api.astuces;
+CREATE POLICY "api_astuces_all_access" ON api.astuces FOR ALL USING (true) WITH CHECK (true);
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.astuces TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA api TO anon, authenticated, service_role;
+GRANT ALL ON TABLE api.astuces TO anon, authenticated, service_role;
+
+DO $$
+BEGIN
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.astuces; EXCEPTION WHEN OTHERS THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE api.astuces; EXCEPTION WHEN OTHERS THEN NULL; END;
+END $$;
+
+NOTIFY pgrst, 'reload schema';`;
 
 // Helper: map internal Department name to Database standard value
 export function departmentToDbValue(dept: Department): string {
@@ -567,13 +594,18 @@ export function mapRowToProduct(row: any): Product {
     row.isVerifiedBroken === true ||
     workerTag.includes('VERIFIED_BROKEN')
   );
-  const verificationStatus: 'none' | 'broken' | '50' | '100' = has100
-    ? '100'
-    : has50
-      ? '50'
-      : hasBroken
-        ? 'broken'
-        : 'none';
+  const verificationStatus: 'none' | 'broken' | '50' | '100' =
+    row.verification_status === '100' ||
+    row.verification_status === '50' ||
+    row.verification_status === 'broken'
+      ? row.verification_status
+      : has100
+        ? '100'
+        : has50
+          ? '50'
+          : hasBroken
+            ? 'broken'
+            : 'none';
   const isVerified100 = verificationStatus === '100';
 
   return {
@@ -627,6 +659,8 @@ export function mapProductToRow(p: Product) {
     'catégorie': p.category || '',
     quantite: pureUnit,
     is_enabled: p.isEnabled ?? true,
+    is_verified_100: vStatus === '100',
+    verification_status: vStatus,
     worker_number:
       vStatus === '100'
         ? 'SHARED|VERIFIED_100'
@@ -637,6 +671,37 @@ export function mapProductToRow(p: Product) {
             : 'SHARED',
     updated_at: new Date().toISOString(),
   };
+}
+
+function isMissingColumnError(err: any): boolean {
+  const msg = String(err?.message || '').toLowerCase();
+  const code = String(err?.code || '');
+  return (
+    code === 'PGRST204' ||
+    code === '42703' ||
+    msg.includes('could not find the') ||
+    msg.includes('column') && msg.includes('does not exist')
+  );
+}
+
+function stripExtendedProductColumns(row: Record<string, any>) {
+  const {
+    is_verified_100: _v1,
+    verification_status: _v2,
+    ...withoutVerifyCols
+  } = row;
+  return withoutVerifyCols;
+}
+
+function stripAllOptionalProductColumns(row: Record<string, any>) {
+  const {
+    is_verified_100: _v1,
+    verification_status: _v2,
+    quantite: _q,
+    worker_number: _w,
+    ...coreRow
+  } = row;
+  return coreRow;
 }
 
 // Check Supabase connection and table status across both 'public' and 'api' schemas
@@ -815,27 +880,49 @@ export async function fetchProductsFromSupabase(): Promise<{
   }
 }
 
-// Upsert a single product in Supabase
+// Upsert a single product in Supabase (with automatic column & schema fallback)
 export async function upsertProductInSupabase(
   product: Product
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const row = mapProductToRow(product);
-    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    const { error } = await client.from('products').upsert(row, { onConflict: 'id' });
-
-    if (!error) return { success: true };
-
-    // Try fallback client
+    const primaryClient = activeSchema === 'api' ? supabaseApi : supabasePublic;
     const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
-    const { error: errAlt } = await fallbackClient.from('products').upsert(row, { onConflict: 'id' });
-    if (!errAlt) {
+
+    const tryUpsertOnClient = async (client: typeof supabasePublic) => {
+      const { error } = await client.from('products').upsert(row, { onConflict: 'id' });
+      if (!error) return { ok: true as const };
+
+      if (isMissingColumnError(error)) {
+        const resNoVerify = await client
+          .from('products')
+          .upsert(stripExtendedProductColumns(row), { onConflict: 'id' });
+        if (!resNoVerify.error) return { ok: true as const };
+
+        if (isMissingColumnError(resNoVerify.error)) {
+          const resCore = await client
+            .from('products')
+            .upsert(stripAllOptionalProductColumns(row), { onConflict: 'id' });
+          if (!resCore.error) return { ok: true as const };
+          return { ok: false as const, error: resCore.error };
+        }
+        return { ok: false as const, error: resNoVerify.error };
+      }
+
+      return { ok: false as const, error };
+    };
+
+    const primaryRes = await tryUpsertOnClient(primaryClient);
+    if (primaryRes.ok) return { success: true };
+
+    const altRes = await tryUpsertOnClient(fallbackClient);
+    if (altRes.ok) {
       setActiveSchema(activeSchema === 'api' ? 'public' : 'api');
       return { success: true };
     }
 
-    console.error('[Supabase] Erreur upsert produit:', error);
-    return { success: false, error: error.message };
+    console.error('[Supabase] Erreur upsert produit:', primaryRes.error);
+    return { success: false, error: primaryRes.error?.message || 'Erreur upsert Supabase' };
   } catch (err: any) {
     console.error('[Supabase] Exception upsert produit:', err);
     return { success: false, error: err.message || 'Erreur lors de la sauvegarde Supabase' };
@@ -885,7 +972,7 @@ export async function deleteAllProductsFromSupabase(): Promise<{ success: boolea
   }
 }
 
-// Batch upload / seed all products into Supabase (in batches of 50)
+// Batch upload / seed all products into Supabase (in batches of 50 with column/schema fallback)
 export async function seedProductsToSupabase(
   products: Product[],
   onProgress?: (processed: number, total: number) => void
@@ -894,11 +981,43 @@ export async function seedProductsToSupabase(
     const batchSize = 50;
     const total = products.length;
     let processed = 0;
-    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    let client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    let columnLevel: 'full' | 'noVerify' | 'core' = 'full';
+
+    const mapForLevel = (p: Product) => {
+      const full = mapProductToRow(p);
+      if (columnLevel === 'noVerify') return stripExtendedProductColumns(full);
+      if (columnLevel === 'core') return stripAllOptionalProductColumns(full);
+      return full;
+    };
 
     for (let i = 0; i < total; i += batchSize) {
-      const chunk = products.slice(i, i + batchSize).map((p) => mapProductToRow(p));
-      const { error } = await client.from('products').upsert(chunk, { onConflict: 'id' });
+      const slice = products.slice(i, i + batchSize);
+      let chunk = slice.map(mapForLevel);
+      let { error } = await client.from('products').upsert(chunk, { onConflict: 'id' });
+
+      if (error && isMissingColumnError(error) && columnLevel === 'full') {
+        columnLevel = 'noVerify';
+        chunk = slice.map(mapForLevel);
+        ({ error } = await client.from('products').upsert(chunk, { onConflict: 'id' }));
+      }
+      if (error && isMissingColumnError(error) && columnLevel === 'noVerify') {
+        columnLevel = 'core';
+        chunk = slice.map(mapForLevel);
+        ({ error } = await client.from('products').upsert(chunk, { onConflict: 'id' }));
+      }
+
+      // If schema failed on first chunk, test secondary schema
+      if (error && i === 0) {
+        const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+        const altRes = await fallbackClient.from('products').upsert(chunk, { onConflict: 'id' });
+        if (!altRes.error) {
+          client = fallbackClient;
+          setActiveSchema(activeSchema === 'api' ? 'public' : 'api');
+          error = null;
+        }
+      }
+
       if (error) {
         console.error('[Supabase] Erreur lot seed:', error);
         return {
@@ -927,110 +1046,396 @@ const INTERNAL_TIPS_CATEGORIES = new Set([
   'app_activity_log_batch',
 ]);
 
-// Fetch Tips from Supabase
-export async function fetchTipsFromSupabase(): Promise<{ success: boolean; tips: TipPost[]; error?: string }> {
+const RICH_TIP_PREFIX = '__LIVRY_ARTICLE_JSON__:';
+
+function serializeTipContent(content: string, blocks?: TipArticleBlock[]): string {
+  if (!blocks || blocks.length === 0) return content || '';
+  const sanitizedBlocks = blocks.map((b) => ({
+    id: b.id,
+    type: b.type,
+    heading: b.heading || '',
+    text: b.text || '',
+    imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) || '' : '',
+    caption: b.caption || '',
+  }));
+  return `${RICH_TIP_PREFIX}${JSON.stringify({ summary: content || '', blocks: sanitizedBlocks })}`;
+}
+
+function deserializeTipContent(rawContent: unknown): {
+  content: string;
+  blocks?: TipArticleBlock[];
+} {
+  const s = String(rawContent || '');
+  if (!s.startsWith(RICH_TIP_PREFIX)) {
+    return { content: s };
+  }
+  try {
+    const parsed = JSON.parse(s.slice(RICH_TIP_PREFIX.length));
+    const blocks: TipArticleBlock[] = Array.isArray(parsed?.blocks)
+      ? parsed.blocks
+          .map((b: any, idx: number): TipArticleBlock => ({
+            id: String(b.id || `blk-${idx}`),
+            type: b.type === 'image' || b.type === 'image_text' ? b.type : 'text',
+            heading: typeof b.heading === 'string' && b.heading.trim() ? b.heading : undefined,
+            text: typeof b.text === 'string' && b.text.trim() ? b.text : undefined,
+            imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) : undefined,
+            caption: typeof b.caption === 'string' && b.caption.trim() ? b.caption : undefined,
+          }))
+      : [];
+    return {
+      content: String(parsed?.summary ?? ''),
+      blocks: blocks.length > 0 ? blocks : undefined,
+    };
+  } catch {
+    return { content: s };
+  }
+}
+
+function sanitizeBlocksForStorage(blocks?: TipArticleBlock[]) {
+  if (!blocks || blocks.length === 0) return [];
+  return blocks.map((b, idx) => ({
+    id: String(b.id || `blk-${idx}`),
+    type: b.type === 'image' || b.type === 'image_text' ? b.type : ('text' as const),
+    heading: typeof b.heading === 'string' && b.heading.trim() ? b.heading.trim() : undefined,
+    text: typeof b.text === 'string' && b.text.trim() ? b.text.trim() : undefined,
+    imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) : undefined,
+    caption: typeof b.caption === 'string' && b.caption.trim() ? b.caption.trim() : undefined,
+  }));
+}
+
+function mapRowToTip(t: any): TipPost {
+  const parsed = deserializeTipContent(t.content);
+  let blocks = parsed.blocks;
+
+  if ((!blocks || blocks.length === 0) && t.blocks_json) {
+    try {
+      const rawBlocks =
+        typeof t.blocks_json === 'string' ? JSON.parse(t.blocks_json) : t.blocks_json;
+      if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
+        const cleaned = sanitizeBlocksForStorage(rawBlocks);
+        if (cleaned.length > 0) blocks = cleaned;
+      }
+    } catch {}
+  }
+
+  return {
+    id: String(t.id),
+    title: String(t.title || ''),
+    content: parsed.content,
+    blocks,
+    category: t.category || 'Général',
+    authorRole: t.author_role || t.authorRole || 'Pickeur',
+    authorName: t.author_name || t.authorName || undefined,
+    createdAt: t.created_at || t.createdAt || 'Récemment',
+    likes: Number(t.likes || 0),
+    imageUrl: sanitizeImageUrl(t.image_url || t.imageUrl),
+    targetAudience: t.target_audience || t.targetAudience || 'Tous',
+  };
+}
+
+function mapTipToRow(tip: TipPost) {
+  return {
+    id: tip.id,
+    title: tip.title,
+    content: serializeTipContent(tip.content, tip.blocks),
+    category: tip.category,
+    author_role: tip.authorRole,
+    author_name: tip.authorName || '',
+    created_at: tip.createdAt,
+    likes: tip.likes,
+    image_url: sanitizeImageUrl(tip.imageUrl) || '',
+    target_audience: tip.targetAudience || 'Tous',
+  };
+}
+
+function mapAstuceToRow(tip: TipPost) {
+  return {
+    id: tip.id,
+    title: tip.title,
+    content: tip.content || '',
+    blocks_json: sanitizeBlocksForStorage(tip.blocks),
+    category: tip.category,
+    author_role: tip.authorRole,
+    author_name: tip.authorName || '',
+    created_at: tip.createdAt,
+    likes: Number(tip.likes || 0),
+    image_url: sanitizeImageUrl(tip.imageUrl) || '',
+    target_audience: tip.targetAudience || 'Tous',
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function isMissingTableError(err: any): boolean {
+  const msg = String(err?.message || '').toLowerCase();
+  const code = String(err?.code || '');
+  return (
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    code === 'PGRST106' ||
+    msg.includes('could not find the table') ||
+    (msg.includes('relation') && msg.includes('does not exist'))
+  );
+}
+
+export async function checkAstucesTableStatus(): Promise<{
+  exists: boolean;
+  schema: 'public' | 'api';
+  count: number;
+}> {
+  try {
+    const [pubRes, apiRes] = await Promise.allSettled([
+      supabasePublic.from('astuces').select('id', { count: 'exact' }).limit(1),
+      supabaseApi.from('astuces').select('id', { count: 'exact' }).limit(1),
+    ]);
+    const pub = pubRes.status === 'fulfilled' ? pubRes.value : null;
+    const api = apiRes.status === 'fulfilled' ? apiRes.value : null;
+
+    if (pub && !pub.error) {
+      return { exists: true, schema: 'public', count: pub.count ?? 0 };
+    }
+    if (api && !api.error) {
+      return { exists: true, schema: 'api', count: api.count ?? 0 };
+    }
+  } catch {}
+  return { exists: false, schema: 'public', count: 0 };
+}
+
+// Fetch Astuces / Tips from Supabase (prioritizes dedicated 'astuces' table, falls back to 'tips')
+export async function fetchTipsFromSupabase(): Promise<{
+  success: boolean;
+  tips: TipPost[];
+  sourceTable?: 'astuces' | 'tips';
+  error?: string;
+}> {
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+
+    // 1. Try dedicated 'astuces' table first
+    let astucesTableExists = false;
+    let astucesClient = client;
+
+    const astResPrimary = await client
+      .from('astuces')
+      .select('*')
+      .order('likes', { ascending: false });
+
+    if (!astResPrimary.error) {
+      astucesTableExists = true;
+      if (astResPrimary.data && astResPrimary.data.length > 0) {
+        return {
+          success: true,
+          tips: astResPrimary.data.map(mapRowToTip),
+          sourceTable: 'astuces',
+        };
+      }
+    } else if (isMissingTableError(astResPrimary.error)) {
+      const astResAlt = await fallbackClient
+        .from('astuces')
+        .select('*')
+        .order('likes', { ascending: false });
+      if (!astResAlt.error) {
+        astucesTableExists = true;
+        astucesClient = fallbackClient;
+        if (astResAlt.data && astResAlt.data.length > 0) {
+          return {
+            success: true,
+            tips: astResAlt.data.map(mapRowToTip),
+            sourceTable: 'astuces',
+          };
+        }
+      }
+    }
+
+    // 2. Fallback / migration source: user rows inside 'tips'
     let { data, error } = await client
       .from('tips')
       .select('*')
       .order('likes', { ascending: false });
 
-    if (error) {
-      const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+    const userRowsPrimary = (data || []).filter(
+      (t: any) => !INTERNAL_TIPS_CATEGORIES.has(String(t.category || ''))
+    );
+
+    if (error || userRowsPrimary.length === 0) {
       const resAlt = await fallbackClient
         .from('tips')
         .select('*')
         .order('likes', { ascending: false });
-      if (!resAlt.error) {
+      const userRowsAlt = (resAlt.data || []).filter(
+        (t: any) => !INTERNAL_TIPS_CATEGORIES.has(String(t.category || ''))
+      );
+      if (!resAlt.error && (error || userRowsAlt.length > userRowsPrimary.length)) {
         data = resAlt.data;
         error = null;
       }
     }
 
-    if (error) return { success: false, tips: [], error: error.message };
+    if (error && !astucesTableExists) {
+      return { success: false, tips: [], error: error.message };
+    }
 
     const mapped: TipPost[] = (data || [])
       .filter((t: any) => !INTERNAL_TIPS_CATEGORIES.has(String(t.category || '')))
-      .map((t: any) => ({
-        id: String(t.id),
-        title: String(t.title || ''),
-        content: String(t.content || ''),
-        category: t.category || 'Général',
-        authorRole: t.author_role || t.authorRole || 'Pickeur',
-        authorName: t.author_name || t.authorName || undefined,
-        createdAt: t.created_at || t.createdAt || 'Récemment',
-        likes: Number(t.likes || 0),
-        imageUrl: sanitizeImageUrl(t.image_url || t.imageUrl),
-        targetAudience: t.target_audience || t.targetAudience || 'Tous',
-      }));
+      .map(mapRowToTip);
 
-    return { success: true, tips: mapped };
+    // Auto-migrate legacy user tips into dedicated 'astuces' table if it exists and is empty
+    if (astucesTableExists && mapped.length > 0) {
+      const rows = mapped.map(mapAstuceToRow);
+      void astucesClient.from('astuces').upsert(rows, { onConflict: 'id' }).then(() => {}, () => {});
+    }
+
+    return {
+      success: true,
+      tips: mapped,
+      sourceTable: astucesTableExists && mapped.length === 0 ? 'astuces' : 'tips',
+    };
   } catch (err: any) {
     return { success: false, tips: [], error: err.message };
   }
 }
 
-// Upsert tip to Supabase
-export async function upsertTipInSupabase(tip: TipPost): Promise<{ success: boolean; error?: string }> {
+// Upsert tip/astuce to Supabase (saves into dedicated 'astuces' table first, falls back to 'tips' if needed)
+export async function upsertTipInSupabase(tip: TipPost): Promise<{
+  success: boolean;
+  targetTable?: 'astuces' | 'tips';
+  error?: string;
+}> {
   try {
-    const row = {
-      id: tip.id,
-      title: tip.title,
-      content: tip.content,
-      category: tip.category,
-      author_role: tip.authorRole,
-      author_name: tip.authorName || '',
-      created_at: tip.createdAt,
-      likes: tip.likes,
-      image_url: sanitizeImageUrl(tip.imageUrl) || '',
-      target_audience: tip.targetAudience || 'Tous',
-    };
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const fallback = activeSchema === 'api' ? supabasePublic : supabaseApi;
+    const astuceRow = mapAstuceToRow(tip);
+
+    // Try dedicated 'astuces' table first
+    const astPrimary = await client.from('astuces').upsert(astuceRow, { onConflict: 'id' });
+    if (!astPrimary.error) {
+      void fallback.from('astuces').upsert(astuceRow, { onConflict: 'id' }).then(() => {}, () => {});
+      return { success: true, targetTable: 'astuces' };
+    }
+
+    const astAlt = await fallback.from('astuces').upsert(astuceRow, { onConflict: 'id' });
+    if (!astAlt.error) {
+      return { success: true, targetTable: 'astuces' };
+    }
+
+    // Fallback to 'tips' table if 'astuces' table hasn't been created by SQL yet
+    const row = mapTipToRow(tip);
     const { error } = await client.from('tips').upsert(row, { onConflict: 'id' });
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    if (!error) {
+      void fallback.from('tips').upsert(row, { onConflict: 'id' }).then(() => {}, () => {});
+      return { success: true, targetTable: 'tips' };
+    }
+
+    const { error: errAlt } = await fallback.from('tips').upsert(row, { onConflict: 'id' });
+    if (!errAlt) return { success: true, targetTable: 'tips' };
+
+    return {
+      success: false,
+      error: astPrimary.error?.message || error.message || errAlt.message,
+    };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
 }
 
-// Delete tip from Supabase
+// Delete tip/astuce from Supabase (cleans both 'astuces' and 'tips')
 export async function deleteTipInSupabase(id: string): Promise<{ success: boolean; error?: string }> {
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    const { error } = await client.from('tips').delete().eq('id', id);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    const fallback = activeSchema === 'api' ? supabasePublic : supabaseApi;
+
+    const [astPub, astApi, tipPub, tipApi] = await Promise.allSettled([
+      client.from('astuces').delete().eq('id', id),
+      fallback.from('astuces').delete().eq('id', id),
+      client.from('tips').delete().eq('id', id),
+      fallback.from('tips').delete().eq('id', id),
+    ]);
+
+    const hasSuccess = [astPub, astApi, tipPub, tipApi].some(
+      (r) => r.status === 'fulfilled' && !r.value.error
+    );
+    if (hasSuccess) return { success: true };
+
+    const firstErr = [astPub, tipPub]
+      .map((r) => (r.status === 'fulfilled' ? r.value.error?.message : undefined))
+      .find(Boolean);
+
+    return { success: false, error: firstErr || 'Erreur suppression Supabase' };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
 }
 
-// Seed all tips to Supabase
+// Seed all astuces/tips to Supabase (dedicated 'astuces' table first, 'tips' fallback)
 export async function seedTipsToSupabase(
   tips: TipPost[]
-): Promise<{ success: boolean; count: number; error?: string }> {
+): Promise<{
+  success: boolean;
+  count: number;
+  targetTable?: 'astuces' | 'tips';
+  needsTableSql?: boolean;
+  error?: string;
+}> {
   try {
-    const rows = tips.map((tip) => ({
-      id: tip.id,
-      title: tip.title,
-      content: tip.content,
-      category: tip.category,
-      author_role: tip.authorRole,
-      author_name: tip.authorName || '',
-      created_at: tip.createdAt,
-      likes: tip.likes,
-      image_url: tip.imageUrl || '',
-      target_audience: tip.targetAudience || 'Tous',
-    }));
+    if (tips.length === 0) return { success: true, count: 0 };
 
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const fallback = activeSchema === 'api' ? supabasePublic : supabaseApi;
+    const astuceRows = tips.map(mapAstuceToRow);
+
+    const astPrimary = await client.from('astuces').upsert(astuceRows, { onConflict: 'id' });
+    if (!astPrimary.error) {
+      void fallback.from('astuces').upsert(astuceRows, { onConflict: 'id' }).then(() => {}, () => {});
+      return {
+        success: true,
+        count: astuceRows.length,
+        targetTable: 'astuces',
+        needsTableSql: false,
+      };
+    }
+
+    const astAlt = await fallback.from('astuces').upsert(astuceRows, { onConflict: 'id' });
+    if (!astAlt.error) {
+      return {
+        success: true,
+        count: astuceRows.length,
+        targetTable: 'astuces',
+        needsTableSql: false,
+      };
+    }
+
+    const needsTableSql = isMissingTableError(astPrimary.error) || isMissingTableError(astAlt.error);
+
+    const rows = tips.map(mapTipToRow);
     const { error } = await client.from('tips').upsert(rows, { onConflict: 'id' });
-    if (error) return { success: false, count: 0, error: error.message };
-    return { success: true, count: rows.length };
+    if (!error) {
+      void fallback.from('tips').upsert(rows, { onConflict: 'id' }).then(() => {}, () => {});
+      return {
+        success: true,
+        count: rows.length,
+        targetTable: 'tips',
+        needsTableSql,
+      };
+    }
+
+    const { error: errAlt } = await fallback.from('tips').upsert(rows, { onConflict: 'id' });
+    if (!errAlt) {
+      return {
+        success: true,
+        count: rows.length,
+        targetTable: 'tips',
+        needsTableSql,
+      };
+    }
+
+    return {
+      success: false,
+      count: 0,
+      needsTableSql,
+      error: astPrimary.error?.message || error.message || errAlt.message,
+    };
   } catch (err: any) {
-    return { success: false, count: 0, error: err.message || 'Erreur d\'envoi des astuces' };
+    return { success: false, count: 0, error: err.message || "Erreur d'envoi des astuces" };
   }
 }
 
@@ -1046,7 +1451,16 @@ export async function fetchBarcodeVotesFromSupabase(): Promise<{
 }> {
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    const { data, error } = await client.from('barcode_votes').select('*');
+    let { data, error } = await client.from('barcode_votes').select('*');
+
+    if (error) {
+      const fallback = activeSchema === 'api' ? supabasePublic : supabaseApi;
+      const alt = await fallback.from('barcode_votes').select('*');
+      if (!alt.error) {
+        data = alt.data;
+        error = null;
+      }
+    }
 
     if (error) {
       // If table doesn't exist yet, return gracefully
@@ -1107,31 +1521,42 @@ export async function saveBarcodeVoteToSupabase(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
+    const fallback = activeSchema === 'api' ? supabasePublic : supabaseApi;
 
     if (voteType === null) {
-      // Toggle off / cancel vote
       const { error } = await client
         .from('barcode_votes')
         .delete()
         .match({ barcode, worker_number: workerNumber });
+      if (!error) return { success: true };
 
-      if (error) return { success: false, error: error.message };
-      return { success: true };
+      const { error: errAlt } = await fallback
+        .from('barcode_votes')
+        .delete()
+        .match({ barcode, worker_number: workerNumber });
+      if (!errAlt) return { success: true };
+
+      return { success: false, error: error.message };
     }
 
-    // Insert or update vote
-    const { error } = await client.from('barcode_votes').upsert(
-      {
-        barcode,
-        worker_number: workerNumber,
-        vote_type: voteType,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'barcode,worker_number' }
-    );
+    const row = {
+      barcode,
+      worker_number: workerNumber,
+      vote_type: voteType,
+      updated_at: new Date().toISOString(),
+    };
 
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    const { error } = await client
+      .from('barcode_votes')
+      .upsert(row, { onConflict: 'barcode,worker_number' });
+    if (!error) return { success: true };
+
+    const { error: errAlt } = await fallback
+      .from('barcode_votes')
+      .upsert(row, { onConflict: 'barcode,worker_number' });
+    if (!errAlt) return { success: true };
+
+    return { success: false, error: error.message };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
