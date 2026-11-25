@@ -128,6 +128,7 @@ interface AppContextType {
   toggleProductStatus: (id: number) => Promise<void>;
   updateProduct: (updated: Product) => Promise<void>;
   addProduct: (newProduct: Omit<Product, 'id'>) => Promise<void>;
+  duplicateProductsBulk: (ids: number[]) => Promise<Product[]>;
   deleteProduct: (id: number) => Promise<void>;
   deleteProductsBulk: (ids: number[]) => Promise<number>;
   restoreDeletedProducts: (items: Product[]) => Promise<number>;
@@ -1217,6 +1218,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [showToast]
   );
 
+  const duplicateProductsBulk = useCallback(
+    async (ids: number[]): Promise<Product[]> => {
+      if (!requireAdmin('duplicateProductsBulk')) return [];
+      if (!ids || ids.length === 0) return [];
+      const idSet = new Set(ids);
+      const sources = productsRef.current.filter((p) => idSet.has(p.id));
+      if (sources.length === 0) return [];
+
+      let nextId = productsRef.current.reduce((max, p) => Math.max(max, p.id), 0) + 1;
+      const clones: Product[] = sources.map((src) => {
+        const cleanName = (src.name || 'Article').trim();
+        const copyName = cleanName.endsWith('(Copie)') ? cleanName : `${cleanName} (Copie)`;
+        const clone: Product = {
+          ...src,
+          id: nextId++,
+          name: copyName,
+        };
+        return clone;
+      });
+
+      setProducts((prev) => [...clones, ...prev]);
+
+      const disabledCloneIds = clones.filter((c) => c.codeDisabled).map((c) => c.id);
+      if (disabledCloneIds.length > 0) {
+        const currentCfg = guideConfigRef.current;
+        const nextIds = Array.from(
+          new Set([...(currentCfg.noCodeSettings?.disabledCodeProductIds || []), ...disabledCloneIds])
+        );
+        saveGuideConfigToCloud({
+          ...currentCfg,
+          noCodeSettings: {
+            allowAllWithoutCode: Boolean(currentCfg.noCodeSettings?.allowAllWithoutCode),
+            disabledCodeProductIds: nextIds,
+          },
+        })
+          .then((saved) => setGuideConfig(saved.config))
+          .catch(() => {});
+      }
+
+      const res = await seedProductsToSupabase(clones);
+      if (!res.success && res.error) {
+        showToast(`⚠️ ${clones.length} dupliqué(s) localement · Erreur Supabase : ${res.error}`);
+      }
+
+      logAppEvent({
+        category: 'PRODUCT',
+        action: 'PRODUCT_BULK_DUPLICATED',
+        actorRole: roleRef.current,
+        target: `${clones.length} articles`,
+        details: `Duplication groupée de ${clones.length} produit(s) : ${clones
+          .slice(0, 5)
+          .map((c) => c.name)
+          .join(', ')}${clones.length > 5 ? '...' : ''}.`,
+      }).catch(() => {});
+
+      return clones;
+    },
+    [requireAdmin, showToast]
+  );
+
   const deleteProduct = useCallback(
     async (id: number) => {
       if (!requireAdmin('deleteProduct')) return;
@@ -2041,6 +2102,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleProductStatus,
         updateProduct,
         addProduct,
+        duplicateProductsBulk,
         deleteProduct,
         deleteProductsBulk,
         restoreDeletedProducts,

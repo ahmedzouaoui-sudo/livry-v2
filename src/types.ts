@@ -100,6 +100,8 @@ export interface CustomTipCategory {
   color?: CategoryColorKey;
 }
 
+export type TextAlignment = 'left' | 'center' | 'right';
+
 export interface TipArticleBlock {
   id: string;
   type: 'text' | 'image' | 'image_text';
@@ -107,6 +109,7 @@ export interface TipArticleBlock {
   text?: string;
   imageUrl?: string;
   caption?: string;
+  textAlign?: TextAlignment;
 }
 
 export interface TipPost {
@@ -120,6 +123,7 @@ export interface TipPost {
   likes: number;
   imageUrl?: string;
   targetAudience?: 'Tous' | 'Pickeur' | 'Livreur' | 'Référent';
+  textAlign?: TextAlignment;
   blocks?: TipArticleBlock[];
 }
 
@@ -232,6 +236,7 @@ export interface AstucesPageConfig {
   emptyTitle: string;
   emptySubtitle: string;
   heroBgImageUrl?: string;
+  textAlign?: TextAlignment;
   customCategories?: CustomTipCategory[];
 }
 

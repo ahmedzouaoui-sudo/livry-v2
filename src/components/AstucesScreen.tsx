@@ -32,6 +32,9 @@ import {
   Copy,
   CloudUpload,
   Tag,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -39,6 +42,7 @@ import {
   CategoryColorKey,
   CustomTipCategory,
   GuideConfig,
+  TextAlignment,
   TipArticleBlock,
   TipCategory,
   TipPost,
@@ -112,6 +116,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const [formContent, setFormContent] = useState('');
   const [formAuthorName, setFormAuthorName] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
+  const [formTextAlign, setFormTextAlign] = useState<TextAlignment>('left');
   const [formBlocks, setFormBlocks] = useState<TipArticleBlock[]>([]);
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
   const [isSavingTip, setIsSavingTip] = useState(false);
@@ -332,6 +337,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
     setFormContent('');
     setFormAuthorName('Admin Livry');
     setFormImageUrl('');
+    setFormTextAlign('left');
     setFormBlocks([]);
     setInlineModalCatName('');
     setFormError(null);
@@ -347,6 +353,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
     setFormContent(tip.content);
     setFormAuthorName(tip.authorName || 'Admin Livry');
     setFormImageUrl(tip.imageUrl || '');
+    setFormTextAlign(tip.textAlign || 'left');
     setFormBlocks(tip.blocks ? tip.blocks.map((b) => ({ ...b })) : []);
     setInlineModalCatName('');
     setFormError(null);
@@ -400,6 +407,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         text: type !== 'image' ? '' : undefined,
         imageUrl: type !== 'text' ? '' : undefined,
         caption: type !== 'text' ? '' : undefined,
+        textAlign: formTextAlign,
       },
     ]);
   };
@@ -438,6 +446,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         text: b.text?.trim() || undefined,
         imageUrl: sanitizeImageUrl(b.imageUrl),
         caption: b.caption?.trim() || undefined,
+        textAlign: b.textAlign,
       }))
       .filter((b) => b.heading || b.text || b.imageUrl);
 
@@ -463,6 +472,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
           content: trimmedContent,
           authorName: formAuthorName.trim() || editingTip.authorName,
           imageUrl: safeCover,
+          textAlign: formTextAlign,
           blocks: cleanBlocks.length > 0 ? cleanBlocks : undefined,
         });
       } else {
@@ -474,6 +484,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
           authorRole: role,
           authorName: formAuthorName.trim() || `${role} Livry`,
           imageUrl: safeCover,
+          textAlign: formTextAlign,
           blocks: cleanBlocks.length > 0 ? cleanBlocks : undefined,
         });
       }
@@ -956,13 +967,53 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 className="w-full px-2.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white outline-none"
               />
             </div>
+            <div>
+              <label className="block text-[10px] font-bold text-amber-300 mb-1">
+                Côté / sens du texte (Page &amp; Bannière)
+              </label>
+              <div className="grid grid-cols-3 gap-1">
+                {(
+                  [
+                    { val: 'left', label: 'Gauche', Icon: AlignLeft },
+                    { val: 'center', label: 'Centré', Icon: AlignCenter },
+                    { val: 'right', label: 'Droite', Icon: AlignRight },
+                  ] as const
+                ).map(({ val, label, Icon }) => {
+                  const active = (pageUiDraft.textAlign || 'left') === val;
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setPageUiDraft({ ...pageUiDraft, textAlign: val })}
+                      className={`py-1.5 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 border transition cursor-pointer ${
+                        active
+                          ? 'bg-amber-400 text-slate-950 border-amber-300'
+                          : 'bg-white/10 text-white/80 border-white/15 hover:bg-white/20'
+                      }`}
+                    >
+                      <Icon className="w-3 h-3" />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Optional Admin Custom Top Announcement Banner */}
       {activeAstucesUi.topNotice && (
-        <div className="mb-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/45 border border-amber-300/80 dark:border-amber-700/60 px-3.5 py-2.5 flex items-start gap-2.5 text-amber-950 dark:text-amber-100 shadow-2xs">
+        <div
+          dir={(activeAstucesUi.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
+          className={`mb-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/45 border border-amber-300/80 dark:border-amber-700/60 px-3.5 py-2.5 flex items-start gap-2.5 text-amber-950 dark:text-amber-100 shadow-2xs ${
+            activeAstucesUi.textAlign === 'right'
+              ? 'text-right'
+              : activeAstucesUi.textAlign === 'center'
+                ? 'text-center justify-center'
+                : 'text-left'
+          }`}
+        >
           <Megaphone className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <p className="text-xs font-bold leading-snug whitespace-pre-line">
             {activeAstucesUi.topNotice}
@@ -995,7 +1046,16 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         </svg>
 
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-          <div className="sm:col-span-7 space-y-2.5">
+          <div
+            dir={(activeAstucesUi.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
+            className={`sm:col-span-7 space-y-2.5 ${
+              activeAstucesUi.textAlign === 'right'
+                ? 'text-right'
+                : activeAstucesUi.textAlign === 'center'
+                  ? 'text-center'
+                  : 'text-left'
+            }`}
+          >
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/12 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white/95">
               <BookOpen className="w-3 h-3 text-rose-400" />
               <span>{heroBadge}</span>
@@ -1403,15 +1463,26 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                       </span>
                     </div>
 
-                    <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-snug group-hover:text-[#0759A4] dark:group-hover:text-blue-300 transition-colors">
-                      {post.title}
-                    </h3>
+                    <div
+                      dir={(post.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
+                      className={
+                        post.textAlign === 'right'
+                          ? 'text-right'
+                          : post.textAlign === 'center'
+                            ? 'text-center'
+                            : 'text-left'
+                      }
+                    >
+                      <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-snug group-hover:text-[#0759A4] dark:group-hover:text-blue-300 transition-colors">
+                        {post.title}
+                      </h3>
 
-                    {post.content && (
-                      <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed line-clamp-2">
-                        {post.content}
-                      </p>
-                    )}
+                      {post.content && (
+                        <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed line-clamp-2 mt-1">
+                          {post.content}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Footer Actions */}
@@ -1645,14 +1716,32 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 </div>
 
                 {/* Big Article Title */}
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
+                <h2
+                  dir={(readingArticle.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
+                  className={`text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight ${
+                    readingArticle.textAlign === 'right'
+                      ? 'text-right'
+                      : readingArticle.textAlign === 'center'
+                        ? 'text-center'
+                        : 'text-left'
+                  }`}
+                >
                   {readingArticle.title}
                 </h2>
               </div>
 
               {/* Main Intro / Body */}
               {readingArticle.content && (
-                <div className="text-sm text-gray-700 dark:text-slate-200 leading-relaxed whitespace-pre-line font-normal bg-gray-50/80 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
+                <div
+                  dir={(readingArticle.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
+                  className={`text-sm text-gray-700 dark:text-slate-200 leading-relaxed whitespace-pre-line font-normal bg-gray-50/80 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 ${
+                    readingArticle.textAlign === 'right'
+                      ? 'text-right'
+                      : readingArticle.textAlign === 'center'
+                        ? 'text-center'
+                        : 'text-left'
+                  }`}
+                >
                   {readingArticle.content}
                 </div>
               )}
@@ -1662,10 +1751,18 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 <div className="space-y-5">
                   {readingArticle.blocks.map((blk, idx) => {
                     const safeBlkImg = sanitizeImageUrl(blk.imageUrl);
+                    const blkAlign = blk.textAlign || readingArticle.textAlign || 'left';
+                    const blkAlignClass =
+                      blkAlign === 'right'
+                        ? 'text-right'
+                        : blkAlign === 'center'
+                          ? 'text-center'
+                          : 'text-left';
                     return (
                       <section
                         key={blk.id || idx}
-                        className="space-y-2.5 pt-2 border-t border-gray-100 dark:border-slate-800/80 first:border-t-0 first:pt-0"
+                        dir={blkAlign === 'right' ? 'rtl' : 'ltr'}
+                        className={`space-y-2.5 pt-2 border-t border-gray-100 dark:border-slate-800/80 first:border-t-0 first:pt-0 ${blkAlignClass}`}
                       >
                         {blk.heading && (
                           <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight">
@@ -1808,6 +1905,51 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 </div>
               </div>
 
+              {/* Text Side / Direction Selector */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                  <label className="text-[11px] font-black text-gray-700 dark:text-slate-200">
+                    Côté / Sens d&apos;écriture (mnin tbda lketba)
+                  </label>
+                  <span className="text-[10px] font-semibold text-gray-500">
+                    {formTextAlign === 'right'
+                      ? 'Droite → Gauche (Arabe / RTL)'
+                      : formTextAlign === 'center'
+                        ? 'Centré'
+                        : 'Gauche → Droite (Français / LTR)'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      { val: 'left', label: 'Gauche (LTR)', Icon: AlignLeft },
+                      { val: 'center', label: 'Centré', Icon: AlignCenter },
+                      { val: 'right', label: 'Droite (RTL)', Icon: AlignRight },
+                    ] as const
+                  ).map(({ val, label, Icon }) => {
+                    const active = formTextAlign === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setFormTextAlign(val);
+                        }}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                          active
+                            ? 'bg-[#0759A4] text-white border-[#0759A4] shadow-xs'
+                            : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Title */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-400 mb-1">
@@ -1815,10 +1957,17 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 </label>
                 <input
                   type="text"
+                  dir={formTextAlign === 'right' ? 'rtl' : 'ltr'}
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="ex: Guide complet pour peser les fruits & légumes sans erreur"
-                  className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4]"
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-semibold text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4] ${
+                    formTextAlign === 'right'
+                      ? 'text-right'
+                      : formTextAlign === 'center'
+                        ? 'text-center'
+                        : 'text-left'
+                  }`}
                   required
                 />
               </div>
@@ -1942,11 +2091,18 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   Introduction / Résumé de l&apos;article
                 </label>
                 <textarea
+                  dir={formTextAlign === 'right' ? 'rtl' : 'ltr'}
                   value={formContent}
                   onChange={(e) => setFormContent(e.target.value)}
                   placeholder="Écrivez l'introduction ou la consigne principale (vous pouvez aussi ajouter des sections photos + texte ci-dessous)..."
                   rows={3}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4] leading-relaxed"
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-900 dark:text-white outline-none focus:border-[#0759A4] leading-relaxed ${
+                    formTextAlign === 'right'
+                      ? 'text-right'
+                      : formTextAlign === 'center'
+                        ? 'text-center'
+                        : 'text-left'
+                  }`}
                 />
               </div>
 
@@ -1991,12 +2147,20 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
                 {formBlocks.length > 0 && (
                   <div className="space-y-2.5">
-                    {formBlocks.map((blk, idx) => (
+                    {formBlocks.map((blk, idx) => {
+                      const blkAlign = blk.textAlign || formTextAlign;
+                      const blkAlignClass =
+                        blkAlign === 'right'
+                          ? 'text-right'
+                          : blkAlign === 'center'
+                            ? 'text-center'
+                            : 'text-left';
+                      return (
                       <div
                         key={blk.id}
                         className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 space-y-2"
                       >
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
                           <span className="text-[10px] font-black uppercase tracking-wider text-[#0759A4] dark:text-blue-400">
                             Section {idx + 1} •{' '}
                             {blk.type === 'text'
@@ -2006,6 +2170,34 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                               : 'Photo + Texte'}
                           </span>
                           <div className="flex items-center gap-1">
+                            {/* Per-section side selector */}
+                            <div
+                              className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100 border border-gray-200 mr-1"
+                              role="group"
+                              aria-label="Côté du texte de cette section"
+                            >
+                              {(
+                                [
+                                  { val: 'left', title: 'Gauche (LTR)', Icon: AlignLeft },
+                                  { val: 'center', title: 'Centré', Icon: AlignCenter },
+                                  { val: 'right', title: 'Droite (RTL)', Icon: AlignRight },
+                                ] as const
+                              ).map(({ val, title, Icon }) => (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => updateArticleBlock(blk.id, { textAlign: val })}
+                                  title={title}
+                                  className={`p-1 rounded-md transition cursor-pointer ${
+                                    blkAlign === val
+                                      ? 'bg-[#0759A4] text-white shadow-2xs'
+                                      : 'text-gray-500 hover:bg-white'
+                                  }`}
+                                >
+                                  <Icon className="w-3 h-3" />
+                                </button>
+                              ))}
+                            </div>
                             <button
                               type="button"
                               onClick={() => moveArticleBlock(idx, -1)}
@@ -2037,10 +2229,11 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
                         <input
                           type="text"
+                          dir={blkAlign === 'right' ? 'rtl' : 'ltr'}
                           value={blk.heading || ''}
                           onChange={(e) => updateArticleBlock(blk.id, { heading: e.target.value })}
                           placeholder="Sous-titre de section (optionnel)"
-                          className="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:border-[#0759A4]"
+                          className={`w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:border-[#0759A4] ${blkAlignClass}`}
                         />
 
                         {blk.type !== 'text' && (
@@ -2088,27 +2281,30 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                             </div>
                             <input
                               type="text"
+                              dir={blkAlign === 'right' ? 'rtl' : 'ltr'}
                               value={blk.caption || ''}
                               onChange={(e) =>
                                 updateArticleBlock(blk.id, { caption: e.target.value })
                               }
                               placeholder="Légende sous la photo (optionnelle)"
-                              className="w-full p-1.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-[11px] outline-none"
+                              className={`w-full p-1.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-[11px] outline-none ${blkAlignClass}`}
                             />
                           </div>
                         )}
 
                         {blk.type !== 'image' && (
                           <textarea
+                            dir={blkAlign === 'right' ? 'rtl' : 'ltr'}
                             value={blk.text || ''}
                             onChange={(e) => updateArticleBlock(blk.id, { text: e.target.value })}
                             placeholder="Texte explicatif de cette section..."
                             rows={3}
-                            className="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:border-[#0759A4] leading-relaxed"
+                            className={`w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-xs outline-none focus:border-[#0759A4] leading-relaxed ${blkAlignClass}`}
                           />
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

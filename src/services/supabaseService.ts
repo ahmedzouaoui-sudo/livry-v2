@@ -1089,22 +1089,38 @@ const INTERNAL_TIPS_CATEGORIES = new Set([
 
 const RICH_TIP_PREFIX = '__LIVRY_ARTICLE_JSON__:';
 
-function serializeTipContent(content: string, blocks?: TipArticleBlock[]): string {
-  if (!blocks || blocks.length === 0) return content || '';
-  const sanitizedBlocks = blocks.map((b) => ({
+function normalizeTextAlign(val: unknown): TipPost['textAlign'] | undefined {
+  return val === 'left' || val === 'center' || val === 'right' ? val : undefined;
+}
+
+function serializeTipContent(
+  content: string,
+  blocks?: TipArticleBlock[],
+  textAlign?: TipPost['textAlign']
+): string {
+  const cleanAlign = normalizeTextAlign(textAlign);
+  const hasAlignOverride = Boolean(cleanAlign && cleanAlign !== 'left');
+  if ((!blocks || blocks.length === 0) && !hasAlignOverride) return content || '';
+  const sanitizedBlocks = (blocks || []).map((b) => ({
     id: b.id,
     type: b.type,
     heading: b.heading || '',
     text: b.text || '',
     imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) || '' : '',
     caption: b.caption || '',
+    ...(normalizeTextAlign(b.textAlign) ? { textAlign: normalizeTextAlign(b.textAlign) } : {}),
   }));
-  return `${RICH_TIP_PREFIX}${JSON.stringify({ summary: content || '', blocks: sanitizedBlocks })}`;
+  return `${RICH_TIP_PREFIX}${JSON.stringify({
+    summary: content || '',
+    blocks: sanitizedBlocks,
+    ...(cleanAlign ? { textAlign: cleanAlign } : {}),
+  })}`;
 }
 
 function deserializeTipContent(rawContent: unknown): {
   content: string;
   blocks?: TipArticleBlock[];
+  textAlign?: TipPost['textAlign'];
 } {
   const s = String(rawContent || '');
   if (!s.startsWith(RICH_TIP_PREFIX)) {
@@ -1121,11 +1137,13 @@ function deserializeTipContent(rawContent: unknown): {
             text: typeof b.text === 'string' && b.text.trim() ? b.text : undefined,
             imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) : undefined,
             caption: typeof b.caption === 'string' && b.caption.trim() ? b.caption : undefined,
+            textAlign: normalizeTextAlign(b.textAlign),
           }))
       : [];
     return {
       content: String(parsed?.summary ?? ''),
       blocks: blocks.length > 0 ? blocks : undefined,
+      textAlign: normalizeTextAlign(parsed?.textAlign),
     };
   } catch {
     return { content: s };
@@ -1141,6 +1159,7 @@ function sanitizeBlocksForStorage(blocks?: TipArticleBlock[]) {
     text: typeof b.text === 'string' && b.text.trim() ? b.text.trim() : undefined,
     imageUrl: b.imageUrl ? sanitizeImageUrl(b.imageUrl) : undefined,
     caption: typeof b.caption === 'string' && b.caption.trim() ? b.caption.trim() : undefined,
+    textAlign: normalizeTextAlign(b.textAlign),
   }));
 }
 
@@ -1171,6 +1190,7 @@ function mapRowToTip(t: any): TipPost {
     likes: Number(t.likes || 0),
     imageUrl: sanitizeImageUrl(t.image_url || t.imageUrl),
     targetAudience: t.target_audience || t.targetAudience || 'Tous',
+    textAlign: parsed.textAlign || normalizeTextAlign(t.text_align || t.textAlign),
   };
 }
 
@@ -1178,7 +1198,7 @@ function mapTipToRow(tip: TipPost) {
   return {
     id: tip.id,
     title: tip.title,
-    content: serializeTipContent(tip.content, tip.blocks),
+    content: serializeTipContent(tip.content, tip.blocks, tip.textAlign),
     category: tip.category,
     author_role: tip.authorRole,
     author_name: tip.authorName || '',
@@ -1190,10 +1210,15 @@ function mapTipToRow(tip: TipPost) {
 }
 
 function mapAstuceToRow(tip: TipPost) {
+  const cleanAlign = normalizeTextAlign(tip.textAlign);
+  const serializedContent =
+    cleanAlign && cleanAlign !== 'left'
+      ? serializeTipContent(tip.content, undefined, cleanAlign)
+      : tip.content || '';
   return {
     id: tip.id,
     title: tip.title,
-    content: tip.content || '',
+    content: serializedContent,
     blocks_json: sanitizeBlocksForStorage(tip.blocks),
     category: tip.category,
     author_role: tip.authorRole,

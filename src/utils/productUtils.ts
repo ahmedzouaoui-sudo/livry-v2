@@ -700,18 +700,19 @@ function tokenizeWords(text: string): string[] {
     .filter(Boolean);
 }
 
-function pickSingleBestCodeMatch(list: Product[]): Product[] {
+function sortExactCodeMatches(list: Product[]): Product[] {
   if (list.length <= 1) return list;
-  const sorted = [...list].sort((a, b) => {
+  return [...list].sort((a, b) => {
     const aVer = a.verificationStatus === '100' || a.isVerified100 ? 1 : 0;
     const bVer = b.verificationStatus === '100' || b.isVerified100 ? 1 : 0;
     if (aVer !== bVer) return bVer - aVer;
     const aImg = a.imageUrl ? 1 : 0;
     const bImg = b.imageUrl ? 1 : 0;
     if (aImg !== bImg) return bImg - aImg;
+    const nameCmp = (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' });
+    if (nameCmp !== 0) return nameCmp;
     return a.id - b.id;
   });
-  return [sorted[0]];
 }
 
 /**
@@ -719,7 +720,7 @@ function pickSingleBestCodeMatch(list: Product[]): Product[] {
  * - Products with code XXXX are hidden
  * - ONLY products with barcodes appear when onlyWithBarcodes=true
  * - Search ONLY matches by CODE (short code / barcode) OR product NAME
- * - If searching by CODE (exact code or exact barcode): returns ONLY 1 article
+ * - If searching by CODE (exact code or exact barcode): returns all matching products sharing that code
  * - If searching by NAME: returns strictly products whose name matches what the user typed
  */
 export function filterProducts(
@@ -820,12 +821,12 @@ export function filterProducts(
       }
     }
 
-    // Rule 4: If code matches, strictly return ONLY ONE article
+    // Return all products sharing the exact searched code or barcode
     if (exactCodeMatches.length > 0) {
-      return pickSingleBestCodeMatch(exactCodeMatches);
+      return sortExactCodeMatches(exactCodeMatches);
     }
     if (exactBarcodeMatches.length > 0) {
-      return pickSingleBestCodeMatch(exactBarcodeMatches);
+      return sortExactCodeMatches(exactBarcodeMatches);
     }
     if (prefixCodeMatches.length > 0) {
       prefixCodeMatches.sort((a, b) => {
@@ -885,7 +886,7 @@ export function filterProducts(
   }
 
   if (exactAlnumCodeMatches.length > 0) {
-    return pickSingleBestCodeMatch(exactAlnumCodeMatches);
+    return sortExactCodeMatches(exactAlnumCodeMatches);
   }
 
   scoredNames.sort((a, b) => b.score - a.score);
