@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-[#070B14]/70 backdrop-blur-xl border-b border-white/60 dark:border-white/10 shadow-[0_4px_24px_rgba(7,89,164,0.06)] transition-colors">
+      <header className="sticky top-0 z-40 w-full bg-white/78 backdrop-blur-md border-b border-white/70 shadow-[0_4px_20px_rgba(7,89,164,0.06)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-[56px] sm:h-[62px] flex items-center justify-between gap-2">
           {/* Icon-Only Brand Logo (8-click secret admin access preserved) */}
           <button
@@ -63,7 +63,7 @@ export const Header: React.FC = () => {
             aria-label="Accueil Livry Finder"
             className="flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none group shrink-0"
           >
-            <div className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-[13px] bg-white/85 dark:bg-white/10 backdrop-blur-md border border-white/90 dark:border-white/15 shadow-[0_4px_14px_rgba(7,89,164,0.12)] flex items-center justify-center p-1.5 overflow-hidden group-hover:shadow-[0_6px_18px_rgba(7,89,164,0.18)] transition-all">
+            <div className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-[13px] bg-white/85 border border-white/90 shadow-[0_4px_12px_rgba(7,89,164,0.10)] flex items-center justify-center p-1.5 overflow-hidden">
               <img
                 src="/assets/aistudio/icon_03400f86.png"
                 alt="Livry Finder"
@@ -86,10 +86,10 @@ export const Header: React.FC = () => {
                     triggerHaptic('light');
                     setActiveTab(activeTab === 'admin' ? 'home' : 'admin');
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-[12px] text-[11px] sm:text-xs font-extrabold transition active:scale-95 cursor-pointer select-none backdrop-blur-md ${
+                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-[12px] text-[11px] sm:text-xs font-extrabold transition-colors active:scale-95 cursor-pointer select-none ${
                     activeTab === 'admin'
-                      ? 'bg-[#0759A4] text-white shadow-md shadow-blue-900/20'
-                      : 'bg-blue-50/75 dark:bg-blue-950/60 hover:bg-blue-100/90 dark:hover:bg-blue-900/70 text-[#0759A4] dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/70'
+                      ? 'bg-[#0759A4] text-white shadow-sm'
+                      : 'bg-blue-50/80 hover:bg-blue-100/90 text-[#0759A4] border border-blue-200/80'
                   }`}
                 >
                   <Database className="w-3.5 h-3.5" />
@@ -100,7 +100,7 @@ export const Header: React.FC = () => {
                   type="button"
                   onClick={handleLogoutAdmin}
                   title="Quitter le mode Admin"
-                  className="p-2 rounded-[12px] bg-white/70 dark:bg-white/10 backdrop-blur-md border border-white/80 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/40 transition cursor-pointer"
+                  className="p-2 rounded-[12px] bg-white/75 border border-white/85 text-gray-500 hover:text-red-600 hover:bg-red-50/85 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>

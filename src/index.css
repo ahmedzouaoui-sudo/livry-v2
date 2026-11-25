@@ -26,7 +26,6 @@
     -webkit-text-size-adjust: 100%;
     touch-action: manipulation;
     overscroll-behavior-y: none;
-    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   /* Optimize touch responsiveness on all interactive controls */
@@ -59,20 +58,31 @@
     min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   }
 
-  /* Glassmorphism Surfaces (Original Marjane Palette + Frosted Depth) */
+  /* Balanced Lightweight Glassmorphism (Gaussian Frosted Blur) */
   .glass-surface {
-    background-color: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    background-color: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, 0.85);
-    box-shadow: 0 8px 32px rgba(7, 89, 164, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 24px rgba(7, 89, 164, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   .glass-pill {
-    background-color: rgba(255, 255, 255, 0.68);
-    backdrop-filter: blur(14px) saturate(150%);
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.78);
+    background-color: rgba(255, 255, 255, 0.74);
+    backdrop-filter: blur(8px) saturate(135%);
+    -webkit-backdrop-filter: blur(8px) saturate(135%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+
+  /* Fast list/grid virtualization via browser layout containment */
+  .cv-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 74px;
+  }
+
+  .cv-grid-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 210px;
   }
 
   @keyframes soft-blink {

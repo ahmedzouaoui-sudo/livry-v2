@@ -146,8 +146,8 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="relative w-full max-w-2xl max-h-[92vh] bg-white/88 dark:bg-slate-900/88 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/75 dark:border-white/15 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/55 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl max-h-[92vh] bg-white/92 backdrop-blur-md rounded-3xl shadow-2xl border border-white/80 flex flex-col overflow-hidden text-gray-900">
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60 shrink-0">
           <div className="flex items-center gap-2.5">

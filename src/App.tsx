@@ -44,12 +44,16 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#F8F7FC] dark:bg-[#070B14] text-gray-900 dark:text-slate-100 antialiased selection:bg-blue-100 selection:text-[#0759A4] transition-colors relative overflow-x-hidden">
-      {/* Ambient Glassmorphism Depth Orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-        <div className="absolute -top-28 -left-24 w-[420px] h-[420px] rounded-full bg-blue-400/20 dark:bg-blue-600/18 blur-[110px]" />
-        <div className="absolute top-1/3 -right-28 w-[380px] h-[380px] rounded-full bg-sky-300/22 dark:bg-indigo-600/16 blur-[110px]" />
-        <div className="absolute -bottom-28 left-1/4 w-[360px] h-[360px] rounded-full bg-emerald-300/16 dark:bg-emerald-600/10 blur-[110px]" />
+    <div className="min-h-dvh flex flex-col bg-[#F8F7FC] text-gray-900 antialiased selection:bg-blue-100 selection:text-[#0759A4] relative overflow-x-hidden">
+      {/* Cached Static Gaussian Blur Ambient Orbs for Subtle Glassmorphism Depth */}
+      <div
+        className="fixed inset-0 pointer-events-none overflow-hidden z-0"
+        aria-hidden="true"
+        style={{ contain: 'strict', transform: 'translateZ(0)' }}
+      >
+        <div className="absolute -top-24 -left-20 w-[340px] h-[340px] rounded-full bg-blue-400/20 blur-[72px]" />
+        <div className="absolute top-1/3 -right-24 w-[320px] h-[320px] rounded-full bg-sky-300/22 blur-[72px]" />
+        <div className="absolute -bottom-24 left-1/4 w-[300px] h-[300px] rounded-full bg-emerald-300/16 blur-[72px]" />
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col">
@@ -100,9 +104,9 @@ const MainLayout: React.FC = () => {
           />
         )}
 
-        {/* Floating Toast Feedback */}
+        {/* Floating Glass Toast Feedback */}
         {toastMessage && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/85 dark:bg-slate-800/85 backdrop-blur-xl text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-white/15 text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-200 max-w-[90vw] text-center">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/85 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-xl border border-white/15 text-xs font-bold flex items-center gap-2 max-w-[90vw] text-center">
             <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
             <span className="truncate">{toastMessage}</span>
           </div>
