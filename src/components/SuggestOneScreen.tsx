@@ -133,10 +133,10 @@ export const WhatsAppIcon: React.FC<{ className?: string }> = ({ className = 'w-
 );
 
 interface SuggestOneScreenProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
-export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) => {
+export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = () => {
   const {
     role,
     setRole,
@@ -218,6 +218,15 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
       setIsSavedSuccess(false);
     }
   }, [suggestInitialProduct, setSuggestActiveView]);
+
+  // Clear local form/edit state when navigating back to hub via the fixed Header back icon
+  useEffect(() => {
+    if (suggestActiveView === 'hub') {
+      setEditingExistingProduct(null);
+      setIsSavedSuccess(false);
+      setSavedSummary(null);
+    }
+  }, [suggestActiveView]);
 
   const isMissingEffectiveBarcode = (p: Product) => !hasProductBarcodes(p, barcodeVotes);
   const isEffectiveMissingCode = (p: Product) =>
@@ -385,36 +394,10 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col max-w-[850px] mx-auto py-2 sm:py-4 px-2 sm:px-3 pb-safe min-h-[calc(100dvh-70px)]">
-      {/* Top Header */}
-      <div className="flex items-center justify-between gap-2 mb-3 w-full">
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('light');
-            if (editingExistingProduct) {
-              setEditingExistingProduct(null);
-              setSuggestActiveView('missing');
-            } else if (suggestActiveView === 'form' || suggestActiveView === 'missing') {
-              handleResetForm();
-              setSuggestActiveView('hub');
-            } else {
-              onBack();
-            }
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] text-gray-800 dark:text-slate-100 glass-surface hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition font-bold text-xs sm:text-sm cursor-pointer select-none"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
-          <span>
-            {suggestActiveView === 'hub'
-              ? 'Accueil'
-              : editingExistingProduct
-              ? 'Liste'
-              : 'Retour'}
-          </span>
-        </button>
-
-        <div className="text-center flex-1 min-w-0 px-1">
+    <div className="w-full flex-1 flex flex-col max-w-[850px] mx-auto py-4 sm:py-6 px-4 sm:px-6 pb-safe min-h-[calc(100dvh-70px)]">
+      {/* Centered Sub-Screen Title (Back icon is fixed in top Header) */}
+      <div className="flex items-center justify-center mb-4 w-full">
+        <div className="text-center flex-1 min-w-0 px-2">
           <h1 className="font-extrabold text-gray-900 dark:text-white text-sm sm:text-base truncate flex items-center justify-center gap-1.5 tracking-tight">
             {suggestActiveView === 'hub' ? (
               <>
@@ -440,7 +423,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               </>
             )}
           </h1>
-          <p className="text-[10.5px] text-gray-500 dark:text-slate-400 truncate">
+          <p className="text-[10.5px] text-gray-500 dark:text-slate-400 truncate mt-0.5">
             {suggestActiveView === 'hub'
               ? `Support WhatsApp direct au ${WHATSAPP_DISPLAY_NUMBER}`
               : suggestActiveView === 'form'
@@ -450,20 +433,17 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               : `${incompleteProducts.length} articles sans code ou code-barres`}
           </p>
         </div>
-
-        {/* Right side spacer to keep center title balanced */}
-        <div className="w-[72px]" />
       </div>
 
       {/* Main Content: HUB (3 Options: I Need, Avec code sans code-barres, Tous à compléter) OR Form OR Missing Products */}
       {suggestActiveView === 'hub' ? (
         /* Hub View: 3 fluid Carreaux */
-        <div className="flex-1 flex flex-col justify-center items-center my-auto py-4 sm:py-6 w-full">
-          <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-5 text-center px-4">
+        <div className="flex-1 flex flex-col justify-center items-center my-auto py-5 sm:py-7 w-full">
+          <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-6 text-center px-4">
             Sélectionnez une option pour enrichir le catalogue des codes et codes-barres :
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-[620px] justify-items-stretch items-stretch px-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4.5 w-full max-w-[620px] justify-items-stretch items-stretch">
             {/* Carreau 1: I Need */}
             <button
               type="button"
@@ -472,7 +452,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 handleResetForm();
                 setSuggestActiveView('form');
               }}
-              className="w-full bg-emerald-600 rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-lg shadow-emerald-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-emerald-400/30 relative overflow-hidden group min-h-[160px]"
+              className="w-full bg-emerald-600 rounded-[22px] p-4 sm:p-5 flex flex-col items-center justify-between text-center shadow-lg shadow-emerald-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-emerald-400/30 relative overflow-hidden group min-h-[168px]"
             >
               <div className="w-[56px] h-[56px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-1.5 group-hover:scale-105 transition-transform">
                 <WhatsAppIcon className="w-8 h-8 sm:w-9 sm:h-9 text-white fill-current" />
@@ -499,7 +479,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 setIncompleteFilter('ALL');
                 setSuggestActiveView('missing');
               }}
-              className="w-full bg-[#0759A4] rounded-[22px] p-3.5 sm:p-4 flex flex-col items-center justify-between text-center shadow-lg shadow-blue-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-blue-400/30 relative overflow-hidden group min-h-[160px]"
+              className="w-full bg-[#0759A4] rounded-[22px] p-4 sm:p-5 flex flex-col items-center justify-between text-center shadow-lg shadow-blue-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-blue-400/30 relative overflow-hidden group min-h-[168px]"
             >
               <div className="w-[56px] h-[56px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 mb-1.5 group-hover:scale-105 transition-transform relative">
                 <HeartHandshake className="w-8 h-8 sm:w-9 sm:h-9 text-white stroke-[2.2]" />
@@ -526,7 +506,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 setIncompleteFilter('WITH_CODE_NO_BARCODE');
                 setSuggestActiveView('missing');
               }}
-              className="col-span-2 sm:col-span-1 w-full bg-gradient-to-br from-amber-500 to-orange-600 rounded-[22px] p-3.5 sm:p-4 flex flex-row sm:flex-col items-center justify-between text-left sm:text-center shadow-lg shadow-orange-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-amber-300/30 relative overflow-hidden group min-h-[84px] sm:min-h-[160px]"
+              className="col-span-2 sm:col-span-1 w-full bg-gradient-to-br from-amber-500 to-orange-600 rounded-[22px] p-4 sm:p-5 flex flex-row sm:flex-col items-center justify-between text-left sm:text-center shadow-lg shadow-orange-900/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer select-none border border-amber-300/30 relative overflow-hidden group min-h-[88px] sm:min-h-[168px]"
             >
               <div className="flex sm:flex-col items-center gap-3 sm:gap-2">
                 <div className="w-[50px] h-[50px] sm:w-[66px] sm:h-[66px] rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform relative">
@@ -555,10 +535,10 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
           </div>
         </div>
       ) : suggestActiveView === 'form' ? (
-        <div className="w-full max-w-[560px] mx-auto space-y-3">
+        <div className="w-full max-w-[560px] mx-auto space-y-3.5">
           {/* Active Edit Notice Banner */}
           {editingExistingProduct && !isSavedSuccess && (
-            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
+            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[16px] p-3 sm:p-3.5 flex items-center justify-between gap-2.5 shadow-2xs">
               <div className="flex items-center gap-2 min-w-0">
                 <HeartHandshake className="w-4 h-4 text-[#0759A4] dark:text-blue-400 shrink-0" />
                 <p className="text-xs text-[#0759A4] dark:text-blue-300 font-bold truncate">
@@ -577,7 +557,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
 
           {isSavedSuccess && savedSummary ? (
             /* Saved Success Screen */
-            <div className="glass-surface border-2 border-emerald-500/40 rounded-[20px] p-5 text-center space-y-3 animate-in zoom-in-95 duration-200">
+            <div className="glass-surface border-2 border-emerald-500/40 rounded-[22px] p-5 sm:p-6 text-center space-y-3.5 animate-in zoom-in-95 duration-200">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
               </div>
@@ -591,7 +571,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               </div>
 
               {/* Summary Card */}
-              <div className="bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-[14px] p-3 text-left space-y-1.5 text-xs">
+              <div className="bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-[14px] p-3.5 text-left space-y-1.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-gray-400 font-medium">Info 1 :</span>
                   <span className="font-bold text-gray-900 dark:text-white">{savedSummary.detail1}</span>
@@ -621,7 +601,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
                 </a>
               )}
 
-              <div className="flex gap-2 pt-1">
+              <div className="flex gap-2.5 pt-1">
                 <button
                   type="button"
                   onClick={handleResetForm}
@@ -648,7 +628,7 @@ export const SuggestOneScreen: React.FC<SuggestOneScreenProps> = ({ onBack }) =>
               </div>
             </div>
           ) : editingExistingProduct ? (
-            <div className="glass-surface rounded-[20px] p-3.5 sm:p-5 space-y-4">
+            <div className="glass-surface rounded-[22px] p-4 sm:p-6 space-y-4">
               {/* Admin Direct Edit Banner in Aidez-nous Form */}
               {role === 'Admin' ? (
                 <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[14px] p-2.5 sm:p-3 flex items-center justify-between gap-2 shadow-2xs">
@@ -1098,11 +1078,11 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
         </div>
       ) : (
         /* VIEW 2: Produits sans code ou sans code-barres ("kibano fiha ghir les produit bla code ola bla codebarre") */
-        <div className="w-full flex-1 flex flex-col space-y-2.5">
+        <div className="w-full flex-1 flex flex-col space-y-3.5">
           {/* Header of Missing Products View */}
-          <div className="glass-surface rounded-[16px] p-3 space-y-2.5">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 ${
+          <div className="glass-surface rounded-[20px] p-3.5 sm:p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-[11px] flex items-center justify-center shrink-0 ${
                 incompleteFilter === 'WITH_CODE_NO_BARCODE'
                   ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
                   : 'bg-blue-50 dark:bg-blue-950/60 text-[#0759A4] dark:text-blue-400'
@@ -1126,7 +1106,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                       : incompleteProducts.length}
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-500 dark:text-slate-400">
+                <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">
                   {incompleteFilter === 'WITH_CODE_NO_BARCODE'
                     ? `فيهم الكود وبلا كودبار · ${withCodeNoBarcodeProducts.length} articles avec code à compléter via WhatsApp`
                     : `Tous les articles nécessitant un code ou un code-barres via WhatsApp (${WHATSAPP_DISPLAY_NUMBER})`}
@@ -1136,25 +1116,25 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
 
             {/* In-view Search Bar */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={incompleteSearchQuery}
                 onChange={(e) => setIncompleteSearchQuery(e.target.value)}
                 placeholder="Rechercher par code ou nom..."
-                className="w-full h-[36px] pl-8 pr-3 rounded-[10px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium outline-none focus:border-[#0759A4] text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 placeholder:text-gray-400"
+                className="w-full h-[40px] pl-9 pr-3.5 rounded-[12px] bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium outline-none focus:border-[#0759A4] text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 placeholder:text-gray-400"
               />
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-0.5 pb-0.5">
               <button
                 type="button"
                 onClick={() => {
                   triggerHaptic('light');
                   setIncompleteFilter('ALL');
                 }}
-                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
+                className={`px-3.5 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
                   incompleteFilter === 'ALL'
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
                     : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
@@ -1170,7 +1150,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   triggerHaptic('light');
                   setIncompleteFilter('WITH_CODE_NO_BARCODE');
                 }}
-                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 flex items-center gap-1 tabular-nums ${
+                className={`px-3.5 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 flex items-center gap-1 tabular-nums ${
                   incompleteFilter === 'WITH_CODE_NO_BARCODE'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300/70 dark:border-amber-800/60'
@@ -1186,7 +1166,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   triggerHaptic('light');
                   setIncompleteFilter('NO_CODE');
                 }}
-                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
+                className={`px-3.5 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
                   incompleteFilter === 'NO_CODE'
                     ? 'bg-amber-500 text-white shadow-xs'
                     : 'bg-gray-100 dark:bg-slate-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40'
@@ -1200,7 +1180,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   triggerHaptic('light');
                   setIncompleteFilter('NO_BARCODE');
                 }}
-                className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
+                className={`px-3.5 py-1.5 rounded-full text-[10.5px] font-bold transition cursor-pointer shrink-0 tabular-nums ${
                   incompleteFilter === 'NO_BARCODE'
                     ? 'bg-[#0759A4] text-white shadow-xs'
                     : 'bg-blue-50 dark:bg-blue-950/40 text-[#0759A4] dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
@@ -1212,7 +1192,7 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
           </div>
 
           {/* Products Grid: Category colored cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5 pb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-3.5 pb-8">
             {filteredIncompleteProducts.length > 0 ? (
               filteredIncompleteProducts.map((p) => {
                 const missingCode = isEffectiveMissingCode(p);
@@ -1225,11 +1205,11 @@ NOM DE PRODUIT : ${productName.trim() || '-'}`}
                   <div
                     key={p.id}
                     onClick={() => handleSelectProductToComplete(p)}
-                    className="rounded-[15px] sm:rounded-[17px] p-2 sm:p-2.5 flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer select-none border border-black/10 dark:border-white/15 relative group"
+                    className="rounded-[18px] sm:rounded-[20px] p-2.5 sm:p-3 flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer select-none border border-black/10 dark:border-white/15 relative group"
                     style={{ backgroundColor: conf.accentColor }}
                   >
                     {/* 1. White Image Thumbnail Box */}
-                    <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-1.5 p-1.5 shadow-2xs">
+                    <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-2 p-2 shadow-2xs">
                       {/* Admin Edit Shortcut Button */}
                       <button
                         type="button"

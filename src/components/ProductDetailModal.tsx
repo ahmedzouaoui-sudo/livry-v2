@@ -168,30 +168,34 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const showMissingCodePrompt = displayCodeBadge === 'Indisponible';
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#F8F7FC]/90 dark:bg-[#070B14]/90 backdrop-blur-2xl text-gray-900 dark:text-slate-100 flex flex-col w-full h-full overflow-y-auto animate-in fade-in duration-150 transition-colors">
-      {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 py-2.5 bg-white/70 dark:bg-[#070B14]/70 backdrop-blur-xl border-b border-white/60 dark:border-white/10 shrink-0 gap-2">
+    <div className="fixed inset-0 z-50 bg-[#F8F7FC]/88 dark:bg-[#070B14]/88 backdrop-blur-md text-gray-900 dark:text-slate-100 flex flex-col w-full h-full overflow-y-auto animate-in fade-in duration-150 transition-colors">
+      {/* Sticky Top Navigation Bar (icon animates to center, then icon-only back button appears on side) */}
+      <div className="sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 py-2.5 bg-white/80 dark:bg-[#070B14]/80 backdrop-blur-md border-b border-white/70 dark:border-white/10 shrink-0 gap-2">
         <button
           type="button"
           onClick={() => {
             triggerHaptic('light');
             onClose();
           }}
-          className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-800 dark:text-slate-100 py-1.5 px-3 rounded-xl glass-pill hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition cursor-pointer shadow-2xs"
+          title="Retour"
+          aria-label="Retour"
+          className="justify-self-start w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] glass-pill hover:bg-white/95 dark:hover:bg-slate-800/80 active:scale-95 transition cursor-pointer shadow-2xs flex items-center justify-center animate-back-btn-reveal"
         >
-          <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
-          <span>Retour</span>
+          <ArrowLeft className="w-5 h-5 text-[#0759A4] dark:text-blue-400" />
         </button>
 
-        <span
-          className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold"
-          style={{ backgroundColor: deptConfig.tagBg, color: deptConfig.tagText }}
-        >
-          {deptConfig.shortName}
-        </span>
+        {/* Centered App Icon (glides in smoothly from side) */}
+        <div className="justify-self-center w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-[13px] bg-white/90 border border-white/95 shadow-[0_4px_12px_rgba(7,89,164,0.10)] flex items-center justify-center p-1.5 overflow-hidden animate-modal-logo-glide">
+          <img
+            src="/assets/aistudio/icon_03400f86.png"
+            alt="Livry Finder"
+            className="w-full h-full object-contain"
+            loading="eager"
+          />
+        </div>
 
         {/* Right Action Buttons: Admin Edit & Share */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="justify-self-end flex items-center gap-1.5 sm:gap-2">
           {role === 'Admin' ? (
             <button
               type="button"
@@ -199,11 +203,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 triggerHaptic('light');
                 setIsEditModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[13px] bg-[#0759A4] hover:bg-blue-700 text-white text-xs font-black shadow-xs active:scale-95 transition cursor-pointer select-none"
               title="Modifier directement cet article (Admin)"
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span>Modifier</span>
+              <span className="hidden xs:inline">Modifier</span>
             </button>
           ) : (
             <button
@@ -212,18 +216,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 triggerHaptic('light');
                 setIsPinModalOpen(true);
               }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl glass-pill hover:bg-white/90 dark:hover:bg-slate-800/80 text-gray-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer select-none"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-[13px] glass-pill hover:bg-white/90 dark:hover:bg-slate-800/80 text-gray-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer select-none"
               title="Déverrouiller le mode Admin pour modifier cet article"
             >
               <Lock className="w-3.5 h-3.5 text-[#0759A4] dark:text-blue-400" />
-              <span className="text-[11px] font-bold">Admin</span>
+              <span className="text-[11px] font-bold hidden xs:inline">Admin</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={handleShare}
-            className="p-2 rounded-xl glass-pill text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+            className="p-2.5 rounded-[13px] glass-pill text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
             title="Partager"
           >
             {copiedShare ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Share2 className="w-4 h-4" />}
@@ -232,11 +236,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       </div>
 
       {/* Main Full-Screen Body */}
-      <div className="flex-1 w-full max-w-[620px] mx-auto px-3 sm:px-6 py-3 sm:py-5 flex flex-col space-y-3 pb-12">
+      <div className="flex-1 w-full max-w-[620px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col space-y-3.5 sm:space-y-4 pb-14">
         {/* 1. Large Product Image */}
-        <div className="w-full h-52 sm:h-64 rounded-2xl glass-surface p-3 flex items-center justify-center overflow-hidden relative transition-colors">
+        <div className="w-full h-52 sm:h-64 rounded-[22px] glass-surface p-3.5 sm:p-4 flex items-center justify-center overflow-hidden relative transition-colors">
           {product.imageUrl && !imgError ? (
-            <div className="w-full h-full rounded-[14px] bg-white p-2 flex items-center justify-center">
+            <div className="w-full h-full rounded-[14px] bg-white p-2.5 flex items-center justify-center">
               <img
                 src={product.imageUrl}
                 alt={product.name}
@@ -249,7 +253,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
           ) : (
             <div
-              className="w-full h-full rounded-[16px] flex items-center justify-center"
+              className="w-full h-full rounded-[14px] flex items-center justify-center"
               style={{ backgroundColor: deptConfig.bgColor }}
             >
               <ShoppingBag className="w-16 h-16 opacity-40" style={{ color: deptConfig.accentColor }} />
@@ -258,7 +262,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* 2. Product Code Badge & Name */}
-        <div className="glass-surface rounded-2xl p-3.5 sm:p-4 space-y-1.5 transition-colors">
+        <div className="glass-surface rounded-[20px] p-4 sm:p-5 space-y-2 transition-colors">
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className="px-2 py-0.5 rounded-lg text-xs font-mono font-black tracking-wider shadow-2xs tabular-nums whitespace-nowrap"
@@ -303,7 +307,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* 3. Weight / Multiplier Stepper */}
-        <div className="glass-surface rounded-2xl p-3 sm:p-4 flex flex-col items-center w-full transition-colors">
+        <div className="glass-surface rounded-[20px] p-3.5 sm:p-4 flex flex-col items-center w-full transition-colors">
           <QuantityCalculator
             multiplier={multiplier}
             onMultiplierChange={(m) => setMultiplier(m)}
@@ -312,8 +316,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
         {/* 4. Barcode Selection Buttons */}
         {adjustedVariants.length > 0 ? (
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
               {adjustedVariants.map((variant, idx) => {
                 const isSelected = selectedVariantIndex === idx;
 
@@ -327,7 +331,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       color: isSelected ? '#FFFFFF' : variant.badgeText,
                       borderColor: variant.accentColor,
                     }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer select-none active:scale-95 shadow-2xs min-h-[34px] ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[13px] text-xs font-black border transition-all cursor-pointer select-none active:scale-95 shadow-2xs min-h-[36px] ${
                       isSelected
                         ? 'ring-2 ring-gray-900/20 dark:ring-white/30 ring-offset-1 shadow-xs'
                         : 'opacity-85 hover:opacity-100'
@@ -363,8 +367,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             )}
           </div>
         ) : codeDisabled ? (
-          <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-center text-slate-700 dark:text-slate-200 text-xs space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-200/80 dark:bg-slate-800 font-black text-slate-800 dark:text-slate-100">
+          <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-[20px] p-5 text-center text-slate-700 dark:text-slate-200 text-xs space-y-2.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-200/80 dark:bg-slate-800 font-black text-slate-800 dark:text-slate-100">
               <Unlock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
               <span>Non adressé — Code désactivé</span>
             </div>
@@ -379,7 +383,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   onClose();
                   openSuggestForProduct(product);
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold hover:bg-slate-100 active:scale-95 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold hover:bg-slate-100 active:scale-95 transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Ajouter un code si disponible</span>
@@ -387,7 +391,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 text-center text-amber-900 dark:text-amber-200 text-xs font-bold space-y-2.5">
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-[20px] p-5 text-center text-amber-900 dark:text-amber-200 text-xs font-bold space-y-3">
             <p>Aucun code-barres disponible pour cet article</p>
             <button
               type="button"
@@ -396,7 +400,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 onClose();
                 openSuggestForProduct(product);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 active:scale-95 transition shadow-xs cursor-pointer select-none"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 active:scale-95 transition shadow-xs cursor-pointer select-none"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-100" />
               <span>Compléter / Scanner le code-barres</span>
@@ -406,7 +410,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
         {/* Admin Direct In-Place Edit Banner */}
         {role === 'Admin' && (
-          <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs mt-2">
+          <div className="bg-blue-50/75 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-[20px] p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-2xs mt-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-[#0759A4] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Shield className="w-4 h-4" />

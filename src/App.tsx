@@ -44,7 +44,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#F8F7FC] text-gray-900 antialiased selection:bg-blue-100 selection:text-[#0759A4] relative overflow-x-hidden">
+    <div className="min-h-dvh flex flex-col bg-[#F8F7FC] text-gray-900 antialiased selection:bg-blue-100 selection:text-[#0759A4] relative overflow-x-clip">
       {/* Cached Static Gaussian Blur Ambient Orbs for Subtle Glassmorphism Depth */}
       <div
         className="fixed inset-0 pointer-events-none overflow-hidden z-0"
@@ -60,11 +60,11 @@ const MainLayout: React.FC = () => {
         {/* Mandatory Internet Requirement Block */}
         <OfflineIndicator />
 
-        {/* Slim Top Header */}
+        {/* Fixed Top Header */}
         <Header />
 
-        {/* Main Screen Switcher */}
-        <main className="flex-1 w-full flex flex-col">
+        {/* Main Screen Switcher (padded below fixed Header) */}
+        <main className="flex-1 w-full flex flex-col pt-[60px] sm:pt-[64px]">
           {activeTab === 'home' && <HomeScreen />}
 
           {activeTab === 'library' && !selectedDepartment && (

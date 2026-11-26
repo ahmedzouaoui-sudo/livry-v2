@@ -35,19 +35,19 @@ export const UserDevicesModal: React.FC<UserDevicesModalProps> = ({ isOpen, onCl
   const { userDevices, deviceStats, refreshUserDevices, isLoadingDevices, showToast } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'ONLINE' | 'MOBILE' | 'DESKTOP'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'ONLINE' | 'OFFLINE' | 'MOBILE' | 'DESKTOP'>('ALL');
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
   const [copiedSql, setCopiedSql] = useState(false);
   const [copiedSetupSql, setCopiedSetupSql] = useState(false);
   const [showSqlGuide, setShowSqlGuide] = useState(false);
 
-  // Auto-refresh when modal is open every 15 seconds
+  // Auto-refresh every 5 seconds while modal is open (combined with instant Supabase Realtime Presence)
   useEffect(() => {
     if (!isOpen) return;
     refreshUserDevices();
     const interval = setInterval(() => {
       refreshUserDevices();
-    }, 15000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [isOpen, refreshUserDevices]);
 
@@ -69,6 +69,7 @@ export const UserDevicesModal: React.FC<UserDevicesModalProps> = ({ isOpen, onCl
     return userDevices.filter((d) => {
       // Type filter
       if (filterType === 'ONLINE' && !d.is_online) return false;
+      if (filterType === 'OFFLINE' && d.is_online) return false;
       if (filterType === 'MOBILE' && !d.device_type.includes('Mobile') && !d.device_type.includes('iPhone') && !d.device_type.includes('Android')) return false;
       if (filterType === 'DESKTOP' && (d.device_type.includes('Mobile') || d.device_type.includes('Tablette'))) return false;
 
@@ -100,8 +101,8 @@ FROM public.user_devices
 ORDER BY last_active_at DESC;`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/65 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl max-h-[92vh] bg-white/88 dark:bg-slate-900/88 backdrop-blur-2xl rounded-[24px] shadow-2xl border border-white/75 dark:border-white/15 flex flex-col overflow-hidden text-gray-900 dark:text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/55 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="relative w-full max-w-5xl max-h-[92vh] bg-white/92 backdrop-blur-md rounded-[24px] shadow-2xl border border-white/80 flex flex-col overflow-hidden text-gray-900">
         
         {/* 1. Header Bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/50 shrink-0">
@@ -174,14 +175,14 @@ ORDER BY last_active_at DESC;`;
               <span className="text-[11px] font-bold uppercase tracking-wider">En Ligne</span>
               <Activity className="w-4 h-4 text-emerald-500" />
             </div>
-            <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2 tabular-nums">
+            <div className="text-xl sm:text-2xl font-black text-emerald-600 flex items-center gap-2 tabular-nums">
               <span>{deviceStats?.onlineDevices ?? 0}</span>
               {deviceStats && deviceStats.onlineDevices > 0 && (
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               )}
             </div>
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">
-              Actifs ces 2 dernières min
+            <span className="text-[10px] text-emerald-700 font-semibold">
+              En direct · App ouverte maintenant
             </span>
           </div>
 
@@ -247,10 +248,21 @@ ORDER BY last_active_at DESC;`;
               className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shrink-0 tabular-nums ${
                 filterType === 'ONLINE'
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               En ligne ({deviceStats?.onlineDevices || 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType('OFFLINE')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer shrink-0 tabular-nums ${
+                filterType === 'OFFLINE'
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Hors ligne ({Math.max(0, (deviceStats?.totalDevices ?? userDevices.length) - (deviceStats?.onlineDevices || 0))})
             </button>
             <button
               type="button"

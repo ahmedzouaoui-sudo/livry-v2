@@ -21,9 +21,9 @@ export const QuantityCalculator: React.FC<QuantityCalculatorProps> = ({
   };
 
   return (
-    <div className="w-full my-1 flex items-center justify-center">
+    <div className="w-full my-0.5 flex items-center justify-center">
       {/* Stepper with ONLY - digit + (widen container) */}
-      <div className="flex items-center justify-between gap-4 bg-white/65 dark:bg-slate-800/65 backdrop-blur-md p-2 sm:p-3 rounded-2xl border border-white/75 dark:border-white/10 shadow-2xs w-full max-w-[460px]">
+      <div className="flex items-center justify-between gap-4 bg-white/68 dark:bg-slate-800/65 backdrop-blur-md p-2.5 sm:p-3.5 rounded-[18px] border border-white/75 dark:border-white/10 shadow-2xs w-full max-w-[460px]">
         <button
           type="button"
           onClick={() => handleStep(-1)}

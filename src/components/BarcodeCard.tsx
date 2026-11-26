@@ -1,9 +1,10 @@
-import React from 'react';
-import { ThumbsUp, ThumbsDown, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { ThumbsUp, ThumbsDown, CheckCircle2, AlertTriangle, ShieldCheck, Copy, Check, ScanLine } from 'lucide-react';
 import { BarcodeVariant } from '../types';
 import { BarcodeRenderer } from './BarcodeRenderer';
 import { useApp } from '../context/AppContext';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 interface BarcodeCardProps {
   variant: BarcodeVariant;
@@ -12,6 +13,7 @@ interface BarcodeCardProps {
 
 export const BarcodeCard: React.FC<BarcodeCardProps> = ({ variant, onCopySuccess }) => {
   const { voteBarcode } = useApp();
+  const [pillCopied, setPillCopied] = useState(false);
 
   const likes = variant.likes || 0;
   const dislikes = variant.dislikes || 0;
@@ -24,13 +26,23 @@ export const BarcodeCard: React.FC<BarcodeCardProps> = ({ variant, onCopySuccess
     voteBarcode(variant.code, type);
   };
 
+  const handleQuickCopy = async () => {
+    triggerHaptic('success');
+    const ok = await copyTextToClipboard(variant.code);
+    if (ok) {
+      setPillCopied(true);
+      onCopySuccess?.(variant.code);
+      setTimeout(() => setPillCopied(false), 1800);
+    }
+  };
+
   const likesNeeded = Math.max(0, 15 - likes);
   const dislikesRemaining = Math.max(0, 15 - dislikes);
 
   return (
-    <div className="glass-surface rounded-2xl p-3 space-y-2.5 transition-colors">
+    <div className="glass-surface rounded-[20px] p-3.5 sm:p-4 space-y-3 transition-colors">
       {/* Top Banner: Statut + Little Marjane Icon + Thumbs Like / Dislike buttons */}
-      <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-100 dark:border-slate-800 flex-wrap">
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100 dark:border-slate-800 flex-wrap">
         {/* Left: Status badge */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {(() => {
@@ -114,6 +126,37 @@ export const BarcodeCard: React.FC<BarcodeCardProps> = ({ variant, onCopySuccess
         )}
       </div>
 
+      {/* Lightweight Blinking Notification Pills Above Barcode */}
+      <div className="flex flex-col items-center justify-center gap-1.5">
+        <button
+          type="button"
+          onClick={handleQuickCopy}
+          className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-sky-100/85 hover:bg-sky-200/85 backdrop-blur-sm text-sky-900 border border-sky-300/80 shadow-2xs text-[11px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+          title="Cliquer pour copier le code-barres"
+        >
+          <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" aria-hidden="true" />
+          {pillCopied ? (
+            <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+          ) : (
+            <Copy className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+          )}
+          <span className="truncate">
+            {pillCopied ? 'Code-barres copié !' : 'Copie codebarre bach ikhdem 100%'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleQuickCopy}
+          className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-100/85 hover:bg-purple-200/85 backdrop-blur-sm text-purple-900 border border-purple-300/80 shadow-2xs text-[11px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+          title="Cliquer pour copier le code-barres si le scan échoue"
+        >
+          <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+          <ScanLine className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+          <span className="truncate">Ila scanniti o mazach copie codebarre</span>
+        </button>
+      </div>
+
       {/* Barcode Graphic */}
       <BarcodeRenderer
         code={variant.code}
@@ -122,7 +165,7 @@ export const BarcodeCard: React.FC<BarcodeCardProps> = ({ variant, onCopySuccess
       />
 
       {/* Community Progress / Info Footer */}
-      <div className="pt-1.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-gray-500 dark:text-slate-400 font-semibold gap-2 flex-wrap">
+      <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-gray-500 dark:text-slate-400 font-semibold gap-2 flex-wrap">
         {!isApproved && likes < 15 ? (
           <span className="text-amber-700 dark:text-amber-300 flex items-center gap-1 tabular-nums">
             <span>En cours d'approbation :</span>

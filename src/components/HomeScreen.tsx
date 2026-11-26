@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   BookOpen,
   Trash2,
+  Copy,
+  ScanLine,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Product } from '../types';
@@ -20,6 +22,7 @@ import {
   getPrimaryBarcode,
 } from '../utils/productUtils';
 import { triggerHaptic } from '../utils/haptics';
+import { copyTextToClipboard } from '../utils/clipboard';
 import { AppTutorialModal, TUTORIAL_STORAGE_KEY } from './AppTutorialModal';
 import { Verified100Badge, getProductVerificationStatus } from './Verified100Badge';
 import {
@@ -101,18 +104,81 @@ export const HomeScreen: React.FC = () => {
     setSelectedProduct(product);
   };
 
+  const handleBarcodeHintClick = async () => {
+    const firstWithBarcode = filteredProducts.find((p) => Boolean(getPrimaryBarcode(p, barcodeVotes)));
+    const code = firstWithBarcode ? getPrimaryBarcode(firstWithBarcode, barcodeVotes) : '';
+    if (code) {
+      triggerHaptic('success');
+      const ok = await copyTextToClipboard(code);
+      if (ok) {
+        showToast(`Code-barres ${code} copié !`);
+        return;
+      }
+    }
+    triggerHaptic('light');
+    inputRef.current?.focus();
+    showToast('Recherchez un produit puis copiez son code-barres');
+  };
+
   return (
-    <div className="w-full flex-1 flex flex-col max-w-[600px] mx-auto px-3 sm:px-4 py-2 sm:py-3 min-h-[calc(100dvh-60px)] pb-safe">
+    <div className="w-full flex-1 flex flex-col max-w-[600px] mx-auto px-4 sm:px-6 py-4 sm:py-6 min-h-[calc(100dvh-64px)] pb-safe">
       {/* Top Persistent Search Container - Input is NEVER unmounted, keeping keyboard & cursor active */}
       <div
         className={`w-full max-w-[560px] mx-auto flex flex-col items-center ${
-          isSearching ? 'mt-1 mb-2 shrink-0' : 'flex-1 justify-center py-4 my-auto'
+          isSearching ? 'mt-1.5 mb-3 shrink-0' : 'flex-1 justify-center py-4 sm:py-6 my-auto'
         }`}
       >
+        {/* 3 Lightweight Blinking Notifications Stacked Vertically Above the Logos Image */}
+        <div
+          className={`w-full flex flex-col items-center justify-center gap-1.5 ${
+            isSearching ? 'mb-2.5' : 'mb-3.5 sm:mb-4.5'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              const cleanCode = searchQuery.trim();
+              const msg = cleanCode
+                ? `Salam, makhdemch lia had lcode (${cleanCode}), momkin tsa3dni?`
+                : `Salam, makhdemch lia code, momkin tsa3dni?`;
+              openWhatsApp(`https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`);
+            }}
+            className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-100/85 hover:bg-emerald-200/85 backdrop-blur-sm text-emerald-900 border border-emerald-300/80 shadow-2xs text-[10.5px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+            title="Envoyer un message WhatsApp si un code ne fonctionne pas"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+            <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">Ila makhdemch lik code sift WhatsApp</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBarcodeHintClick}
+            className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-sky-100/85 hover:bg-sky-200/85 backdrop-blur-sm text-sky-900 border border-sky-300/80 shadow-2xs text-[10.5px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+            title="Copier le code-barres pour qu'il fonctionne à 100%"
+          >
+            <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" aria-hidden="true" />
+            <Copy className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <span className="truncate">Copie codebarre bach ikhdem 100%</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBarcodeHintClick}
+            className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-100/85 hover:bg-purple-200/85 backdrop-blur-sm text-purple-900 border border-purple-300/80 shadow-2xs text-[10.5px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+            title="Si le scan ne passe pas, copiez le code-barres"
+          >
+            <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+            <ScanLine className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span className="truncate">Ila scanniti o mazach copie codebarre</span>
+          </button>
+        </div>
+
         {/* Centered Brand Banner Image Above Search Bar */}
         <div
           className={`w-full flex items-center justify-center px-2 ${
-            isSearching ? 'mb-2' : 'mb-3.5 sm:mb-5'
+            isSearching ? 'mb-2.5' : 'mb-4 sm:mb-5'
           }`}
         >
           <img
@@ -128,35 +194,16 @@ export const HomeScreen: React.FC = () => {
           />
         </div>
 
-        {/* Lightweight Orange Blinking Notification Above Search Bar */}
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('light');
-            const cleanCode = searchQuery.trim();
-            const msg = cleanCode
-              ? `Salam, makhdemch lia had lcode (${cleanCode}), momkin tsa3dni?`
-              : `Salam, makhdemch lia code, momkin tsa3dni?`;
-            openWhatsApp(`https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`);
-          }}
-          className="animate-soft-blink mb-2 inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-orange-500 hover:bg-orange-600 text-white border border-orange-300/80 shadow-xs text-[11px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
-          title="Envoyer un message WhatsApp si un code ne fonctionne pas"
-        >
-          <span className="w-2 h-2 rounded-full bg-white shrink-0" aria-hidden="true" />
-          <WhatsAppIcon className="w-3.5 h-3.5 text-white shrink-0" />
-          <span className="truncate">Ila makhdemch lik code sift WhatsApp</span>
-        </button>
-
         {/* Big Search Bar - Single persistent input across all states */}
         <div
           onClick={() => inputRef.current?.focus()}
-          className={`w-full rounded-[16px] sm:rounded-[20px] glass-surface flex items-center px-3.5 sm:px-4.5 focus-within:border-[#0759A4] focus-within:ring-2 focus-within:ring-blue-500/20 cursor-text ${
+          className={`w-full rounded-[18px] sm:rounded-[22px] glass-surface flex items-center px-4 sm:px-5 focus-within:border-[#0759A4] focus-within:ring-2 focus-within:ring-blue-500/20 cursor-text ${
             isSearching
-              ? 'h-[46px] xs:h-[50px] sm:h-[56px]'
-              : 'h-[54px] xs:h-[60px] sm:h-[66px]'
+              ? 'h-[48px] xs:h-[52px] sm:h-[56px]'
+              : 'h-[56px] xs:h-[60px] sm:h-[66px]'
           }`}
         >
-          <Search className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-[#0759A4] shrink-0 mr-2.5 sm:mr-3" />
+          <Search className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-[#0759A4] shrink-0 mr-3" />
           <input
             ref={inputRef}
             type="search"
@@ -180,7 +227,7 @@ export const HomeScreen: React.FC = () => {
                 setSearchQuery('');
                 inputRef.current?.focus();
               }}
-              className="p-1.5 rounded-full hover:bg-gray-100 active:scale-95 text-gray-400 hover:text-gray-700 cursor-pointer ml-1 shrink-0 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-100 active:scale-95 text-gray-400 hover:text-gray-700 cursor-pointer ml-1.5 shrink-0 transition-colors"
               aria-label="Effacer la recherche"
             >
               <X className="w-4 h-4" />
@@ -190,7 +237,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* Action Buttons under search bar - Unified Dimensions with Subtle Glassmorphism */}
         {!isSearching && (
-          <div className="w-full mt-3.5 sm:mt-4.5 space-y-2.5">
+          <div className="w-full mt-5 sm:mt-6 space-y-3">
             {/* Button 1: Bibliothèque des Rayons */}
             <button
               type="button"
@@ -198,7 +245,7 @@ export const HomeScreen: React.FC = () => {
                 triggerHaptic('light');
                 setActiveTab('library');
               }}
-              className="w-full h-[50px] xs:h-[54px] sm:h-[58px] bg-[#0759A4]/90 hover:bg-[#0759A4] backdrop-blur-md text-white border border-white/25 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_8px_22px_rgba(7,89,164,0.22)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
+              className="w-full h-[52px] xs:h-[56px] sm:h-[60px] px-4 sm:px-5 bg-[#0759A4]/90 hover:bg-[#0759A4] backdrop-blur-md text-white border border-white/25 rounded-[18px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_8px_22px_rgba(7,89,164,0.22)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-white/15 flex items-center justify-center p-1 shrink-0">
                 <img
@@ -220,7 +267,7 @@ export const HomeScreen: React.FC = () => {
                 setSuggestActiveView('hub');
                 setActiveTab('suggest');
               }}
-              className="w-full h-[50px] xs:h-[54px] sm:h-[58px] bg-emerald-600/92 hover:bg-emerald-600 backdrop-blur-md text-white border border-white/25 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_8px_22px_rgba(5,150,105,0.22)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
+              className="w-full h-[52px] xs:h-[56px] sm:h-[60px] px-4 sm:px-5 bg-emerald-600/92 hover:bg-emerald-600 backdrop-blur-md text-white border border-white/25 rounded-[18px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_8px_22px_rgba(5,150,105,0.22)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-white text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
                 <HeartHandshake className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -235,7 +282,7 @@ export const HomeScreen: React.FC = () => {
                 triggerHaptic('light');
                 setActiveTab('tips');
               }}
-              className="w-full h-[50px] xs:h-[54px] sm:h-[58px] bg-white/78 hover:bg-amber-50/88 backdrop-blur-md text-amber-800 border border-amber-200/80 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_6px_18px_rgba(245,158,11,0.08)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
+              className="w-full h-[52px] xs:h-[56px] sm:h-[60px] px-4 sm:px-5 bg-white/78 hover:bg-amber-50/88 backdrop-blur-md text-amber-800 border border-amber-200/80 rounded-[18px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_6px_18px_rgba(245,158,11,0.08)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-amber-50/95 text-amber-600 flex items-center justify-center shrink-0">
                 <Lightbulb className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-amber-500/30" />
@@ -250,7 +297,7 @@ export const HomeScreen: React.FC = () => {
                 triggerHaptic('medium');
                 setIsTutorialOpen(true);
               }}
-              className="w-full h-[50px] xs:h-[54px] sm:h-[58px] bg-blue-50/78 hover:bg-blue-100/85 backdrop-blur-md text-[#0759A4] border border-blue-200/80 rounded-[16px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_6px_18px_rgba(7,89,164,0.08)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
+              className="w-full h-[52px] xs:h-[56px] sm:h-[60px] px-4 sm:px-5 bg-blue-50/78 hover:bg-blue-100/85 backdrop-blur-md text-[#0759A4] border border-blue-200/80 rounded-[18px] font-bold text-xs xs:text-sm sm:text-base shadow-[0_6px_18px_rgba(7,89,164,0.08)] active:scale-[0.985] transition-colors flex items-center justify-center gap-3 cursor-pointer select-none"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] bg-white/95 text-[#0759A4] border border-blue-200/70 flex items-center justify-center shrink-0">
                 <BookOpen className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -265,8 +312,8 @@ export const HomeScreen: React.FC = () => {
       {/* SEARCHING STATE : LISTE DES RÉSULTATS (Visible dès qu'on tape un mot)     */}
       {/* ========================================================================= */}
       {isSearching && (
-        <div className="flex-1 w-full max-w-[560px] mx-auto flex flex-col mb-3 overflow-y-auto">
-          <div className="flex items-center justify-between gap-2 px-1 mb-2">
+        <div className="flex-1 w-full max-w-[560px] mx-auto flex flex-col mb-4 overflow-y-auto">
+          <div className="flex items-center justify-between gap-2 px-1.5 mb-2.5">
             <span className="text-[11px] font-bold text-gray-500 tabular-nums whitespace-nowrap">
               {filteredProducts.length} résultat{filteredProducts.length > 1 ? 's' : ''}
             </span>
@@ -285,7 +332,7 @@ export const HomeScreen: React.FC = () => {
           </div>
 
           {filteredProducts.length > 0 ? (
-            <div className="space-y-1.5 pb-3">
+            <div className="space-y-2 pb-4">
               {visibleProducts.map((product) => {
                 const displayCodeLabel = formatProductCodeBadge(
                   product.code,
@@ -301,11 +348,11 @@ export const HomeScreen: React.FC = () => {
                   <div
                     key={product.id}
                     onClick={() => handleProductClick(product)}
-                    className="cv-card w-full rounded-[15px] p-2 sm:p-2.5 shadow-2xs active:scale-[0.99] transition-transform duration-100 flex items-center gap-2.5 cursor-pointer select-none border border-black/10"
+                    className="cv-card w-full rounded-[18px] p-2.5 sm:p-3 shadow-2xs active:scale-[0.99] transition-transform duration-100 flex items-center gap-3 cursor-pointer select-none border border-black/10"
                     style={{ backgroundColor: deptConf.accentColor }}
                   >
                     {/* White Thumbnail Box */}
-                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-[10px] bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                    <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-[12px] bg-white p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
@@ -433,10 +480,10 @@ export const HomeScreen: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="glass-surface rounded-[18px] p-6 text-center my-auto">
-              <AlertCircle className="w-7 h-7 text-gray-400 mx-auto mb-1.5" />
+            <div className="glass-surface rounded-[20px] p-7 sm:p-8 text-center my-auto">
+              <AlertCircle className="w-7 h-7 text-gray-400 mx-auto mb-2" />
               <h4 className="text-xs font-bold text-gray-900">Aucun produit trouvé</h4>
-              <p className="text-[10.5px] text-gray-500 mt-0.5">
+              <p className="text-[10.5px] text-gray-500 mt-1">
                 Vérifiez le numéro de code ou le libellé saisi.
               </p>
             </div>

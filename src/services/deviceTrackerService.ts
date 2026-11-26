@@ -1,4 +1,10 @@
-import { supabasePublic, supabaseApi, activeSchema } from './supabaseClient';
+import {
+  supabasePublic,
+  supabaseApi,
+  activeSchema,
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+} from './supabaseClient';
 import { UserDevice, DeviceStats } from '../types';
 
 const STORAGE_KEY_DEVICE_ID = 'finder_device_tracker_id_v1';
@@ -6,6 +12,20 @@ const STORAGE_KEY_SESSION_FLAG = 'finder_device_session_active_v1';
 const STORAGE_KEY_CACHED_TIME = 'finder_device_local_time_seconds_v1';
 const STORAGE_KEY_USER_IP = 'finder_livry_user_ip';
 const STORAGE_KEY_LOCAL_DEVICES = 'finder_tracked_devices_local_v2';
+
+/** Real-time timeout threshold: if no heartbeat for 25s and not in Realtime Presence -> Hors ligne */
+export const REALTIME_ONLINE_THRESHOLD_MS = 25_000;
+
+/** Live set of device_ids currently connected via Supabase Realtime Presence */
+let realtimeOnlineIds = new Set<string>();
+
+export function setRealtimeOnlineDeviceIds(ids: Iterable<string>): void {
+  realtimeOnlineIds = new Set(Array.from(ids).filter(Boolean));
+}
+
+export function getRealtimeOnlineDeviceIds(): Set<string> {
+  return realtimeOnlineIds;
+}
 
 export const USER_DEVICES_SETUP_SQL = `-- =========================================================================
 -- TABLE DES TÉLÉPHONES / APPAREILS CONNECTÉS ET TEMPS D'UTILISATION
@@ -392,14 +412,18 @@ export async function sendDeviceHeartbeat(secondsToAdd = 30): Promise<void> {
 }
 
 /**
- * Marks device as offline when leaving / backgrounding.
+ * Marks device as offline immediately when leaving / backgrounding / closing the app.
+ * Uses `fetch(..., { keepalive: true })` so browsers complete the request even during tab/app termination.
  */
 export function markDeviceOffline(): void {
   try {
     const device_id = getOrCreateDeviceId();
     const nowIso = new Date().toISOString();
 
-    // Local
+    // Update Realtime Presence set locally
+    realtimeOnlineIds.delete(device_id);
+
+    // Local update
     const localDevices = getLocalTrackedDevices();
     const idx = localDevices.findIndex((d) => d.device_id === device_id);
     let devObj: UserDevice | null = null;
@@ -411,10 +435,15 @@ export function markDeviceOffline(): void {
       saveLocalTrackedDevices(localDevices);
     }
 
-    const client = activeSchema === 'api' ? supabaseApi : supabasePublic;
-    const fallbackClient = activeSchema === 'api' ? supabasePublic : supabaseApi;
+    const baseRest = `${SUPABASE_URL.replace(/\/+$/, '')}/rest/v1`;
+    const commonHeaders: Record<string, string> = {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Content-Profile': activeSchema,
+    };
 
-    // Cloud tips sync
+    // Cloud tips sync with keepalive
     if (devObj) {
       const cloudRecord = {
         id: `dev_rec_${device_id}`,
@@ -426,49 +455,77 @@ export function markDeviceOffline(): void {
         likes: devObj.total_time_seconds,
         target_audience: 'Tous',
       };
-      Promise.resolve(client.from('tips').upsert(cloudRecord, { onConflict: 'id' }))
-        .then(({ error }) => {
-          if (error) {
-            Promise.resolve(fallbackClient.from('tips').upsert(cloudRecord, { onConflict: 'id' })).catch(() => {});
-          }
-        })
-        .catch(() => {});
+      if (typeof fetch !== 'undefined') {
+        fetch(`${baseRest}/tips?on_conflict=id`, {
+          method: 'POST',
+          keepalive: true,
+          headers: {
+            ...commonHeaders,
+            Prefer: 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(cloudRecord),
+        }).catch(() => {});
+      }
     }
 
-    // user_devices table
-    if (!isSupabaseDeviceTableMissing) {
-      Promise.resolve(client.from('user_devices').update({ is_online: false, last_active_at: nowIso, updated_at: nowIso }).eq('device_id', device_id))
-        .then(({ error }) => {
-          if (error) {
-            Promise.resolve(fallbackClient.from('user_devices').update({ is_online: false, last_active_at: nowIso, updated_at: nowIso }).eq('device_id', device_id)).catch(() => {});
-          }
-        })
-        .catch(() => {});
+    // user_devices table update with keepalive
+    if (!isSupabaseDeviceTableMissing && typeof fetch !== 'undefined') {
+      fetch(`${baseRest}/user_devices?device_id=eq.${encodeURIComponent(device_id)}`, {
+        method: 'PATCH',
+        keepalive: true,
+        headers: commonHeaders,
+        body: JSON.stringify({
+          is_online: false,
+          last_active_at: nowIso,
+          updated_at: nowIso,
+        }),
+      }).catch(() => {});
     }
   } catch {}
 }
 
 /**
- * Calculates aggregate statistics for an array of devices.
+ * Determines in real time whether a device is currently Online (app actively open) or Hors ligne.
  */
-function calculateStats(devices: UserDevice[]): DeviceStats {
-  const now = Date.now();
-  const TWO_MINUTES_MS = 2 * 60 * 1000;
+export function isDeviceCurrentlyOnline(device: UserDevice, nowMs = Date.now()): boolean {
+  const currentId = getOrCreateDeviceId();
 
+  // For THIS device, real-time truth is whether this app tab/window is currently visible & connected
+  if (device.device_id === currentId) {
+    const isVisible = typeof document === 'undefined' || document.visibilityState === 'visible';
+    const isNetOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+    return isVisible && isNetOnline;
+  }
+
+  // 1. Live WebSocket Presence: connected inside the app right now -> En ligne
+  if (realtimeOnlineIds.has(device.device_id)) {
+    return true;
+  }
+
+  // 2. Fallback check: only online if explicit DB is_online=true AND recent active heartbeat within 25s
+  if (device.is_online !== true) {
+    return false;
+  }
+  const lastActiveMs = device.last_active_at ? new Date(device.last_active_at).getTime() : 0;
+  if (!Number.isFinite(lastActiveMs) || lastActiveMs <= 0) return false;
+  const ageMs = nowMs - lastActiveMs;
+  return ageMs >= -5000 && ageMs < REALTIME_ONLINE_THRESHOLD_MS;
+}
+
+/**
+ * Calculates aggregate statistics using already-resolved real-time `is_online` flags.
+ */
+export function calculateDeviceStats(devices: UserDevice[]): DeviceStats {
   let totalSeconds = 0;
   let onlineCount = 0;
   let mobileCount = 0;
   let desktopCount = 0;
 
   for (const d of devices) {
-    const lastActiveMs = d.last_active_at ? new Date(d.last_active_at).getTime() : 0;
-    const isRecentlyActive = now - lastActiveMs < TWO_MINUTES_MS;
-    const isOnline = isRecentlyActive || (d.is_online === true && now - lastActiveMs < 5 * 60 * 1000);
-
     const timeSec = Number(d.total_time_seconds || 0);
     totalSeconds += timeSec;
 
-    if (isOnline) onlineCount++;
+    if (d.is_online) onlineCount++;
 
     const dtype = String(d.device_type || '');
     if (dtype.includes('Mobile') || dtype.includes('iPhone') || dtype.includes('Android')) {
@@ -488,8 +545,62 @@ function calculateStats(devices: UserDevice[]): DeviceStats {
 }
 
 /**
- * Fetches all registered phones / devices and calculates aggregate statistics.
- * Resilient fallback: If Supabase table is not yet created or returns 404, returns local devices seamlessly!
+ * Re-evaluates real-time Online/Hors-ligne statuses and sorts Online devices first,
+ * then by `last_active_at` descending.
+ */
+export function applyLivePresenceToDevices(devices: UserDevice[]): {
+  devices: UserDevice[];
+  stats: DeviceStats;
+} {
+  const nowMs = Date.now();
+  const updated = devices
+    .map((d) => {
+      const liveOnline = isDeviceCurrentlyOnline(d, nowMs);
+      return liveOnline === d.is_online ? d : { ...d, is_online: liveOnline };
+    })
+    .sort((a, b) => {
+      const onlineDiff = (b.is_online ? 1 : 0) - (a.is_online ? 1 : 0);
+      if (onlineDiff !== 0) return onlineDiff;
+      const timeA = new Date(a.last_active_at || 0).getTime();
+      const timeB = new Date(b.last_active_at || 0).getTime();
+      return timeB - timeA;
+    });
+
+  return {
+    devices: updated,
+    stats: calculateDeviceStats(updated),
+  };
+}
+
+/**
+ * Pick whichever device snapshot has the fresher `last_active_at` timestamp,
+ * keeping accumulated usage counters monotonic.
+ */
+function mergeNewerDeviceSnapshot(a: UserDevice, b: UserDevice): UserDevice {
+  const msA = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
+  const msB = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
+  const newer = msB >= msA ? b : a;
+  const older = newer === b ? a : b;
+
+  return {
+    ...older,
+    ...newer,
+    ip_address:
+      newer.ip_address && newer.ip_address !== '-' && newer.ip_address !== 'Détection en cours'
+        ? newer.ip_address
+        : older.ip_address,
+    total_time_seconds: Math.max(
+      Number(a.total_time_seconds || 0),
+      Number(b.total_time_seconds || 0)
+    ),
+    visits_count: Math.max(Number(a.visits_count || 1), Number(b.visits_count || 1)),
+    is_online: Boolean(newer.is_online),
+    last_active_at: newer.last_active_at || older.last_active_at,
+  };
+}
+
+/**
+ * Fetches all registered phones / devices and calculates real-time status + aggregate statistics.
  */
 export async function fetchUserDevices(): Promise<{
   success: boolean;
@@ -527,7 +638,11 @@ export async function fetchUserDevices(): Promise<{
           if (row.content) {
             const parsed = JSON.parse(row.content);
             if (parsed && parsed.device_id) {
-              mergedMap.set(parsed.device_id, parsed);
+              const existing = mergedMap.get(parsed.device_id);
+              mergedMap.set(
+                parsed.device_id,
+                existing ? mergeNewerDeviceSnapshot(existing, parsed) : parsed
+              );
             }
           }
         } catch {}
@@ -581,15 +696,13 @@ export async function fetchUserDevices(): Promise<{
             updated_at: row.updated_at,
           };
           const existing = mergedMap.get(id);
-          if (!existing || (dev.total_time_seconds > (existing.total_time_seconds || 0))) {
-            mergedMap.set(id, dev);
-          }
+          mergedMap.set(id, existing ? mergeNewerDeviceSnapshot(existing, dev) : dev);
         }
       }
     }
   } catch {}
 
-  // 3. Merge with local storage devices
+  // 3. Merge with local storage devices (only newer wins; keeps current device fast)
   const localDevices = getLocalTrackedDevices();
   for (const loc of localDevices) {
     if (loc && loc.device_id) {
@@ -597,15 +710,7 @@ export async function fetchUserDevices(): Promise<{
       if (!existing) {
         mergedMap.set(loc.device_id, loc);
       } else {
-        const merged: UserDevice = {
-          ...existing,
-          ...loc,
-          total_time_seconds: Math.max(Number(existing.total_time_seconds || 0), Number(loc.total_time_seconds || 0)),
-          visits_count: Math.max(Number(existing.visits_count || 1), Number(loc.visits_count || 1)),
-          is_online: existing.is_online || loc.is_online,
-          last_active_at: existing.last_active_at > loc.last_active_at ? existing.last_active_at : loc.last_active_at,
-        };
-        mergedMap.set(loc.device_id, merged);
+        mergedMap.set(loc.device_id, mergeNewerDeviceSnapshot(existing, loc));
       }
     }
   }
@@ -623,7 +728,7 @@ export async function fetchUserDevices(): Promise<{
       screen_size: details.screen_size,
       first_seen_at: new Date().toISOString(),
       last_active_at: new Date().toISOString(),
-      total_time_seconds: 30,
+      total_time_seconds: 10,
       visits_count: 1,
       is_online: true,
       updated_at: new Date().toISOString(),
@@ -631,12 +736,10 @@ export async function fetchUserDevices(): Promise<{
     mergedMap.set(currentDeviceId, currentDev);
   }
 
-  // Convert map to array and sort by last_active_at DESC
-  const finalDevices = Array.from(mergedMap.values()).sort((a, b) => {
-    const timeA = new Date(a.last_active_at || 0).getTime();
-    const timeB = new Date(b.last_active_at || 0).getTime();
-    return timeB - timeA;
-  });
+  // Apply real-time presence resolution (Online if app open, Hors ligne otherwise)
+  const { devices: finalDevices, stats } = applyLivePresenceToDevices(
+    Array.from(mergedMap.values())
+  );
 
   // Save merged state to local storage cache
   saveLocalTrackedDevices(finalDevices);
@@ -644,7 +747,7 @@ export async function fetchUserDevices(): Promise<{
   return {
     success: true,
     devices: finalDevices,
-    stats: calculateStats(finalDevices),
+    stats,
     isLocalOnly: false,
   };
 }

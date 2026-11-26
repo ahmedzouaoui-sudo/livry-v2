@@ -44,11 +44,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) =>
   return (
     <div
       onClick={handleClick}
-      className="cv-card group relative flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-[15px] sm:rounded-[17px] shadow-2xs transition-transform duration-100 select-none cursor-pointer active:scale-[0.99] border border-black/10"
+      className="cv-card group relative flex items-center gap-3 sm:gap-3.5 p-2.5 sm:p-3 rounded-[18px] sm:rounded-[20px] shadow-2xs transition-transform duration-100 select-none cursor-pointer active:scale-[0.99] border border-black/10"
       style={{ backgroundColor: deptConfig.accentColor }}
     >
       {/* Thumbnail with White Box Background */}
-      <div className="relative w-11 h-11 sm:w-13 sm:h-13 rounded-[10px] sm:rounded-[12px] bg-white p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
+      <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-[12px] bg-white p-1.5 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
         {product.imageUrl && !imgError ? (
           <img
             src={product.imageUrl}

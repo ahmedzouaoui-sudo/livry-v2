@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Copy, Check, Maximize2, Minimize2, Smartphone } from 'lucide-react';
+import { Copy, Check, Maximize2, Minimize2, Smartphone, ScanLine } from 'lucide-react';
 import { encodeEan13, encodeEan8, formatBarcodeDigits } from '../utils/barcode';
 import { triggerHaptic } from '../utils/haptics';
 import { copyTextToClipboard } from '../utils/clipboard';
@@ -219,8 +219,36 @@ export const BarcodeRenderer: React.FC<BarcodeRendererProps> = ({
       </div>
 
       {isFullscreen && (
-        <div className="mt-6 flex flex-col items-center gap-3 max-w-sm text-center">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-50 px-4 py-2.5 rounded-[14px] border border-amber-200/90 shadow-2xs">
+        <div className="mt-5 flex flex-col items-center gap-2.5 max-w-md w-full text-center">
+          <div className="flex flex-col items-center justify-center gap-1.5 w-full">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-sky-100/90 hover:bg-sky-200/90 backdrop-blur-sm text-sky-900 border border-sky-300/80 shadow-2xs text-[11px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+            >
+              <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" aria-hidden="true" />
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+              )}
+              <span className="truncate">
+                {copied ? 'Code-barres copié !' : 'Copie codebarre bach ikhdem 100%'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="animate-soft-blink inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-100/90 hover:bg-purple-200/90 backdrop-blur-sm text-purple-900 border border-purple-300/80 shadow-2xs text-[11px] sm:text-xs font-extrabold tracking-tight cursor-pointer select-none active:scale-95 transition-colors max-w-full"
+            >
+              <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+              <ScanLine className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+              <span className="truncate">Ila scanniti o mazach copie codebarre</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-900 bg-amber-50 px-4 py-2.5 rounded-[14px] border border-amber-200/90 shadow-2xs w-full justify-center">
             <Smartphone className="w-4 h-4 text-amber-600 shrink-0" />
             <span>Mettez la luminosité de votre téléphone au maximum pour faciliter le bip en caisse</span>
           </div>

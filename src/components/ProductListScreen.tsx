@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, ShoppingBag, Database, Edit3, Trash2 } from 'lucide-react';
+import { ShoppingBag, Database, Edit3, Trash2 } from 'lucide-react';
 import { Department, Product } from '../types';
 import {
   DEPARTMENT_CONFIGS,
@@ -17,14 +17,13 @@ interface ProductListScreenProps {
   products: Product[];
   selectedDepartment: Department | null;
   initialQuery?: string;
-  onBack: () => void;
+  onBack?: () => void;
   onSelectProduct: (p: Product) => void;
 }
 
 export const ProductListScreen: React.FC<ProductListScreenProps> = ({
   products,
   selectedDepartment,
-  onBack,
   onSelectProduct,
 }) => {
   const { role, setActiveTab, barcodeVotes, noCodeSettings, openSuggestForProduct, deleteProduct, showToast } = useApp();
@@ -83,23 +82,10 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[800px] mx-auto px-2.5 sm:px-4 py-2 pb-20 flex flex-col min-h-[calc(100dvh-60px)] pb-safe">
-      {/* Top Header with Back Button */}
-      <div className="flex items-center gap-2 mb-2.5">
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('light');
-            onBack();
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-gray-800 glass-surface hover:bg-white active:scale-95 transition-colors font-bold text-xs shrink-0 cursor-pointer select-none"
-          aria-label="Retour"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#0759A4]" />
-          <span>Retour</span>
-        </button>
-
-        <h1 className="text-xs sm:text-sm font-extrabold text-gray-900 truncate flex-1 tracking-tight">
+    <div className="w-full max-w-[800px] mx-auto px-4 sm:px-6 py-4 sm:py-5 pb-20 flex flex-col min-h-[calc(100dvh-64px)] pb-safe">
+      {/* Top Department Title */}
+      <div className="flex items-center justify-center gap-2.5 mb-3.5 relative">
+        <h1 className="text-xs sm:text-sm font-extrabold text-gray-900 truncate tracking-tight text-center">
           {title}
         </h1>
 
@@ -110,7 +96,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
               triggerHaptic('medium');
               setActiveTab('admin');
             }}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#0759A4] border border-blue-200 text-[11px] font-black transition-colors active:scale-95 cursor-pointer shadow-2xs shrink-0 select-none"
+            className="absolute right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[13px] bg-blue-50 hover:bg-blue-100 text-[#0759A4] border border-blue-200 text-[11px] font-black transition-colors active:scale-95 cursor-pointer shadow-2xs shrink-0 select-none"
             title="Ouvrir le panneau Données"
           >
             <Database className="w-3.5 h-3.5" />
@@ -121,14 +107,14 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
 
       {/* Categories Filter Bar */}
       {categories.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-2.5 no-scrollbar select-none touch-pan-x">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 mb-3.5 no-scrollbar select-none touch-pan-x">
           <button
             type="button"
             onClick={() => {
               triggerHaptic('light');
               setSelectedCategory('ALL');
             }}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 cursor-pointer select-none tabular-nums whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 cursor-pointer select-none tabular-nums whitespace-nowrap ${
               selectedCategory === 'ALL'
                 ? 'bg-gray-900 text-white shadow-xs'
                 : 'glass-pill text-gray-600 hover:bg-white'
@@ -144,7 +130,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                 triggerHaptic('light');
                 setSelectedCategory(cat);
               }}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 cursor-pointer select-none whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 cursor-pointer select-none whitespace-nowrap ${
                 selectedCategory === cat
                   ? 'bg-[#0759A4] text-white shadow-xs'
                   : 'glass-pill text-gray-600 hover:bg-white'
@@ -157,7 +143,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       )}
 
       {/* Products Grid: Category colored cards with white text and white code badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-3.5">
         {filtered.length > 0 ? (
           visibleProducts.map((product) => {
             const productDeptConfig = DEPARTMENT_CONFIGS[product.department] || deptConfig;
@@ -174,11 +160,11 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
               <div
                 key={product.id}
                 onClick={() => handleProductClick(product)}
-                className="cv-grid-card rounded-[15px] sm:rounded-[17px] p-2 sm:p-2.5 flex flex-col justify-between shadow-2xs active:scale-[0.98] transition-transform duration-100 cursor-pointer select-none border border-black/10"
+                className="cv-grid-card rounded-[18px] sm:rounded-[20px] p-2.5 sm:p-3 flex flex-col justify-between shadow-2xs active:scale-[0.98] transition-transform duration-100 cursor-pointer select-none border border-black/10"
                 style={{ backgroundColor: productDeptConfig.accentColor }}
               >
                 {/* 1. White Image Thumbnail Box */}
-                <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-1.5 p-1.5 shadow-2xs">
+                <div className="relative w-full aspect-square rounded-[12px] bg-white border border-black/5 flex items-center justify-center overflow-hidden mb-2 p-2 shadow-2xs">
                   {role === 'Admin' && (
                     <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
                       <button
@@ -241,7 +227,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
                 </div>
 
                 {/* 2. Code Badge */}
-                <div className="mb-1 flex items-center gap-1.5 flex-wrap">
+                <div className="mb-1.5 flex items-center gap-1.5 flex-wrap">
                   <span
                     className="inline-block text-[10px] sm:text-[11px] font-mono font-black px-1.5 py-0.5 rounded-[6px] shadow-2xs tracking-wider tabular-nums whitespace-nowrap"
                     style={{
@@ -284,7 +270,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
 
                 {/* 4. Barcode preview */}
                 {primaryBarcode && (
-                  <p className="text-[9px] font-mono text-white/85 truncate mt-1 tabular-nums">
+                  <p className="text-[9px] font-mono text-white/85 truncate mt-1.5 tabular-nums">
                     {primaryBarcode}
                   </p>
                 )}
@@ -292,9 +278,9 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
             );
           })
         ) : (
-          <div className="col-span-2 sm:col-span-3 md:col-span-4 glass-surface rounded-2xl p-6 text-center mt-3">
+          <div className="col-span-2 sm:col-span-3 md:col-span-4 glass-surface rounded-[20px] p-7 sm:p-8 text-center mt-4">
             <p className="text-xs font-bold text-gray-800">Aucun produit dans ce rayon</p>
-            <p className="text-[10.5px] text-gray-500 mt-0.5">
+            <p className="text-[10.5px] text-gray-500 mt-1">
               Tous les produits affichés disposent d&apos;un code-barres actif.
             </p>
           </div>
@@ -308,7 +294,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
             triggerHaptic('light');
             setVisibleCount((prev) => prev + 60);
           }}
-          className="mt-3 w-full py-2.5 rounded-2xl bg-white border border-gray-200 text-[#0759A4] hover:bg-blue-50 text-xs font-extrabold cursor-pointer transition-colors"
+          className="mt-4 w-full py-3 rounded-[16px] bg-white border border-gray-200 text-[#0759A4] hover:bg-blue-50 text-xs font-extrabold cursor-pointer transition-colors"
         >
           Afficher plus (+{filtered.length - visibleCount} restants)
         </button>

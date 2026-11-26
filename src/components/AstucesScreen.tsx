@@ -59,13 +59,13 @@ import { DEFAULT_GUIDE_CONFIG } from '../services/guideContentService';
 import { AppTutorialModal } from './AppTutorialModal';
 
 interface AstucesScreenProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const makeBlockId = (): string =>
   `blk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
+export const AstucesScreen: React.FC<AstucesScreenProps> = () => {
   const {
     tips,
     addTip,
@@ -601,21 +601,13 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
   const heroBgImg = sanitizeImageUrl(activeAstucesUi.heroBgImageUrl);
 
   return (
-    <div className="w-full max-w-[740px] mx-auto px-3.5 py-3 pb-24 flex flex-col min-h-[calc(100vh-65px)]">
-      {/* Top Header with Back button and Admin controls */}
-      <div className="flex items-center justify-between gap-1.5 sm:gap-2.5 mb-3 flex-wrap">
-        <button
-          type="button"
-          onClick={() => {
-            triggerHaptic('light');
-            onBack();
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-gray-800 dark:text-slate-100 glass-surface hover:bg-white/90 dark:hover:bg-slate-800/80 active:scale-95 transition font-bold text-xs shrink-0 cursor-pointer select-none"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
-          <span>{activeAstucesUi.backLabel}</span>
-        </button>
-
+    <div className="w-full max-w-[740px] mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-24 flex flex-col min-h-[calc(100vh-65px)]">
+      {/* Top Sub-Header with centered title and optional Admin controls */}
+      <div
+        className={`flex items-center gap-2 sm:gap-3 mb-4 flex-wrap ${
+          role === 'Admin' ? 'justify-between' : 'justify-center'
+        }`}
+      >
         <div className="flex items-center gap-1.5">
           <Lightbulb className="w-4 h-4 text-amber-500 fill-amber-500" />
           <h1 className="text-sm sm:text-base font-extrabold text-gray-900 dark:text-white tracking-tight">
@@ -624,7 +616,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         </div>
 
         {/* Only Admin can customize page, open Data, or publish articles */}
-        {role === 'Admin' ? (
+        {role === 'Admin' && (
           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
             <button
               type="button"
@@ -688,8 +680,6 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
               <span>Nouvel article</span>
             </button>
           </div>
-        ) : (
-          <div className="w-12" />
         )}
       </div>
 
@@ -1006,7 +996,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
       {activeAstucesUi.topNotice && (
         <div
           dir={(activeAstucesUi.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
-          className={`mb-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/45 border border-amber-300/80 dark:border-amber-700/60 px-3.5 py-2.5 flex items-start gap-2.5 text-amber-950 dark:text-amber-100 shadow-2xs ${
+          className={`mb-4 rounded-[18px] bg-amber-50/90 dark:bg-amber-950/45 border border-amber-300/80 dark:border-amber-700/60 px-4 py-3 flex items-start gap-3 text-amber-950 dark:text-amber-100 shadow-2xs ${
             activeAstucesUi.textAlign === 'right'
               ? 'text-right'
               : activeAstucesUi.textAlign === 'center'
@@ -1023,7 +1013,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
       {/* Official Tutorial Callout Hero */}
       <div
-        className="mb-3.5 relative rounded-[24px] p-4 sm:p-5 text-white overflow-hidden border border-white/20 shadow-[0_16px_44px_rgba(7,11,20,0.32)]"
+        className="mb-4 relative rounded-[24px] p-5 sm:p-6 text-white overflow-hidden border border-white/20 shadow-[0_16px_44px_rgba(7,11,20,0.32)]"
         style={{
           background:
             'radial-gradient(ellipse 80% 75% at 45% 45%, rgba(168, 22, 68, 0.52) 0%, rgba(7, 89, 164, 0.36) 52%, rgba(8, 11, 22, 0.97) 100%)',
@@ -1045,7 +1035,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
           <line x1="48" y1="100" x2="72" y2="0" stroke="#EC4899" strokeWidth="0.6" />
         </svg>
 
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
           <div
             dir={(activeAstucesUi.textAlign || 'left') === 'right' ? 'rtl' : 'ltr'}
             className={`sm:col-span-7 space-y-2.5 ${
@@ -1132,11 +1122,11 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
       </div>
 
       {/* Target Audience Filter */}
-      <div className="mb-2.5 glass-surface p-1 rounded-2xl grid grid-cols-4 gap-1">
+      <div className="mb-3 glass-surface p-1.5 rounded-[18px] grid grid-cols-4 gap-1.5">
         <button
           type="button"
           onClick={() => setAudienceFilter('ALL')}
-          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-2 px-1.5 sm:px-2.5 rounded-[13px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'ALL'
               ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-xs'
               : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -1147,7 +1137,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setAudienceFilter('Pickeur')}
-          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-2 px-1.5 sm:px-2.5 rounded-[13px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'Pickeur'
               ? 'bg-[#0759A4] text-white shadow-xs'
               : 'text-[#0759A4] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40'
@@ -1158,7 +1148,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setAudienceFilter('Livreur')}
-          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-2 px-1.5 sm:px-2.5 rounded-[13px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'Livreur'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
@@ -1169,7 +1159,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
         <button
           type="button"
           onClick={() => setAudienceFilter('Référent')}
-          className={`py-1.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
+          className={`py-2 px-1.5 sm:px-2.5 rounded-[13px] text-[11px] sm:text-xs font-bold transition text-center cursor-pointer select-none truncate ${
             audienceFilter === 'Référent'
               ? 'bg-amber-600 text-white shadow-xs'
               : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
@@ -1180,9 +1170,9 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
       </div>
 
       {/* Search Bar + Alphabetical Sort */}
-      <div className="mb-2.5 flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1 glass-surface rounded-2xl focus-within:border-[#0759A4] transition-colors">
-          <div className="flex items-center h-[44px] px-3.5">
+      <div className="mb-3.5 flex flex-col sm:flex-row gap-2.5">
+        <div className="relative flex-1 glass-surface rounded-[18px] focus-within:border-[#0759A4] transition-colors">
+          <div className="flex items-center h-[46px] px-4">
             <Search className="w-4 h-4 text-gray-400 mr-2.5 shrink-0" />
             <input
               type="text"
@@ -1195,7 +1185,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
               <button
                 type="button"
                 onClick={() => setSearchTip('')}
-                className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -1206,12 +1196,12 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
       {/* Admin Custom Category Filter Bar (Only user-created categories + Admin create control) */}
       {(customCategories.length > 0 || role === 'Admin') && (
-        <div className="mb-3.5 space-y-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        <div className="mb-4 space-y-2.5">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar">
             <button
               type="button"
               onClick={() => setSelectedCat('ALL')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer select-none whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer select-none whitespace-nowrap ${
                 selectedCat === 'ALL'
                   ? 'bg-gray-900 text-white shadow-xs'
                   : 'glass-pill text-gray-700 hover:bg-white/90'
@@ -1228,7 +1218,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCat(cat.name)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer select-none whitespace-nowrap border"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer select-none whitespace-nowrap border"
                   style={
                     isSel
                       ? {
@@ -1379,7 +1369,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
 
       {/* Clean List View with Large Unobstructed Photos (Tap row -> Opens full Editorial Article) */}
       {filteredTips.length > 0 ? (
-        <div className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-4">
           {filteredTips.map((post) => {
             const coverImg = getCoverImage(post);
             const catStyle = getCategoryColor(post.category);
@@ -1399,11 +1389,11 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
               >
                 {/* Crystal-Clear Unobstructed Photo Frame */}
                 {coverImg && (
-                  <div className="relative w-full h-56 sm:w-64 sm:h-auto sm:min-h-[176px] shrink-0 bg-slate-100 dark:bg-slate-900/90 border-b sm:border-b-0 sm:border-r border-gray-200/70 dark:border-slate-700/70 flex items-center justify-center overflow-hidden p-1.5">
+                  <div className="relative w-full h-56 sm:w-64 sm:h-auto sm:min-h-[176px] shrink-0 bg-slate-100 dark:bg-slate-900/90 border-b sm:border-b-0 sm:border-r border-gray-200/70 dark:border-slate-700/70 flex items-center justify-center overflow-hidden p-2">
                     <img
                       src={coverImg}
                       alt={post.title}
-                      className="w-full h-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-300"
+                      className="w-full h-full object-contain rounded-[14px] group-hover:scale-[1.02] transition-transform duration-300"
                       loading="lazy"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -1415,7 +1405,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                         e.stopPropagation();
                         setPreviewImage(coverImg);
                       }}
-                      className="absolute bottom-2.5 right-2.5 px-2 py-1 rounded-lg bg-black/65 hover:bg-black/85 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
+                      className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/65 hover:bg-black/85 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
                       title="Agrandir la photo"
                     >
                       <ZoomIn className="w-3 h-3" />
@@ -1425,7 +1415,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                 )}
 
                 {/* Article Details Column */}
-                <div className="flex-1 p-3.5 sm:p-4 flex flex-col justify-between gap-2.5 min-w-0">
+                <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between gap-3 min-w-0">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -1486,7 +1476,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                   </div>
 
                   {/* Footer Actions */}
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200/60 dark:border-slate-800 flex-wrap">
+                  <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-gray-200/60 dark:border-slate-800 flex-wrap">
                     <div className="flex items-center gap-2.5">
                       <button
                         type="button"
@@ -1495,7 +1485,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
                           triggerHaptic('light');
                           likeTip(post.id);
                         }}
-                        className="flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-slate-300 hover:text-[#0759A4] dark:hover:text-blue-400 py-1 px-2 rounded-lg bg-gray-100/80 dark:bg-slate-800/70 transition active:scale-95 cursor-pointer tabular-nums"
+                        className="flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-slate-300 hover:text-[#0759A4] dark:hover:text-blue-400 py-1 px-2.5 rounded-lg bg-gray-100/80 dark:bg-slate-800/70 transition active:scale-95 cursor-pointer tabular-nums"
                       >
                         <ThumbsUp className="w-3.5 h-3.5 text-amber-500" />
                         <span>{post.likes || 0}</span>
@@ -1564,7 +1554,7 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
           })}
         </div>
       ) : (
-        <div className="glass-surface rounded-2xl p-8 text-center mt-2">
+        <div className="glass-surface rounded-[22px] p-8 sm:p-10 text-center mt-3">
           <Lightbulb className="w-8 h-8 text-amber-400 mx-auto mb-2 opacity-80" />
           <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
             {activeAstucesUi.emptyTitle}
@@ -1614,10 +1604,11 @@ export const AstucesScreen: React.FC<AstucesScreenProps> = ({ onBack }) => {
               <button
                 type="button"
                 onClick={() => setReadingTipId(null)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-xs font-bold cursor-pointer"
+                title="Retour"
+                aria-label="Retour"
+                className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center active:scale-95 transition cursor-pointer"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Retour</span>
+                <ArrowLeft className="w-4 h-4 text-[#0759A4] dark:text-blue-400" />
               </button>
 
               <div className="flex items-center gap-1.5">

@@ -39,6 +39,9 @@ import {
   sendDeviceHeartbeat,
   markDeviceOffline,
   fetchUserDevices,
+  getOrCreateDeviceId,
+  setRealtimeOnlineDeviceIds,
+  applyLivePresenceToDevices,
 } from '../services/deviceTrackerService';
 import { supabasePublic, supabaseApi } from '../services/supabaseClient';
 import { triggerHaptic } from '../utils/haptics';
@@ -310,8 +313,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Registered Phones & Usage State
   const [userDevices, setUserDevices] = useState<UserDevice[]>([]);
+  const userDevicesRef = useRef<UserDevice[]>([]);
+  useEffect(() => {
+    userDevicesRef.current = userDevices;
+  }, [userDevices]);
   const [deviceStats, setDeviceStats] = useState<DeviceStats | null>(null);
   const [isLoadingDevices, setIsLoadingDevices] = useState(false);
+
+  const reapplyLiveDeviceStatuses = useCallback(() => {
+    setUserDevices((prev) => {
+      if (prev.length === 0) return prev;
+      const { devices, stats } = applyLivePresenceToDevices(prev);
+      setDeviceStats(stats);
+      return devices;
+    });
+  }, []);
 
   const refreshUserDevices = useCallback(async () => {
     setIsLoadingDevices(true);
@@ -328,9 +344,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Fetch and save user IP + Auto-register device immediately
+  // Real-time Phone Presence (Supabase Realtime Presence + 10s visible heartbeat + keepalive offline)
   useEffect(() => {
     let isCancelled = false;
+    const deviceId = getOrCreateDeviceId();
+
+    const trackPayload = () => ({
+      device_id: deviceId,
+      online_at: new Date().toISOString(),
+    });
+
+    const presenceChannel = supabasePublic.channel('livry_devices_presence', {
+      config: {
+        presence: {
+          key: deviceId,
+        },
+      },
+    });
+
+    const syncPresenceFromChannel = () => {
+      if (isCancelled) return;
+      try {
+        const state = presenceChannel.presenceState();
+        const presentKeys = Object.keys(state || {});
+        // Include self if visible and online even while socket sync settles
+        const isSelfActive =
+          (typeof document === 'undefined' || document.visibilityState === 'visible') &&
+          (typeof navigator === 'undefined' || navigator.onLine !== false);
+        if (isSelfActive && !presentKeys.includes(deviceId)) {
+          presentKeys.push(deviceId);
+        }
+
+        setRealtimeOnlineDeviceIds(presentKeys);
+        reapplyLiveDeviceStatuses();
+
+        // If a brand new device_id appears in presence that isn't in our list yet, fetch once
+        const knownIds = new Set(userDevicesRef.current.map((d) => d.device_id));
+        const hasUnknownPeer = presentKeys.some((id) => id && !knownIds.has(id));
+        if (hasUnknownPeer) {
+          void refreshUserDevices();
+        }
+      } catch {}
+    };
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, syncPresenceFromChannel)
+      .on('presence', { event: 'join' }, syncPresenceFromChannel)
+      .on('presence', { event: 'leave' }, syncPresenceFromChannel)
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED' && !isCancelled) {
+          const isVisibleNow =
+            typeof document === 'undefined' || document.visibilityState === 'visible';
+          const isNetOnline =
+            typeof navigator === 'undefined' || navigator.onLine !== false;
+          if (isVisibleNow && isNetOnline) {
+            void presenceChannel.track(trackPayload()).catch(() => {});
+          }
+          syncPresenceFromChannel();
+        }
+      });
 
     // 1. Immediate initial registration with existing or cached IP
     registerDeviceEntry()
@@ -349,7 +421,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             try {
               localStorage.setItem(STORAGE_KEY_USER_IP, data.ip);
             } catch {}
-            // Re-sync with confirmed IP address
             registerDeviceEntry(data.ip)
               .then(() => {
                 if (!isCancelled) refreshUserDevices();
@@ -358,7 +429,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         }
       } catch {
-        // Fallback
         try {
           const res2 = await fetch('https://api64.ipify.org?format=json');
           if (res2.ok) {
@@ -381,37 +451,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     fetchIp().catch(() => {});
 
-    // 2. Active usage time tracking: Heartbeat every 30 seconds while user is using the app
-    const HEARTBEAT_INTERVAL_MS = 30000;
+    // 2. Fast Real-Time Active Heartbeat every 10s ONLY when app is open & visible
+    const HEARTBEAT_INTERVAL_MS = 10000;
     const intervalId = window.setInterval(() => {
-      if (typeof document !== 'undefined' && !document.hidden) {
-        sendDeviceHeartbeat(30).catch(() => {});
+      const isVisible = typeof document === 'undefined' || document.visibilityState === 'visible';
+      const isNetOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
+      if (isVisible && isNetOnline) {
+        sendDeviceHeartbeat(10).catch(() => {});
+        void presenceChannel.track(trackPayload()).catch(() => {});
+      }
+      if (roleRef.current === 'Admin') {
+        reapplyLiveDeviceStatuses();
       }
     }, HEARTBEAT_INTERVAL_MS);
 
-    // 3. Visibility and unload listeners
+    // 3. Real-time Online / Hors-ligne transitions across mobile & desktop lifecycles
+    const goOnline = () => {
+      if (isCancelled) return;
+      void presenceChannel.track(trackPayload()).catch(() => {});
+      registerDeviceEntry()
+        .then(() => {
+          reapplyLiveDeviceStatuses();
+        })
+        .catch(() => {});
+    };
+
+    const goOffline = () => {
+      void presenceChannel.untrack().catch(() => {});
+      markDeviceOffline();
+      reapplyLiveDeviceStatuses();
+    };
+
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        sendDeviceHeartbeat(5).catch(() => {});
+      if (document.hidden || document.visibilityState !== 'visible') {
+        goOffline();
       } else {
-        registerDeviceEntry().catch(() => {});
+        goOnline();
+      }
+    };
+
+    const handlePageHide = () => {
+      goOffline();
+    };
+
+    const handlePageShow = () => {
+      if (!document.hidden) {
+        goOnline();
       }
     };
 
     const handleBeforeUnload = () => {
-      markDeviceOffline();
+      goOffline();
+    };
+
+    const handleNetworkOnline = () => {
+      if (!document.hidden) {
+        goOnline();
+      }
+    };
+
+    const handleNetworkOffline = () => {
+      void presenceChannel.untrack().catch(() => {});
+      reapplyLiveDeviceStatuses();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('online', handleNetworkOnline);
+    window.addEventListener('offline', handleNetworkOffline);
 
     return () => {
       isCancelled = true;
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('online', handleNetworkOnline);
+      window.removeEventListener('offline', handleNetworkOffline);
+      void presenceChannel.untrack().catch(() => {});
+      try {
+        supabasePublic.removeChannel(presenceChannel);
+      } catch {}
     };
-  }, [refreshUserDevices]);
+  }, [refreshUserDevices, reapplyLiveDeviceStatuses]);
 
   // Role starts safely as Pickeur and upgrades ONLY after cryptographic session validation
   const [role, setRoleState] = useState<Role>('Pickeur');
@@ -904,7 +1029,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             .on(
               'postgres_changes',
               { event: '*', schema: rtSchema, table: 'tips' },
-              async () => {
+              async (payload) => {
+                const rowCategory =
+                  (payload?.new as Record<string, any> | undefined)?.category ||
+                  (payload?.old as Record<string, any> | undefined)?.category;
+
+                if (rowCategory === 'device_tracker_record') {
+                  if (roleRef.current === 'Admin' && isMounted) {
+                    void refreshUserDevices();
+                  }
+                  return;
+                }
+
                 const [freshTips, freshGuide] = await Promise.all([
                   fetchTipsFromSupabase(),
                   fetchGuideConfigFromCloud().catch(() => null),

@@ -1009,7 +1009,10 @@ ALTER TABLE api.products ADD COLUMN IF NOT EXISTS quantite TEXT DEFAULT 'pièce'
               <Smartphone className="w-3.5 h-3.5 text-indigo-100" />
               <span>Téléphones ({deviceStats?.totalDevices ?? userDevices.length})</span>
               {deviceStats && deviceStats.onlineDevices > 0 && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-400/25 text-emerald-100 text-[10px] font-black tabular-nums">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                  <span>{deviceStats.onlineDevices}</span>
+                </span>
               )}
             </button>
 
